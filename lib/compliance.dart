@@ -117,12 +117,20 @@ class CambodiaRules {
 
   static bool documentsReady(DriverProfile driver) {
     if (!driver.independentPartner || !driver.trained) return false;
+    if (driver.review == 'pending' || driver.review == 'rejected') {
+      return false;
+    }
     if (!needsMotorFile(driver.vehicleKind)) return true;
     if (!refOk(driver.licenceNumber) ||
         !refOk(driver.plate) ||
         !refOk(driver.registration) ||
         !refOk(driver.insurance) ||
         !driver.logoOnVehicle) {
+      return false;
+    }
+    if (driver.licencePhoto == null ||
+        driver.registrationPhoto == null ||
+        driver.insurancePhoto == null) {
       return false;
     }
     if (needsInspection(driver.vehicleKind) && !refOk(driver.inspection)) {

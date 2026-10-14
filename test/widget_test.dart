@@ -18,6 +18,9 @@ Future<void> _signInGoogle(WidgetTester tester) async {
   addTearDown(tester.view.resetPhysicalSize);
   await tester.pumpWidget(const ChowApp());
   await tester.pump();
+  expect(find.byKey(const Key('sign_in_phone')), findsOneWidget);
+  await tester.tap(find.byKey(const Key('sign_in_more')));
+  await tester.pump();
   expect(find.byKey(const Key('sign_in_google')), findsOneWidget);
   await tester.tap(find.byKey(const Key('sign_in_google')));
   await tester.pump();
@@ -73,6 +76,7 @@ void main() {
         await tester.tap(find.text('ជួលយាន'));
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('dropoff')), findsOneWidget);
+        expect(find.byKey(const Key('rent_hours_24')), findsOneWidget);
         expect(find.byKey(const Key('fare_proof_rent:car')), findsOneWidget);
         expect(
           find.byWidgetPredicate(
@@ -201,7 +205,7 @@ void main() {
         await tester.scrollUntilVisible(find.byKey(const Key('sign_out')), 400);
         await tester.tap(find.byKey(const Key('sign_out')));
         await tester.pumpAndSettle();
-        expect(find.byKey(const Key('sign_in_google')), findsOneWidget);
+        expect(find.byKey(const Key('sign_in_phone')), findsOneWidget);
       });
     },
   );

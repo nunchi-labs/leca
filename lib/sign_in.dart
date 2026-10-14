@@ -18,7 +18,19 @@ class _SignInScreenState extends State<SignInScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _name = TextEditingController();
+  final _country = TextEditingController(text: '+855');
   bool _register = false;
+  bool _more = false;
+
+  /// Country code plus the local number. A leading 0 is the trunk prefix
+  /// and drops when the country code is present.
+  String _phoneHandle() {
+    final country = _country.text.replaceAll(RegExp(r'\D'), '');
+    var local = _phone.text.replaceAll(RegExp(r'\D'), '');
+    if (country.isEmpty) return local;
+    if (local.startsWith('0')) local = local.substring(1);
+    return '+$country$local';
+  }
 
   @override
   void dispose() {
@@ -27,6 +39,7 @@ class _SignInScreenState extends State<SignInScreen> {
     _email.dispose();
     _password.dispose();
     _name.dispose();
+    _country.dispose();
     super.dispose();
   }
 
@@ -61,6 +74,12 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ChowScope.of(context);
+    InputDecoration box(String hint) => InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    );
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -101,137 +120,30 @@ class _SignInScreenState extends State<SignInScreen> {
                       style: const TextStyle(color: Color(0xFF8B1E1E)),
                     ),
                   ),
-                FilledButton(
-                  key: const Key('sign_in_google'),
-                  onPressed: state.authLoading
-                      ? null
-                      : () => state.signIn(
-                          method: 'google',
-                          handle: 'sokha@chow.app',
-                        ),
-                  child: Text(
-                    AuthConfig.googleLive
-                        ? l10n.authGoogleLive
-                        : l10n.authGoogle,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton(
-                  key: const Key('sign_in_facebook'),
-                  onPressed: state.authLoading
-                      ? null
-                      : () => state.signIn(
-                          method: 'facebook',
-                          handle: 'sokha.fb@chow.app',
-                        ),
-                  child: Text(
-                    AuthConfig.facebookLive
-                        ? l10n.authFacebookLive
-                        : l10n.authFacebook,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton(
-                  key: const Key('sign_in_wechat'),
-                  onPressed: state.authLoading
-                      ? null
-                      : () => state.signIn(
-                          method: 'wechat',
-                          handle: 'sokha.wx@chow.app',
-                        ),
-                  child: Text(
-                    AuthConfig.wechatLive
-                        ? l10n.authWechatLive
-                        : l10n.authWechat,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(_register ? l10n.authCreateAccount : l10n.authEmailLabel),
-                const SizedBox(height: 6),
-                TextField(
-                  key: const Key('sign_in_email'),
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    hintText: l10n.authEmailHint,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  key: const Key('sign_in_email_password'),
-                  controller: _password,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: l10n.authPasswordHint,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                if (_register) ...[
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _name,
-                    decoration: InputDecoration(
-                      hintText: l10n.authNameHint,
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 10),
-                FilledButton(
-                  key: const Key('sign_in_email_submit'),
-                  onPressed: state.authLoading
-                      ? null
-                      : () => state.signIn(
-                          method: 'email',
-                          handle: _email.text,
-                          password: _password.text,
-                          name: _name.text,
-                          register: _register,
-                        ),
-                  child: Text(
-                    _register ? l10n.authCreateAccount : l10n.authEmailSignIn,
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: state.authLoading
-                        ? null
-                        : () => setState(() => _register = !_register),
-                    child: Text(
-                      _register ? l10n.authHaveAccount : l10n.authNeedAccount,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Text(l10n.authPhoneLabel),
                 const SizedBox(height: 6),
-                TextField(
-                  key: const Key('sign_in_phone_number'),
-                  controller: _phone,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    hintText: l10n.authPhoneHint,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 96,
+                      child: TextField(
+                        key: const Key('sign_in_country'),
+                        controller: _country,
+                        keyboardType: TextInputType.phone,
+                        decoration: box('+855'),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        key: const Key('sign_in_phone_number'),
+                        controller: _phone,
+                        keyboardType: TextInputType.phone,
+                        autofocus: true,
+                        decoration: box(l10n.authPhoneHint),
+                      ),
+                    ),
+                  ],
                 ),
                 if (state.phoneCodeSent) ...[
                   if (state.devCode != null) ...[
@@ -243,30 +155,131 @@ class _SignInScreenState extends State<SignInScreen> {
                     key: const Key('sign_in_phone_code'),
                     controller: _code,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: l10n.authCodeHint,
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                    decoration: box(l10n.authCodeHint),
                   ),
                 ],
                 const SizedBox(height: 10),
-                FilledButton.tonal(
+                FilledButton(
                   key: const Key('sign_in_phone'),
                   onPressed: state.authLoading
                       ? null
                       : () => state.signIn(
                           method: 'phone',
-                          handle: _phone.text,
+                          handle: _phoneHandle(),
                           code: _code.text,
                         ),
                   child: Text(
                     state.phoneCodeSent ? l10n.authVerify : l10n.authSendCode,
                   ),
                 ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    key: const Key('sign_in_more'),
+                    onPressed: () => setState(() => _more = !_more),
+                    child: Text(_more ? l10n.authFewerWays : l10n.authMoreWays),
+                  ),
+                ),
+                if (_more) ...[
+                  OutlinedButton(
+                    key: const Key('sign_in_google'),
+                    onPressed: state.authLoading
+                        ? null
+                        : () => state.signIn(
+                            method: 'google',
+                            handle: 'sokha@chow.app',
+                          ),
+                    child: Text(
+                      AuthConfig.googleLive
+                          ? l10n.authGoogleLive
+                          : l10n.authGoogle,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    key: const Key('sign_in_facebook'),
+                    onPressed: state.authLoading
+                        ? null
+                        : () => state.signIn(
+                            method: 'facebook',
+                            handle: 'sokha.fb@chow.app',
+                          ),
+                    child: Text(
+                      AuthConfig.facebookLive
+                          ? l10n.authFacebookLive
+                          : l10n.authFacebook,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    key: const Key('sign_in_wechat'),
+                    onPressed: state.authLoading
+                        ? null
+                        : () => state.signIn(
+                            method: 'wechat',
+                            handle: 'sokha.wx@chow.app',
+                          ),
+                    child: Text(
+                      AuthConfig.wechatLive
+                          ? l10n.authWechatLive
+                          : l10n.authWechat,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    _register ? l10n.authCreateAccount : l10n.authEmailLabel,
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    key: const Key('sign_in_email'),
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    decoration: box(l10n.authEmailHint),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    key: const Key('sign_in_email_password'),
+                    controller: _password,
+                    obscureText: true,
+                    decoration: box(l10n.authPasswordHint),
+                  ),
+                  if (_register) ...[
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _name,
+                      decoration: box(l10n.authNameHint),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  FilledButton.tonal(
+                    key: const Key('sign_in_email_submit'),
+                    onPressed: state.authLoading
+                        ? null
+                        : () => state.signIn(
+                            method: 'email',
+                            handle: _email.text,
+                            password: _password.text,
+                            name: _name.text,
+                            register: _register,
+                          ),
+                    child: Text(
+                      _register ? l10n.authCreateAccount : l10n.authEmailSignIn,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: state.authLoading
+                          ? null
+                          : () => setState(() => _register = !_register),
+                      child: Text(
+                        _register ? l10n.authHaveAccount : l10n.authNeedAccount,
+                      ),
+                    ),
+                  ),
+                ],
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(

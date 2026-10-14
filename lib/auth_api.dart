@@ -16,12 +16,14 @@ class AuthApiException implements Exception {
 class AuthApi {
   static Future<Map<String, Object?>> post(
     String path,
-    Map<String, Object?> body,
-  ) {
-    return _send('POST', path, body);
+    Map<String, Object?> body, {
+    String? token,
+  }) {
+    return _send('POST', path, body: body, token: token);
   }
 
-  static Future<Map<String, Object?>> get(String path) => _send('GET', path);
+  static Future<Map<String, Object?>> get(String path, {String? token}) =>
+      _send('GET', path, token: token);
 
   static Future<Map<String, Object?>> finishProvider(String provider) async {
     final start = await post('/v1/auth/provider/start', {'provider': provider});
@@ -42,17 +44,22 @@ class AuthApi {
 
   static Future<Map<String, Object?>> _send(
     String method,
-    String path, [
+    String path, {
     Map<String, Object?>? body,
-  ]) async {
+    String? token,
+  }) async {
     final uri = Uri.parse('${AuthConfig.apiBase}$path');
+    final headers = <String, String>{
+      if (method == 'POST') 'content-type': 'application/json',
+      if (token != null && token.isNotEmpty) 'authorization': 'Bearer $token',
+    };
     final response = method == 'POST'
         ? await http.post(
             uri,
-            headers: {'content-type': 'application/json'},
+            headers: headers,
             body: jsonEncode(body ?? const {}),
           )
-        : await http.get(uri);
+        : await http.get(uri, headers: headers);
     final decoded = response.body.isEmpty
         ? <String, Object?>{}
         : jsonDecode(response.body);

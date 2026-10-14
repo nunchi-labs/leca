@@ -16,6 +16,10 @@ void main() {
       'toLng': 104.9282,
     });
     expect(quote['cents'], greaterThanOrEqualTo(50));
+    expect(quote['rates'], isA<Map>());
+    expect((quote['rates'] as Map)['id'], 'leca-kh-1');
+    expect(quote['hours'], 0);
+    expect(quote['routed'], isFalse);
     expect(
       fareProof(
         fareBody(
@@ -28,6 +32,38 @@ void main() {
       ),
       quote['proof'],
     );
+    final along = quoteTrip({
+      'kind': 'ride',
+      'vehicle': 'car',
+      'fromLat': 10.6,
+      'fromLng': 104.18,
+      'toLat': 10.48,
+      'toLng': 104.32,
+      'meters': 42000,
+      'minutes': 70,
+    });
+    expect(along['routed'], isTrue);
+    expect(along['meters'], 42000);
+    expect(along['minutes'], 70);
+    final day = quoteTrip({
+      'kind': 'rent-self',
+      'vehicle': 'car',
+      'fromLat': 13.36,
+      'fromLng': 103.85,
+      'toLat': 13.36,
+      'toLng': 103.85,
+      'hours': 24,
+    });
+    expect(day['hours'], 24);
+    final hop = quoteTrip({
+      'kind': 'rent-self',
+      'vehicle': 'car',
+      'fromLat': 13.36,
+      'fromLng': 103.85,
+      'toLat': 13.36,
+      'toLng': 103.85,
+    });
+    expect(day['cents'], greaterThan(hop['cents'] as int));
     expect(
       () => quoteTrip({'kind': 'delivery', 'fromLat': 11}),
       throwsFormatException,

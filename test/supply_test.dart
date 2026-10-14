@@ -12,6 +12,15 @@ final _pngA = base64Decode(
 final _pngB = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
 );
+final _pngC = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+);
+final _pngD = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
+);
+final _pngE = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +78,17 @@ void main() {
         ),
         'photo_invalid',
       );
+      expect(
+        await Identity.check(
+          legalName: 'Sokha',
+          nameOnId: 'Sokha',
+          idNumber: '123456',
+          selfie: _pngA,
+          idCard: _pngB,
+          extras: [_pngA],
+        ),
+        'photo_same',
+      );
     },
   );
 
@@ -121,6 +141,9 @@ void main() {
           vehicleKind: 'tuktuk',
           selfie: _pngA,
           idCard: _pngB,
+          licencePhoto: _pngC,
+          registrationPhoto: _pngD,
+          insurancePhoto: _pngE,
           licenceNumber: 'PP12345',
           plate: '1A-8830',
           registration: 'REG-1001',

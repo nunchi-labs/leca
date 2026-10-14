@@ -131,6 +131,66 @@ void main() {
     expect(withDriver.meters, selfDrive.meters);
     expect(withDriver.cents, greaterThan(selfDrive.cents));
     expect(withDriver.proof, isNot(selfDrive.proof));
+    final loop = priceTrip(
+      kind: 'rent-self',
+      vehicle: 'car',
+      fromLat: 13.3633,
+      fromLng: 103.8564,
+      toLat: 13.3633,
+      toLng: 103.8564,
+      hours: 24,
+    );
+    final hop = priceTrip(
+      kind: 'rent-self',
+      vehicle: 'car',
+      fromLat: 13.3633,
+      fromLng: 103.8564,
+      toLat: 13.3633,
+      toLng: 103.8564,
+    );
+    expect(loop.checksOut, isTrue);
+    expect(loop.hours, 24);
+    expect(loop.cents, greaterThan(hop.cents));
+    final along = priceTrip(
+      kind: 'ride',
+      vehicle: 'car',
+      fromLat: 11.5454,
+      fromLng: 104.9108,
+      toLat: 13.3633,
+      toLng: 103.8564,
+      routeMeters: 320000,
+      traffic: 300,
+    );
+    expect(along.routed, isTrue);
+    expect(along.meters, 320000);
+    expect(along.minutes, 300);
+    expect(along.checksOut, isTrue);
+    final builtIn = RateCard.active;
+    RateCard.adopt(
+      RateCard(
+        id: 'leca-kh-test',
+        kinds: builtIn.kinds,
+        scales: builtIn.scales,
+        minCents: 99,
+      ),
+    );
+    try {
+      expect(along.card, 'leca-kh-1');
+      expect(along.checksOut, isTrue);
+      expect(
+        priceTrip(
+          kind: 'delivery',
+          fromLat: 11.5,
+          fromLng: 104.9,
+          toLat: 11.6,
+          toLng: 104.9,
+        ).card,
+        'leca-kh-test',
+      );
+    } finally {
+      RateCard.known.remove('leca-kh-test');
+      RateCard.active = RateCard.builtIn;
+    }
     expect(
       fareCents(kind: 'rent', vehicle: 'car', meters: 2000, minutes: 10),
       greaterThan(

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'auth.dart';
 import 'location.dart';
+import 'rate_card.dart';
 
 /// Minutes from Google Routes with live traffic. Empty when the server has no key.
 class TrafficMinutes extends StatefulWidget {
@@ -46,7 +47,17 @@ class _TrafficMinutesState extends State<TrafficMinutes> {
   }
 }
 
-Future<int?> trafficMinutes({
+/// A routed road: minutes in today's traffic and metres along the road.
+/// Kampot to Kep is not a straight line, and neither is anything that
+/// crosses the Tonle Sap.
+class RoadRoute {
+  const RoadRoute({required this.minutes, required this.meters});
+
+  final int minutes;
+  final int meters;
+}
+
+Future<RoadRoute?> roadRoute({
   required TripFix from,
   required TripFix to,
 }) async {
@@ -70,7 +81,30 @@ Future<int?> trafficMinutes({
     if (decoded is! Map) return null;
     final minutes = decoded['minutes'];
     if (minutes is! int || minutes < 1) return null;
-    return minutes;
+    final meters = decoded['distanceMeters'];
+    return RoadRoute(
+      minutes: minutes,
+      meters: meters is int && meters > 0 ? meters : 0,
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
+Future<int?> trafficMinutes({
+  required TripFix from,
+  required TripFix to,
+}) async => (await roadRoute(from: from, to: to))?.minutes;
+
+/// The rate card the server is pricing on today, or null offline.
+Future<RateCard?> fetchRateCard() async {
+  if (!AuthConfig.apiLive) return null;
+  try {
+    final response = await http
+        .get(Uri.parse('${AuthConfig.apiBase}/v1/card'))
+        .timeout(const Duration(seconds: 8));
+    if (response.statusCode != 200) return null;
+    return RateCard.fromJson(jsonDecode(response.body));
   } catch (_) {
     return null;
   }

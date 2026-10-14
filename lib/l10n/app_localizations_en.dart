@@ -264,11 +264,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authMockBanner =>
-      'Sign in with Google, Facebook, WeChat, or a phone number. Without the auth server this device uses a local mock.';
+      'Phone number first. Without the auth server this device uses a local mock.';
 
   @override
   String get authLiveBanner =>
-      'Sign in with Google, Facebook, WeChat, or a phone number.';
+      'Sign in with your phone number. Google, Facebook, WeChat, and email are under more ways.';
 
   @override
   String get authWechat => 'Continue with WeChat (mock)';
@@ -801,7 +801,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportActed =>
-      'Leca recorded this and suspended this partner from new trips.';
+      'Leca recorded this and suspended this partner from new trips. They can appeal.';
+
+  @override
+  String get licencePhoto => 'Driving licence photo';
+
+  @override
+  String get registrationPhoto => 'Registration photo';
+
+  @override
+  String get insurancePhoto => 'Insurance photo';
+
+  @override
+  String get reviewPending =>
+      'A person is looking at this file. Going online waits for that.';
+
+  @override
+  String get reviewApproved => 'A person approved this file.';
+
+  @override
+  String get reviewRejected => 'This file was not approved.';
+
+  @override
+  String get appealHint =>
+      'A report suspended you. Write why it should be cleared.';
+
+  @override
+  String get appealSend => 'Appeal';
+
+  @override
+  String get appealEmpty => 'Write the appeal.';
 
   @override
   String get upfrontFare => 'Upfront fare';
@@ -870,6 +899,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get priceInChat =>
       'Price is negotiated here. Either side can propose; the other allows.';
+
+  @override
+  String get roadRouted => 'Distance follows the road in today\'s traffic.';
+
+  @override
+  String get rentLength => 'How long';
+
+  @override
+  String rentHours(int n) {
+    return '$n h';
+  }
+
+  @override
+  String rentDays(int n) {
+    return '$n day';
+  }
+
+  @override
+  String rentWeeks(int n) {
+    return '$n week';
+  }
+
+  @override
+  String get authMoreWays => 'More ways to sign in';
+
+  @override
+  String get authFewerWays => 'Fewer ways';
 
   @override
   String get counterFare => 'Counter';

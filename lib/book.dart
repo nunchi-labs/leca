@@ -156,12 +156,15 @@ class _Dropoff extends StatelessWidget {
   }
 }
 
+/// Prices from the device to [dropoff]. With a routed [road] the fare uses
+/// the road's metres and today's minutes; without one, the card's estimate.
 TripQuote _routeQuote(
   ChowState state, {
   required String dropoff,
-  required int? traffic,
+  required RoadRoute? road,
   required String kind,
   required String vehicle,
+  int hours = 0,
 }) {
   final city = MarketConfig.active.city(dropoff);
   final from = state.origin;
@@ -172,17 +175,22 @@ TripQuote _routeQuote(
     fromLng: from.longitude,
     toLat: city.latitude,
     toLng: city.longitude,
-    traffic: traffic,
+    traffic: road?.minutes,
+    routeMeters: road?.meters,
+    hours: hours,
   );
 }
 
-Future<int?> _trafficTo(ChowState state, String dropoff) {
+Future<RoadRoute?> _roadTo(ChowState state, String dropoff) {
   final city = MarketConfig.active.city(dropoff);
-  return trafficMinutes(
+  return roadRoute(
     from: state.origin,
     to: TripFix(latitude: city.latitude, longitude: city.longitude),
   );
 }
+
+/// Rental lengths a tap away. Hours, so a loop around town still prices.
+const _rentHours = [1, 4, 24, 72, 168];
 
 class _AutoTrip extends StatefulWidget {
   const _AutoTrip({
@@ -205,25 +213,26 @@ class _AutoTrip extends StatefulWidget {
 
 class _AutoTripState extends State<_AutoTrip> {
   late String _dropoff;
-  int? _traffic;
+  RoadRoute? _road;
 
   @override
   void initState() {
     super.initState();
     _dropoff = widget.state.cityId;
-    _loadTraffic();
+    _loadRoad();
   }
 
-  Future<void> _loadTraffic() async {
-    final minutes = await _trafficTo(widget.state, _dropoff);
-    if (!mounted || minutes == null) return;
-    setState(() => _traffic = minutes);
+  Future<void> _loadRoad() async {
+    final asked = _dropoff;
+    final road = await _roadTo(widget.state, asked);
+    if (!mounted || road == null || asked != _dropoff) return;
+    setState(() => _road = road);
   }
 
   TripQuote _quote(String vehicle) => _routeQuote(
     widget.state,
     dropoff: _dropoff,
-    traffic: _traffic,
+    road: _road,
     kind: widget.delivery ? 'delivery' : 'ride',
     vehicle: widget.delivery ? '' : vehicle,
   );
@@ -243,13 +252,14 @@ class _AutoTripState extends State<_AutoTrip> {
           onChanged: (id) {
             setState(() {
               _dropoff = id;
-              _traffic = null;
+              _road = null;
             });
-            _loadTraffic();
+            _loadRoad();
           },
         ),
         const SizedBox(height: 8),
         Text(l10n.autoFare(first.kilometres.toStringAsFixed(1), first.minutes)),
+        if (first.routed) Text(l10n.roadRouted),
         const SizedBox(height: 8),
         if (widget.delivery)
           _OfferTile(
@@ -267,6 +277,7 @@ class _AutoTripState extends State<_AutoTrip> {
                 meters: quote?.meters ?? 0,
                 minutes: quote?.minutes ?? 0,
                 proof: quote?.proof ?? '',
+                card: quote?.card ?? 'leca-kh-1',
               ),
             ),
             l10n: l10n,
@@ -288,6 +299,7 @@ class _AutoTripState extends State<_AutoTrip> {
                   meters: quote?.meters ?? 0,
                   minutes: quote?.minutes ?? 0,
                   proof: quote?.proof ?? '',
+                  card: quote?.card ?? 'leca-kh-1',
                 ),
               ),
               l10n: l10n,
@@ -317,30 +329,40 @@ class _TradeBoard extends StatefulWidget {
 class _TradeBoardState extends State<_TradeBoard> {
   bool _sale = false;
   late String _dropoff;
-  int? _traffic;
+  RoadRoute? _road;
+  int _hours = 24;
 
   @override
   void initState() {
     super.initState();
     _dropoff = widget.state.cityId;
-    _loadTraffic();
+    _loadRoad();
   }
 
-  Future<void> _loadTraffic() async {
-    final minutes = await _trafficTo(widget.state, _dropoff);
-    if (!mounted || minutes == null) return;
-    setState(() => _traffic = minutes);
+  Future<void> _loadRoad() async {
+    final asked = _dropoff;
+    final road = await _roadTo(widget.state, asked);
+    if (!mounted || road == null || asked != _dropoff) return;
+    setState(() => _road = road);
   }
 
-  /// A rental is priced place to place. With a driver it includes their time.
+  /// A rental is priced place to place, with the rental length as a floor,
+  /// so a day around town prices even when it ends where it began.
   TripQuote _rentQuote(String vehicle, {required bool withDriver}) =>
       _routeQuote(
         widget.state,
         dropoff: _dropoff,
-        traffic: _traffic,
+        road: _road,
         kind: withDriver ? 'rent' : 'rent-self',
         vehicle: vehicle,
+        hours: _hours,
       );
+
+  String _hoursLabel(AppLocalizations l10n, int hours) {
+    if (hours < 24) return l10n.rentHours(hours);
+    if (hours < 168) return l10n.rentDays(hours ~/ 24);
+    return l10n.rentWeeks(hours ~/ 168);
+  }
 
   String _offerId(ListedVehicle vehicle) {
     final kind = vehicle.kind.toLowerCase();
@@ -368,7 +390,9 @@ class _TradeBoardState extends State<_TradeBoard> {
       vehicleId: vehicleId,
       meters: quote?.meters ?? 0,
       minutes: quote?.minutes ?? 0,
+      hours: quote?.hours ?? 0,
       proof: quote?.proof ?? '',
+      card: quote?.card ?? 'leca-kh-1',
     );
   }
 
@@ -410,10 +434,24 @@ class _TradeBoardState extends State<_TradeBoard> {
             onChanged: (id) {
               setState(() {
                 _dropoff = id;
-                _traffic = null;
+                _road = null;
               });
-              _loadTraffic();
+              _loadRoad();
             },
+          ),
+          const SizedBox(height: 8),
+          Text(l10n.rentLength),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final hours in _rentHours)
+                ChoiceChip(
+                  key: Key('rent_hours_$hours'),
+                  label: Text(_hoursLabel(l10n, hours)),
+                  selected: _hours == hours,
+                  onSelected: (_) => setState(() => _hours = hours),
+                ),
+            ],
           ),
         ],
         const SizedBox(height: 12),
@@ -527,7 +565,7 @@ class _OfferTileState extends State<_OfferTile> {
         ? null
         : quote == null
         ? base
-        : '$base:${_withDriver ? 'driver' : 'self'}:${quote.meters}:${quote.minutes}';
+        : '$base:${_withDriver ? 'driver' : 'self'}:${quote.meters}:${quote.minutes}:${quote.hours}';
     final agreed = key != null && state.askFor(key)?.agreedUsd != null;
     final amount = key == null ? appUsd : state.payable(key, appUsd);
     final mode = _withDriver ? l10n.withDriver : l10n.selfDrive;

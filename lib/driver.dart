@@ -44,6 +44,10 @@ String? driverErrorText(AppLocalizations l10n, String? code) {
       return l10n.trainingRequired;
     case 'online_blocked':
       return l10n.onlineBlocked;
+    case 'review_pending':
+      return l10n.reviewPending;
+    case 'appeal_empty':
+      return l10n.appealEmpty;
     default:
       return null;
   }
@@ -70,6 +74,9 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
   String _vehicle = '';
   Uint8List? _selfie;
   Uint8List? _idCard;
+  Uint8List? _licencePhoto;
+  Uint8List? _registrationPhoto;
+  Uint8List? _insurancePhoto;
   bool _logo = false;
   bool _partner = false;
   bool _traffic = false;
@@ -121,6 +128,11 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
     }
     if (_selfie == null) return l10n.selfiePhoto;
     if (_idCard == null) return l10n.idCardPhoto;
+    if (CambodiaRules.needsMotorFile(_vehicle)) {
+      if (_licencePhoto == null) return l10n.licencePhoto;
+      if (_registrationPhoto == null) return l10n.registrationPhoto;
+      if (_insurancePhoto == null) return l10n.insurancePhoto;
+    }
     final code = CambodiaRules.checkPartner(
       vehicleKind: _vehicle,
       licenceNumber: _licence.text,
@@ -155,14 +167,21 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
     super.dispose();
   }
 
-  Future<void> _pick(bool selfie) async {
+  Future<void> _pick(String slot) async {
     final bytes = await PhotoPick.image();
     if (!mounted || bytes == null) return;
     setState(() {
-      if (selfie) {
-        _selfie = bytes;
-      } else {
-        _idCard = bytes;
+      switch (slot) {
+        case 'selfie':
+          _selfie = bytes;
+        case 'id':
+          _idCard = bytes;
+        case 'licence':
+          _licencePhoto = bytes;
+        case 'registration':
+          _registrationPhoto = bytes;
+        case 'insurance':
+          _insurancePhoto = bytes;
       }
     });
   }
@@ -287,16 +306,45 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
                   _photoSlot(
                     label: l10n.selfiePhoto,
                     bytes: _selfie,
-                    onPick: () => _pick(true),
+                    onPick: () => _pick('selfie'),
                   ),
                   const SizedBox(width: 12),
                   _photoSlot(
                     label: l10n.idCardPhoto,
                     bytes: _idCard,
-                    onPick: () => _pick(false),
+                    onPick: () => _pick('id'),
                   ),
                 ],
               ),
+              if (motor) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _photoSlot(
+                      label: l10n.licencePhoto,
+                      bytes: _licencePhoto,
+                      onPick: () => _pick('licence'),
+                    ),
+                    const SizedBox(width: 12),
+                    _photoSlot(
+                      label: l10n.registrationPhoto,
+                      bytes: _registrationPhoto,
+                      onPick: () => _pick('registration'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _photoSlot(
+                      label: l10n.insurancePhoto,
+                      bytes: _insurancePhoto,
+                      onPick: () => _pick('insurance'),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+              ],
               if (error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
@@ -323,6 +371,9 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
                     vehicleKind: _vehicle,
                     selfie: _selfie,
                     idCard: _idCard,
+                    licencePhoto: _licencePhoto,
+                    registrationPhoto: _registrationPhoto,
+                    insurancePhoto: _insurancePhoto,
                     licenceNumber: _licence.text,
                     plate: _plate.text,
                     registration: _registration.text,

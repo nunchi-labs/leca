@@ -21,6 +21,11 @@ class DriverProfile {
     this.trained = false,
     this.staffId = '',
     this.suspended = false,
+    this.licencePhoto,
+    this.registrationPhoto,
+    this.insurancePhoto,
+    this.review = 'local',
+    this.reviewNote = '',
   });
 
   final String legalName;
@@ -41,6 +46,13 @@ class DriverProfile {
   final bool trained;
   final String staffId;
   final bool suspended;
+  final Uint8List? licencePhoto;
+  final Uint8List? registrationPhoto;
+  final Uint8List? insurancePhoto;
+
+  /// local: no server yet. pending / approved / rejected: a person looked.
+  final String review;
+  final String reviewNote;
 
   Map<String, Object?> toJson() => {
     'legalName': legalName,
@@ -61,6 +73,15 @@ class DriverProfile {
     'trained': trained,
     'staffId': staffId,
     'suspended': suspended,
+    'licencePhoto': licencePhoto == null ? null : base64Encode(licencePhoto!),
+    'registrationPhoto': registrationPhoto == null
+        ? null
+        : base64Encode(registrationPhoto!),
+    'insurancePhoto': insurancePhoto == null
+        ? null
+        : base64Encode(insurancePhoto!),
+    'review': review,
+    'reviewNote': reviewNote,
   };
 
   static DriverProfile? fromJson(Object? raw) {
@@ -85,13 +106,22 @@ class DriverProfile {
         trained: raw['trained'] == true,
         staffId: '${raw['staffId'] ?? ''}',
         suspended: raw['suspended'] == true,
+        licencePhoto: _bytes(raw['licencePhoto']),
+        registrationPhoto: _bytes(raw['registrationPhoto']),
+        insurancePhoto: _bytes(raw['insurancePhoto']),
+        review: '${raw['review'] ?? 'local'}',
+        reviewNote: '${raw['reviewNote'] ?? ''}',
       );
     } on FormatException {
       return null;
     }
   }
 
-  DriverProfile copyWith({bool? suspended}) {
+  DriverProfile copyWith({
+    bool? suspended,
+    String? review,
+    String? reviewNote,
+  }) {
     return DriverProfile(
       legalName: legalName,
       nameOnId: nameOnId,
@@ -111,7 +141,21 @@ class DriverProfile {
       trained: trained,
       staffId: staffId,
       suspended: suspended ?? this.suspended,
+      licencePhoto: licencePhoto,
+      registrationPhoto: registrationPhoto,
+      insurancePhoto: insurancePhoto,
+      review: review ?? this.review,
+      reviewNote: reviewNote ?? this.reviewNote,
     );
+  }
+}
+
+Uint8List? _bytes(Object? raw) {
+  if (raw == null) return null;
+  try {
+    return base64Decode('$raw');
+  } on FormatException {
+    return null;
   }
 }
 
@@ -160,6 +204,7 @@ class PlatformReport {
     required this.subjectId,
     required this.status,
     this.note = '',
+    this.appeal = '',
   });
 
   final String id;
@@ -168,6 +213,7 @@ class PlatformReport {
   final String subjectId;
   final String status;
   final String note;
+  final String appeal;
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -176,6 +222,7 @@ class PlatformReport {
     'subjectId': subjectId,
     'status': status,
     'note': note,
+    'appeal': appeal,
   };
 
   static PlatformReport? fromJson(Object? raw) {
@@ -187,8 +234,19 @@ class PlatformReport {
       subjectId: '${raw['subjectId']}',
       status: '${raw['status']}',
       note: '${raw['note'] ?? ''}',
+      appeal: '${raw['appeal'] ?? ''}',
     );
   }
+
+  PlatformReport copyWith({String? status, String? appeal}) => PlatformReport(
+    id: id,
+    kind: kind,
+    category: category,
+    subjectId: subjectId,
+    status: status ?? this.status,
+    note: note,
+    appeal: appeal ?? this.appeal,
+  );
 }
 
 /// A vendor item is a photo, a short description, and a price.

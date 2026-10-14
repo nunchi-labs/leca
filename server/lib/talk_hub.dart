@@ -12,10 +12,12 @@ typedef TalkResolver = TalkIdentity? Function(String token);
 /// Each room's lines are appended to a file under [logDir] as they happen,
 /// so a restart loses nothing and every proof chain can be re-read later.
 class TalkHub {
-  TalkHub({this.logDir, TalkResolver? resolve}) : _resolve = resolve;
+  TalkHub({this.logDir, TalkResolver? resolve}) : _resolve = resolve ?? _nobody;
+
+  static TalkIdentity? _nobody(String token) => null;
 
   final String? logDir;
-  final TalkResolver? _resolve;
+  final TalkResolver _resolve;
   final Map<String, List<_Line>> _rooms = {};
   final Map<String, List<_Seat>> _seats = {};
 
@@ -100,7 +102,7 @@ class TalkHub {
     var name = _clip('${message['name'] ?? ''}', 24, 'Guest');
     var who = '';
     final token = '${message['token'] ?? ''}';
-    final identity = token.isEmpty ? null : _resolve?.call(token);
+    final identity = token.isEmpty ? null : _resolve(token);
     if (identity != null) {
       who = talkWho(identity.id);
       if (identity.name.trim().isNotEmpty) {

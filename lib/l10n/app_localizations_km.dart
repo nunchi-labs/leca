@@ -264,10 +264,11 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get authMockBanner =>
-      'ចូលដោយ Google, Facebook, WeChat ឬលេខទូរស័ព្ទ។ បើគ្មានម៉ាស៊ីនផ្ទៀងផ្ទាត់ នឹងប្រើការចូលក្នុងម៉ាស៊ីននេះ។';
+      'លេខទូរស័ព្ទជាមុន។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។';
 
   @override
-  String get authLiveBanner => 'ចូលដោយ Google, Facebook, WeChat ឬលេខទូរស័ព្ទ។';
+  String get authLiveBanner =>
+      'ចូលដោយលេខទូរស័ព្ទ។ Google, Facebook, WeChat និងអ៊ីមែលនៅក្រោមវិធីផ្សេងទៀត។';
 
   @override
   String get authWechat => 'បន្តជាមួយ WeChat (សាកល្បង)';
@@ -794,7 +795,36 @@ class AppLocalizationsKm extends AppLocalizations {
   String get reportHarassment => 'ការបៀតបៀនផ្លូវភេទ';
 
   @override
-  String get reportActed => 'Leca បានកត់ត្រា ហើយផ្អាកដៃគូនេះពីការជិះថ្មី។';
+  String get reportActed =>
+      'Leca បានកត់ត្រា ហើយផ្អាកដៃគូនេះពីការជិះថ្មី។ ពួកគេអាចប្តឹងបាន។';
+
+  @override
+  String get licencePhoto => 'រូបប័ណ្ណបើកបរ';
+
+  @override
+  String get registrationPhoto => 'រូបប័ណ្ណចុះឈ្មោះ';
+
+  @override
+  String get insurancePhoto => 'រូបធានារ៉ាប់រង';
+
+  @override
+  String get reviewPending =>
+      'មនុស្សកំពុងមើលឯកសារនេះ។ ការចូលបណ្តាញរង់ចាំការនោះ។';
+
+  @override
+  String get reviewApproved => 'មនុស្សបានយល់ព្រមឯកសារនេះ។';
+
+  @override
+  String get reviewRejected => 'ឯកសារនេះមិនត្រូវបានយល់ព្រម។';
+
+  @override
+  String get appealHint => 'របាយការណ៍បានផ្អាកអ្នក។ សរសេរមូលហេតុដែលគួរលុបចោល។';
+
+  @override
+  String get appealSend => 'ប្តឹង';
+
+  @override
+  String get appealEmpty => 'សរសេរការប្តឹង។';
 
   @override
   String get upfrontFare => 'តម្លៃបង្ហាញមុន';
@@ -862,6 +892,33 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get priceInChat => 'តម្លៃចរចានៅទីនេះ។ ម្ខាងស្នើ ម្ខាងទៀតយល់ព្រម។';
+
+  @override
+  String get roadRouted => 'ចម្ងាយតាមផ្លូវ និងចរាចរណ៍ថ្ងៃនេះ។';
+
+  @override
+  String get rentLength => 'រយៈពេល';
+
+  @override
+  String rentHours(int n) {
+    return '$n ម៉ោង';
+  }
+
+  @override
+  String rentDays(int n) {
+    return '$n ថ្ងៃ';
+  }
+
+  @override
+  String rentWeeks(int n) {
+    return '$n សប្តាហ៍';
+  }
+
+  @override
+  String get authMoreWays => 'វិធីផ្សេងទៀត';
+
+  @override
+  String get authFewerWays => 'បង្រួម';
 
   @override
   String get counterFare => 'តថ្លៃវិញ';

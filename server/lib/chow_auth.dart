@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'password.dart';
 import 'quote.dart';
+import 'trust.dart';
 
 class AuthFailure implements Exception {
   AuthFailure(this.code, [this.status = 400]);
@@ -857,11 +858,18 @@ document.getElementById("wechat").onclick = function () { provider("wechat"); };
 ''';
 }
 
-Future<void> handleAuth(AuthCore core, HttpRequest request) async {
+Future<void> handleAuth(
+  AuthCore core,
+  HttpRequest request, {
+  TrustStore? trust,
+}) async {
   final response = request.response;
   response.headers
     ..set('access-control-allow-origin', '*')
-    ..set('access-control-allow-headers', 'content-type, authorization')
+    ..set(
+      'access-control-allow-headers',
+      'content-type, authorization, x-admin-key',
+    )
     ..set('access-control-allow-methods', 'GET, POST, OPTIONS');
   if (request.method == 'OPTIONS') {
     response.statusCode = 204;
@@ -887,6 +895,11 @@ Future<void> handleAuth(AuthCore core, HttpRequest request) async {
     }
     if (request.method == 'GET' && path == '/health') {
       await _json(response, 200, {'ok': true});
+      return;
+    }
+    if (request.method == 'GET' &&
+        (path == '/v1/card' || path == '/v1/quote')) {
+      await _json(response, 200, RateCard.active.toJson());
       return;
     }
     if (request.method == 'POST' && path == '/v1/auth/phone/start') {
@@ -989,12 +1002,87 @@ Future<void> handleAuth(AuthCore core, HttpRequest request) async {
       await _json(response, 200, await core.trafficRoute(body));
       return;
     }
+    if (trust != null &&
+        (path.startsWith('/v1/driver/') ||
+            path.startsWith('/v1/report') ||
+            path.startsWith('/v1/admin/') ||
+            path == '/v1/suspended')) {
+      await _handleTrust(core, trust, request, response, path);
+      return;
+    }
     throw AuthFailure('not_found', 404);
   } on AuthFailure catch (e) {
     await _json(response, e.status, {'error': e.code});
   } catch (_) {
     await _json(response, 500, {'error': 'failed'});
   }
+}
+
+AuthUser _bearer(AuthCore core, HttpRequest request) {
+  final header = request.headers.value('authorization') ?? '';
+  final token = header.startsWith('Bearer ') ? header.substring(7) : '';
+  final user = core.userForToken(token);
+  if (user == null) throw AuthFailure('unauthorized', 401);
+  return user;
+}
+
+Future<void> _handleTrust(
+  AuthCore core,
+  TrustStore trust,
+  HttpRequest request,
+  HttpResponse response,
+  String path,
+) async {
+  final method = request.method;
+  if (method == 'GET' && path == '/v1/suspended') {
+    await _json(response, 200, {'staffIds': trust.suspended()});
+    return;
+  }
+  if (method == 'POST' && path == '/v1/driver/file') {
+    final user = _bearer(core, request);
+    final body = await _readJson(request, maxBytes: 40 * 1024 * 1024);
+    await _json(response, 200, trust.submitDriver(user, body));
+    return;
+  }
+  if (method == 'GET' && path == '/v1/driver/status') {
+    final user = _bearer(core, request);
+    await _json(response, 200, trust.status(user));
+    return;
+  }
+  if (method == 'POST' && path == '/v1/report') {
+    final user = _bearer(core, request);
+    await _json(
+      response,
+      200,
+      trust.fileReport(user, await _readJson(request)),
+    );
+    return;
+  }
+  if (method == 'POST' && path == '/v1/report/appeal') {
+    final user = _bearer(core, request);
+    await _json(response, 200, trust.appeal(user, await _readJson(request)));
+    return;
+  }
+  if (path.startsWith('/v1/admin/')) {
+    trust.requireAdmin(request.headers.value('x-admin-key'));
+    if (method == 'GET' && path == '/v1/admin/driver/queue') {
+      await _json(response, 200, {'queue': trust.queue()});
+      return;
+    }
+    if (method == 'POST' && path == '/v1/admin/driver/review') {
+      await _json(response, 200, trust.reviewDriver(await _readJson(request)));
+      return;
+    }
+    if (method == 'GET' && path == '/v1/admin/report/open') {
+      await _json(response, 200, {'reports': trust.openReports()});
+      return;
+    }
+    if (method == 'POST' && path == '/v1/admin/report/resolve') {
+      await _json(response, 200, trust.resolveReport(await _readJson(request)));
+      return;
+    }
+  }
+  throw AuthFailure('not_found', 404);
 }
 
 Future<bool> domainPointsHere(String domain) async {
@@ -1026,8 +1114,14 @@ int? _googleSeconds(Object? value) {
   return int.tryParse(match.group(1)!);
 }
 
-Future<Map<String, Object?>> _readJson(HttpRequest request) async {
+Future<Map<String, Object?>> _readJson(
+  HttpRequest request, {
+  int maxBytes = 1024 * 1024,
+}) async {
+  final length = request.contentLength;
+  if (length > maxBytes) throw AuthFailure('too_large', 413);
   final text = await utf8.decoder.bind(request).join();
+  if (text.length > maxBytes) throw AuthFailure('too_large', 413);
   if (text.isEmpty) return {};
   final decoded = jsonDecode(text);
   if (decoded is! Map) throw AuthFailure('bad_request');

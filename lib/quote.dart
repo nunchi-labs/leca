@@ -3,70 +3,36 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 import 'geo.dart';
+import 'rate_card.dart';
 
-/// Published Cambodia rate card. The fare is a pure function of these inputs.
-const fareCard = 'leca-kh-1';
+export 'rate_card.dart';
 
-/// Straight-line kilometres times 1.3, and never under 500 metres.
-int roadMeters(double straightKm) {
-  final straight = (straightKm * 1000).round();
-  final road = (straight * 1300 + 500) ~/ 1000;
-  return road < 500 ? 500 : road;
-}
+/// The card new quotes are priced on.
+String get fareCard => RateCard.active.id;
 
-int tripMinutes(int meters, int? traffic) {
-  if (traffic != null) {
-    if (traffic < 1) return 1;
-    if (traffic > 1440) return 1440;
-    return traffic;
-  }
-  final estimate = (meters * 3 + 999) ~/ 1000;
-  return estimate < 1 ? 1 : estimate;
-}
+int roadMeters(double straightKm) => RateCard.active.roadMeters(straightKm);
 
-int rideScale(String vehicle) {
-  switch (vehicle) {
-    case 'bicycle':
-      return 70;
-    case 'motorcycle':
-      return 100;
-    case 'tuktuk':
-      return 130;
-    case 'remorque':
-      return 140;
-    case 'car':
-      return 180;
-    case 'van6':
-      return 220;
-    default:
-      return 130;
-  }
-}
+int tripMinutes(int meters, int? traffic) =>
+    RateCard.active.tripMinutes(meters, traffic);
+
+int rideScale(String vehicle) => RateCard.active.scale(vehicle);
 
 /// Kinds: delivery, ride, rent (with a driver), rent-self (self-drive).
+/// [hours] is the rental length; its time charge is a floor under the route.
 int fareCents({
   required String kind,
   required String vehicle,
   required int meters,
   required int minutes,
-}) {
-  final wheels = kind == 'ride' || kind == 'rent' || kind == 'rent-self';
-  final base = kind == 'delivery'
-      ? 40
-      : kind == 'ride'
-      ? 50
-      : 100;
-  final perKm = wheels ? 22 : 18;
-  final perMin = kind == 'rent-self'
-      ? 0
-      : wheels
-      ? 3
-      : 2;
-  final scale = wheels ? rideScale(vehicle) : 100;
-  final raw = base + (meters * perKm + 500) ~/ 1000 + minutes * perMin;
-  final scaled = (raw * scale + 50) ~/ 100;
-  return scaled < 50 ? 50 : scaled;
-}
+  int hours = 0,
+  RateCard? card,
+}) => (card ?? RateCard.active).fareCents(
+  kind: kind,
+  vehicle: vehicle,
+  meters: meters,
+  minutes: minutes,
+  hours: hours,
+);
 
 String fareBody({
   required String kind,
@@ -74,13 +40,16 @@ String fareBody({
   required int meters,
   required int minutes,
   required int cents,
+  int hours = 0,
+  String? card,
 }) {
-  return 'leca-fare/1\n'
-      'card=$fareCard\n'
+  return 'leca-fare/2\n'
+      'card=${card ?? fareCard}\n'
       'kind=$kind\n'
       'vehicle=$vehicle\n'
       'meters=$meters\n'
       'minutes=$minutes\n'
+      'hours=$hours\n'
       'fare=$cents\n';
 }
 
@@ -94,25 +63,39 @@ class TripQuote {
     required this.minutes,
     required this.cents,
     required this.proof,
+    this.hours = 0,
+    this.card = 'leca-kh-1',
+    this.routed = false,
   });
 
   final String kind;
   final String vehicle;
   final int meters;
   final int minutes;
+  final int hours;
   final int cents;
   final String proof;
+
+  /// The card this quote was priced on. Proofs name it, so an old quote
+  /// still checks after the card changes.
+  final String card;
+
+  /// Distance came from a routed road, not the straight-line estimate.
+  final bool routed;
 
   double get usd => cents / 100;
 
   double get kilometres => meters / 1000;
 
   bool get checksOut {
-    final again = fareCents(
+    final rates = RateCard.known[card];
+    if (rates == null) return false;
+    final again = rates.fareCents(
       kind: kind,
       vehicle: vehicle,
       meters: meters,
       minutes: minutes,
+      hours: hours,
     );
     if (again != cents) return false;
     return proof ==
@@ -122,12 +105,53 @@ class TripQuote {
             vehicle: vehicle,
             meters: meters,
             minutes: minutes,
+            hours: hours,
             cents: cents,
+            card: card,
           ),
         );
   }
+
+  Map<String, Object?> toJson() => {
+    'card': card,
+    'kind': kind,
+    'vehicle': vehicle,
+    'meters': meters,
+    'minutes': minutes,
+    'hours': hours,
+    'cents': cents,
+    'proof': proof,
+    'routed': routed,
+  };
+
+  /// A quote the server published, if it parses and checks out.
+  /// Adopts [rates] so a new card is known before the proof is checked.
+  static TripQuote? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final rates = RateCard.fromJson(raw['rates']);
+    if (rates != null) RateCard.adopt(rates);
+    final meters = raw['meters'];
+    final minutes = raw['minutes'];
+    final cents = raw['cents'];
+    if (meters is! int || minutes is! int || cents is! int) return null;
+    final hours = raw['hours'];
+    final quote = TripQuote(
+      kind: '${raw['kind']}',
+      vehicle: '${raw['vehicle'] ?? ''}',
+      meters: meters,
+      minutes: minutes,
+      hours: hours is int ? hours : 0,
+      cents: cents,
+      proof: '${raw['proof']}',
+      card: '${raw['card'] ?? 'leca-kh-1'}',
+      routed: raw['routed'] == true,
+    );
+    return quote.checksOut ? quote : null;
+  }
 }
 
+/// Prices a trip on the active card. [routeMeters] is the road distance
+/// from a routed call when one is known; otherwise the card's estimate.
 TripQuote priceTrip({
   required String kind,
   required double fromLat,
@@ -136,28 +160,40 @@ TripQuote priceTrip({
   required double toLng,
   String vehicle = '',
   int? traffic,
+  int? routeMeters,
+  int hours = 0,
 }) {
-  final meters = roadMeters(kmBetween(fromLat, fromLng, toLat, toLng));
-  final minutes = tripMinutes(meters, traffic);
-  final cents = fareCents(
+  final card = RateCard.active;
+  final routed = routeMeters != null && routeMeters >= card.minMeters;
+  final meters = routed
+      ? routeMeters
+      : card.roadMeters(kmBetween(fromLat, fromLng, toLat, toLng));
+  final minutes = card.tripMinutes(meters, traffic);
+  final cents = card.fareCents(
     kind: kind,
     vehicle: vehicle,
     meters: meters,
     minutes: minutes,
+    hours: hours,
   );
   final body = fareBody(
     kind: kind,
     vehicle: vehicle,
     meters: meters,
     minutes: minutes,
+    hours: hours,
     cents: cents,
+    card: card.id,
   );
   return TripQuote(
     kind: kind,
     vehicle: vehicle,
     meters: meters,
     minutes: minutes,
+    hours: hours,
     cents: cents,
     proof: fareProof(body),
+    card: card.id,
+    routed: routed,
   );
 }

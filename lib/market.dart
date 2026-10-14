@@ -458,7 +458,9 @@ class Booking {
     this.vehicleId = '',
     this.meters = 0,
     this.minutes = 0,
+    this.hours = 0,
     this.proof = '',
+    this.card = 'leca-kh-1',
   });
 
   final BookKind kind;
@@ -468,7 +470,13 @@ class Booking {
   final String vehicleId;
   final int meters;
   final int minutes;
+
+  /// Rental length. Zero for rides and deliveries.
+  final int hours;
   final String proof;
+
+  /// The rate card the proof was made under.
+  final String card;
 
   Map<String, Object?> toJson() => {
     'kind': kind.name,
@@ -478,7 +486,9 @@ class Booking {
     'vehicleId': vehicleId,
     'meters': meters,
     'minutes': minutes,
+    'hours': hours,
     'proof': proof,
+    'card': card,
   };
 
   static Booking? fromJson(Object? raw) {
@@ -493,7 +503,9 @@ class Booking {
       vehicleId: '${raw['vehicleId'] ?? ''}',
       meters: raw['meters'] is num ? (raw['meters'] as num).toInt() : 0,
       minutes: raw['minutes'] is num ? (raw['minutes'] as num).toInt() : 0,
+      hours: raw['hours'] is num ? (raw['hours'] as num).toInt() : 0,
       proof: '${raw['proof'] ?? ''}',
+      card: '${raw['card'] ?? 'leca-kh-1'}',
     );
   }
 }

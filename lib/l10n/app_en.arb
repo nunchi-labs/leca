@@ -142,8 +142,8 @@
   "withOrWithoutDriver": "With a driver or self-drive",
   "vehicleExamplesNote": "Examples only — any legal vehicle can be rented, with or without a driver.",
   "ok": "OK",
-  "authMockBanner": "Sign in with Google, Facebook, WeChat, or a phone number. Without the auth server this device uses a local mock.",
-  "authLiveBanner": "Sign in with Google, Facebook, WeChat, or a phone number.",
+  "authMockBanner": "Phone number first. Without the auth server this device uses a local mock.",
+  "authLiveBanner": "Sign in with your phone number. Google, Facebook, WeChat, and email are under more ways.",
   "authWechat": "Continue with WeChat (mock)",
   "authWechatLive": "Continue with WeChat",
   "authDevCode": "Development code",
@@ -311,7 +311,16 @@
   "reportIntoxication": "Driving under the influence",
   "reportViolence": "Violence",
   "reportHarassment": "Sexual harassment",
-  "reportActed": "Leca recorded this and suspended this partner from new trips.",
+  "reportActed": "Leca recorded this and suspended this partner from new trips. They can appeal.",
+  "licencePhoto": "Driving licence photo",
+  "registrationPhoto": "Registration photo",
+  "insurancePhoto": "Insurance photo",
+  "reviewPending": "A person is looking at this file. Going online waits for that.",
+  "reviewApproved": "A person approved this file.",
+  "reviewRejected": "This file was not approved.",
+  "appealHint": "A report suspended you. Write why it should be cleared.",
+  "appealSend": "Appeal",
+  "appealEmpty": "Write the appeal.",
   "upfrontFare": "Upfront fare",
   "noWallet": "Money settles in the bank app, with Stripe for Visa, Mastercard, Discover, UnionPay, and Alipay, or in cash. Leca has no wallet and does not take Bitcoin.",
   "cashHint": "Pay the partner or seller in riel or US dollars. Leca does not take the cash.",
@@ -357,6 +366,28 @@
     }
   },
   "priceInChat": "Price is negotiated here. Either side can propose; the other allows.",
+  "roadRouted": "Distance follows the road in today's traffic.",
+  "rentLength": "How long",
+  "rentHours": "{n} h",
+  "@rentHours": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "rentDays": "{n} day",
+  "@rentDays": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "rentWeeks": "{n} week",
+  "@rentWeeks": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "authMoreWays": "More ways to sign in",
+  "authFewerWays": "Fewer ways",
   "counterFare": "Counter",
   "endFare": "End bargaining",
   "fareEnded": "Bargaining ended. {price} applies.",

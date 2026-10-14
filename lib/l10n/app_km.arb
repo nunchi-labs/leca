@@ -142,8 +142,8 @@
   "withOrWithoutDriver": "មានអ្នកបើក ឬបើកផ្ទាល់",
   "vehicleExamplesNote": "ឧទាហរណ៍ — យានស្របច្បាប់ផ្សេងទៀតអាចជួលបាន ទាំងមានអ្នកបើក និងគ្មាន។",
   "ok": "យល់ព្រម",
-  "authMockBanner": "ចូលដោយ Google, Facebook, WeChat ឬលេខទូរស័ព្ទ។ បើគ្មានម៉ាស៊ីនផ្ទៀងផ្ទាត់ នឹងប្រើការចូលក្នុងម៉ាស៊ីននេះ។",
-  "authLiveBanner": "ចូលដោយ Google, Facebook, WeChat ឬលេខទូរស័ព្ទ។",
+  "authMockBanner": "លេខទូរស័ព្ទជាមុន។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។",
+  "authLiveBanner": "ចូលដោយលេខទូរស័ព្ទ។ Google, Facebook, WeChat និងអ៊ីមែលនៅក្រោមវិធីផ្សេងទៀត។",
   "authWechat": "បន្តជាមួយ WeChat (សាកល្បង)",
   "authWechatLive": "បន្តជាមួយ WeChat",
   "authDevCode": "លេខកូដសាកល្បង",
@@ -331,7 +331,16 @@
   "reportIntoxication": "បើកបរក្រោមឥទ្ធិពល",
   "reportViolence": "អំពើហិង្សា",
   "reportHarassment": "ការបៀតបៀនផ្លូវភេទ",
-  "reportActed": "Leca បានកត់ត្រា ហើយផ្អាកដៃគូនេះពីការជិះថ្មី។",
+  "reportActed": "Leca បានកត់ត្រា ហើយផ្អាកដៃគូនេះពីការជិះថ្មី។ ពួកគេអាចប្តឹងបាន។",
+  "licencePhoto": "រូបប័ណ្ណបើកបរ",
+  "registrationPhoto": "រូបប័ណ្ណចុះឈ្មោះ",
+  "insurancePhoto": "រូបធានារ៉ាប់រង",
+  "reviewPending": "មនុស្សកំពុងមើលឯកសារនេះ។ ការចូលបណ្តាញរង់ចាំការនោះ។",
+  "reviewApproved": "មនុស្សបានយល់ព្រមឯកសារនេះ។",
+  "reviewRejected": "ឯកសារនេះមិនត្រូវបានយល់ព្រម។",
+  "appealHint": "របាយការណ៍បានផ្អាកអ្នក។ សរសេរមូលហេតុដែលគួរលុបចោល។",
+  "appealSend": "ប្តឹង",
+  "appealEmpty": "សរសេរការប្តឹង។",
   "upfrontFare": "តម្លៃបង្ហាញមុន",
   "noWallet": "ប្រាក់ចូលធនាគារ តាម Stripe សម្រាប់ Visa, Mastercard, Discover, UnionPay និង Alipay ឬជាសាច់ប្រាក់។ Leca មិនមានកាបូបប្រាក់ ឬ Bitcoin។",
   "cashHint": "បង់ជារៀល ឬដុល្លារទៅដៃគូ ឬអ្នកលក់។ Leca មិនទទួលសាច់ប្រាក់នេះទេ។",
@@ -377,6 +386,28 @@
     }
   },
   "priceInChat": "តម្លៃចរចានៅទីនេះ។ ម្ខាងស្នើ ម្ខាងទៀតយល់ព្រម។",
+  "roadRouted": "ចម្ងាយតាមផ្លូវ និងចរាចរណ៍ថ្ងៃនេះ។",
+  "rentLength": "រយៈពេល",
+  "rentHours": "{n} ម៉ោង",
+  "@rentHours": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "rentDays": "{n} ថ្ងៃ",
+  "@rentDays": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "rentWeeks": "{n} សប្តាហ៍",
+  "@rentWeeks": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "authMoreWays": "វិធីផ្សេងទៀត",
+  "authFewerWays": "បង្រួម",
   "counterFare": "តថ្លៃវិញ",
   "endFare": "បញ្ចប់ការតថ្លៃ",
   "fareEnded": "ការតថ្លៃបានបញ្ចប់។ អនុវត្ត {price}។",

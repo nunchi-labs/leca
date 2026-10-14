@@ -32,39 +32,35 @@ String? _quoteKind(Booking booking) {
   }
 }
 
-double? _automaticUsd(Booking booking) {
-  if (!_quoted(booking)) return null;
-  final kind = _quoteKind(booking)!;
+/// The booking's quote, rebuilt on the card it was priced under. Null when
+/// the booking was not auto-priced or its proof does not check out.
+TripQuote? _bookingQuote(Booking booking) {
+  if (booking.proof.isEmpty || booking.meters <= 0) return null;
+  final kind = _quoteKind(booking);
+  if (kind == null) return null;
+  final card = RateCard.known[booking.card];
+  if (card == null) return null;
   final vehicle = kind == 'delivery' ? '' : booking.vehicleId;
-  return fareCents(
-        kind: kind,
-        vehicle: vehicle,
-        meters: booking.meters,
-        minutes: booking.minutes,
-      ) /
-      100;
+  final quote = TripQuote(
+    kind: kind,
+    vehicle: vehicle,
+    meters: booking.meters,
+    minutes: booking.minutes,
+    hours: booking.hours,
+    cents: card.fareCents(
+      kind: kind,
+      vehicle: vehicle,
+      meters: booking.meters,
+      minutes: booking.minutes,
+      hours: booking.hours,
+    ),
+    proof: booking.proof,
+    card: booking.card,
+  );
+  return quote.checksOut ? quote : null;
 }
 
-bool _quoted(Booking booking) {
-  if (booking.proof.isEmpty || booking.meters <= 0) return false;
-  final kind = _quoteKind(booking);
-  if (kind == null) return false;
-  final vehicle = kind == 'delivery' ? '' : booking.vehicleId;
-  final cents = fareCents(
-    kind: kind,
-    vehicle: vehicle,
-    meters: booking.meters,
-    minutes: booking.minutes,
-  );
-  return TripQuote(
-    kind: kind,
-    vehicle: vehicle,
-    meters: booking.meters,
-    minutes: booking.minutes,
-    cents: cents,
-    proof: booking.proof,
-  ).checksOut;
-}
+double? _automaticUsd(Booking booking) => _bookingQuote(booking)?.usd;
 
 class PayScreen extends StatefulWidget {
   const PayScreen({super.key});
@@ -562,8 +558,9 @@ class _PartnerCard extends StatelessWidget {
     );
   }
 
-  void _report(BuildContext context, String category) {
-    state.fileSafetyReport(category);
+  Future<void> _report(BuildContext context, String category) async {
+    await state.fileSafetyReport(category);
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(l10n.reportActed)));
   }

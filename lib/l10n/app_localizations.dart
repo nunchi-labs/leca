@@ -551,13 +551,13 @@ abstract class AppLocalizations {
   /// No description provided for @authMockBanner.
   ///
   /// In km, this message translates to:
-  /// **'ចូលដោយ Google, Facebook, WeChat ឬលេខទូរស័ព្ទ។ បើគ្មានម៉ាស៊ីនផ្ទៀងផ្ទាត់ នឹងប្រើការចូលក្នុងម៉ាស៊ីននេះ។'**
+  /// **'លេខទូរស័ព្ទជាមុន។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។'**
   String get authMockBanner;
 
   /// No description provided for @authLiveBanner.
   ///
   /// In km, this message translates to:
-  /// **'ចូលដោយ Google, Facebook, WeChat ឬលេខទូរស័ព្ទ។'**
+  /// **'ចូលដោយលេខទូរស័ព្ទ។ Google, Facebook, WeChat និងអ៊ីមែលនៅក្រោមវិធីផ្សេងទៀត។'**
   String get authLiveBanner;
 
   /// No description provided for @authWechat.
@@ -1565,8 +1565,62 @@ abstract class AppLocalizations {
   /// No description provided for @reportActed.
   ///
   /// In km, this message translates to:
-  /// **'Leca បានកត់ត្រា ហើយផ្អាកដៃគូនេះពីការជិះថ្មី។'**
+  /// **'Leca បានកត់ត្រា ហើយផ្អាកដៃគូនេះពីការជិះថ្មី។ ពួកគេអាចប្តឹងបាន។'**
   String get reportActed;
+
+  /// No description provided for @licencePhoto.
+  ///
+  /// In km, this message translates to:
+  /// **'រូបប័ណ្ណបើកបរ'**
+  String get licencePhoto;
+
+  /// No description provided for @registrationPhoto.
+  ///
+  /// In km, this message translates to:
+  /// **'រូបប័ណ្ណចុះឈ្មោះ'**
+  String get registrationPhoto;
+
+  /// No description provided for @insurancePhoto.
+  ///
+  /// In km, this message translates to:
+  /// **'រូបធានារ៉ាប់រង'**
+  String get insurancePhoto;
+
+  /// No description provided for @reviewPending.
+  ///
+  /// In km, this message translates to:
+  /// **'មនុស្សកំពុងមើលឯកសារនេះ។ ការចូលបណ្តាញរង់ចាំការនោះ។'**
+  String get reviewPending;
+
+  /// No description provided for @reviewApproved.
+  ///
+  /// In km, this message translates to:
+  /// **'មនុស្សបានយល់ព្រមឯកសារនេះ។'**
+  String get reviewApproved;
+
+  /// No description provided for @reviewRejected.
+  ///
+  /// In km, this message translates to:
+  /// **'ឯកសារនេះមិនត្រូវបានយល់ព្រម។'**
+  String get reviewRejected;
+
+  /// No description provided for @appealHint.
+  ///
+  /// In km, this message translates to:
+  /// **'របាយការណ៍បានផ្អាកអ្នក។ សរសេរមូលហេតុដែលគួរលុបចោល។'**
+  String get appealHint;
+
+  /// No description provided for @appealSend.
+  ///
+  /// In km, this message translates to:
+  /// **'ប្តឹង'**
+  String get appealSend;
+
+  /// No description provided for @appealEmpty.
+  ///
+  /// In km, this message translates to:
+  /// **'សរសេរការប្តឹង។'**
+  String get appealEmpty;
 
   /// No description provided for @upfrontFare.
   ///
@@ -1675,6 +1729,48 @@ abstract class AppLocalizations {
   /// In km, this message translates to:
   /// **'តម្លៃចរចានៅទីនេះ។ ម្ខាងស្នើ ម្ខាងទៀតយល់ព្រម។'**
   String get priceInChat;
+
+  /// No description provided for @roadRouted.
+  ///
+  /// In km, this message translates to:
+  /// **'ចម្ងាយតាមផ្លូវ និងចរាចរណ៍ថ្ងៃនេះ។'**
+  String get roadRouted;
+
+  /// No description provided for @rentLength.
+  ///
+  /// In km, this message translates to:
+  /// **'រយៈពេល'**
+  String get rentLength;
+
+  /// No description provided for @rentHours.
+  ///
+  /// In km, this message translates to:
+  /// **'{n} ម៉ោង'**
+  String rentHours(int n);
+
+  /// No description provided for @rentDays.
+  ///
+  /// In km, this message translates to:
+  /// **'{n} ថ្ងៃ'**
+  String rentDays(int n);
+
+  /// No description provided for @rentWeeks.
+  ///
+  /// In km, this message translates to:
+  /// **'{n} សប្តាហ៍'**
+  String rentWeeks(int n);
+
+  /// No description provided for @authMoreWays.
+  ///
+  /// In km, this message translates to:
+  /// **'វិធីផ្សេងទៀត'**
+  String get authMoreWays;
+
+  /// No description provided for @authFewerWays.
+  ///
+  /// In km, this message translates to:
+  /// **'បង្រួម'**
+  String get authFewerWays;
 
   /// No description provided for @counterFare.
   ///

@@ -16,6 +16,7 @@ import 'location.dart';
 import 'market.dart';
 import 'rate.dart';
 import 'records.dart';
+import 'traffic.dart';
 import 'vault.dart';
 
 class ChowState extends ChangeNotifier {
@@ -127,10 +128,22 @@ class ChowState extends ChangeNotifier {
     }
     restored = true;
     super.notifyListeners();
+    unawaited(_refreshRateCard());
+    unawaited(refreshTrust());
+  }
+
+  /// Prices follow the card the server publishes. The last one seen is
+  /// kept, so the app prices on it offline too.
+  Future<void> _refreshRateCard() async {
+    final card = await fetchRateCard();
+    if (card == null || card.id == RateCard.active.id) return;
+    RateCard.adopt(card);
+    notifyListeners();
   }
 
   Map<String, Object?> toJson() => {
     'v': 1,
+    'rateCard': RateCard.active.toJson(),
     'locale': locale.languageCode,
     'cityId': cityId,
     'railId': railId,
@@ -155,6 +168,8 @@ class ChowState extends ChangeNotifier {
   };
 
   void _apply(Map<dynamic, dynamic> raw) {
+    final card = RateCard.fromJson(raw['rateCard']);
+    if (card != null) RateCard.adopt(card);
     final lang = '${raw['locale'] ?? ''}';
     if (lang == 'km' || lang == 'en') locale = Locale(lang);
     final market = MarketConfig.active;
@@ -454,11 +469,23 @@ class ChowState extends ChangeNotifier {
     return text;
   }
 
-  void fileSafetyReport(String category) {
+  Future<void> fileSafetyReport(String category) async {
     const allowed = {'intoxication', 'violence', 'harassment'};
     if (!allowed.contains(category)) return;
     final partner = rideMatch;
     if (partner == null) return;
+    var id = 'r_${reports.length + 1}';
+    var status = 'suspended';
+    if (AuthConfig.apiLive && (session?.token ?? '').isNotEmpty) {
+      try {
+        final posted = await AuthApi.post('/v1/report', {
+          'category': category,
+          'subjectId': partner.id,
+        }, token: session!.token);
+        id = '${posted['id'] ?? id}';
+        status = '${posted['status'] ?? status}';
+      } catch (_) {}
+    }
     suspendedPartnerIds.add(partner.id);
     final local = driver;
     if (local != null && local.staffId == partner.id) {
@@ -467,11 +494,11 @@ class ChowState extends ChangeNotifier {
     }
     reports.add(
       PlatformReport(
-        id: 'r_${reports.length + 1}',
+        id: id,
         kind: 'safety',
         category: category,
         subjectId: partner.id,
-        status: 'acted',
+        status: status,
       ),
     );
     rideMatch = CambodiaRules.match(
@@ -479,6 +506,83 @@ class ChowState extends ChangeNotifier {
       suspended: suspendedPartnerIds,
       driver: driver,
     );
+    notifyListeners();
+  }
+
+  /// The named partner answers a report. A person then upholds or clears it.
+  Future<String?> appealReport(String id, String note) async {
+    final text = note.trim();
+    if (text.isEmpty) return 'appeal_empty';
+    final i = reports.indexWhere((r) => r.id == id);
+    if (i < 0) return 'report_unknown';
+    if (AuthConfig.apiLive && (session?.token ?? '').isNotEmpty) {
+      try {
+        await AuthApi.post('/v1/report/appeal', {
+          'id': id,
+          'note': text,
+        }, token: session!.token);
+      } on AuthApiException catch (e) {
+        return e.code;
+      } catch (_) {
+        return 'failed';
+      }
+    }
+    reports[i] = reports[i].copyWith(status: 'appealed', appeal: text);
+    notifyListeners();
+    return null;
+  }
+
+  List<PlatformReport> get openPartnerReports {
+    final staffId = driver?.staffId ?? '';
+    if (staffId.isEmpty) return const [];
+    return [
+      for (final report in reports)
+        if (report.subjectId == staffId &&
+            (report.status == 'suspended' || report.status == 'appealed'))
+          report,
+    ];
+  }
+
+  Future<void> refreshTrust() async {
+    if (!AuthConfig.apiLive) return;
+    try {
+      final listed = await AuthApi.get('/v1/suspended');
+      final ids = listed['staffIds'];
+      if (ids is List) {
+        suspendedPartnerIds
+          ..clear()
+          ..addAll([for (final id in ids) '$id']);
+      }
+    } catch (_) {}
+    final token = session?.token;
+    if (token != null && token.isNotEmpty) {
+      try {
+        final status = await AuthApi.get('/v1/driver/status', token: token);
+        final review = '${status['review'] ?? ''}';
+        if (driver != null && review.isNotEmpty && review != 'none') {
+          driver = driver!.copyWith(
+            review: review,
+            reviewNote: '${status['note'] ?? ''}',
+            suspended: status['suspended'] == true,
+          );
+          if (driver!.suspended) driving = false;
+        }
+        final mine = status['reports'];
+        if (mine is List) {
+          for (final item in mine) {
+            final parsed = PlatformReport.fromJson(item);
+            if (parsed == null) continue;
+            final i = reports.indexWhere((r) => r.id == parsed.id);
+            if (i < 0) {
+              reports.add(parsed);
+            } else {
+              reports[i] = parsed;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    syncRideMatch(notify: false);
     notifyListeners();
   }
 
@@ -947,6 +1051,9 @@ class ChowState extends ChangeNotifier {
     required String vehicleKind,
     required Uint8List? selfie,
     required Uint8List? idCard,
+    Uint8List? licencePhoto,
+    Uint8List? registrationPhoto,
+    Uint8List? insurancePhoto,
     String licenceNumber = '',
     String plate = '',
     String registration = '',
@@ -972,12 +1079,16 @@ class ChowState extends ChangeNotifier {
       notifyListeners();
       return driverError;
     }
+    final extras = CambodiaRules.needsMotorFile(vehicleKind)
+        ? [licencePhoto, registrationPhoto, insurancePhoto]
+        : const <Uint8List?>[];
     final code = await Identity.check(
       legalName: legalName,
       nameOnId: nameOnId,
       idNumber: idNumber,
       selfie: selfie,
       idCard: idCard,
+      extras: extras,
     );
     if (code != null) {
       driverError = code;
@@ -1005,6 +1116,35 @@ class ChowState extends ChangeNotifier {
       return partner;
     }
     final staffId = CambodiaRules.staffIdFor(idNumber);
+    var review = 'local';
+    var reviewNote = '';
+    if (AuthConfig.apiLive && (session?.token ?? '').isNotEmpty) {
+      try {
+        final posted = await AuthApi.post('/v1/driver/file', {
+          'staffId': staffId,
+          'vehicleKind': vehicleKind.trim(),
+          'legalName': legalName.trim(),
+          'phone': phone.trim(),
+          'licenceNumber': licenceNumber.trim(),
+          'plate': plate.trim(),
+          'registration': registration.trim(),
+          'inspection': inspection.trim(),
+          'domesticCert': domesticCert.trim(),
+          'insurance': insurance.trim(),
+          'selfie': base64Encode(selfie!),
+          'idCard': base64Encode(idCard!),
+          if (licencePhoto != null) 'licencePhoto': base64Encode(licencePhoto),
+          if (registrationPhoto != null)
+            'registrationPhoto': base64Encode(registrationPhoto),
+          if (insurancePhoto != null)
+            'insurancePhoto': base64Encode(insurancePhoto),
+        }, token: session!.token);
+        review = '${posted['review'] ?? 'pending'}';
+        reviewNote = '${posted['note'] ?? ''}';
+      } catch (_) {
+        review = 'pending';
+      }
+    }
     driver = DriverProfile(
       legalName: legalName.trim(),
       nameOnId: nameOnId.trim(),
@@ -1028,6 +1168,11 @@ class ChowState extends ChangeNotifier {
           trainedConduct,
       staffId: staffId,
       suspended: suspendedPartnerIds.contains(staffId),
+      licencePhoto: licencePhoto,
+      registrationPhoto: registrationPhoto,
+      insurancePhoto: insurancePhoto,
+      review: review,
+      reviewNote: reviewNote,
     );
     notifyListeners();
     return null;

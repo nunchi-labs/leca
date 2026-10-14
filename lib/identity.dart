@@ -15,6 +15,7 @@ class Identity {
     required String idNumber,
     required Uint8List? selfie,
     required Uint8List? idCard,
+    List<Uint8List?> extras = const [],
   }) async {
     if (selfie == null || idCard == null || selfie.isEmpty || idCard.isEmpty) {
       return 'photo_missing';
@@ -22,6 +23,11 @@ class Identity {
     if (_same(selfie, idCard)) return 'photo_same';
     if (!await _decodes(selfie) || !await _decodes(idCard)) {
       return 'photo_invalid';
+    }
+    for (final extra in extras) {
+      if (extra == null || extra.isEmpty) return 'photo_missing';
+      if (_same(extra, selfie) || _same(extra, idCard)) return 'photo_same';
+      if (!await _decodes(extra)) return 'photo_invalid';
     }
     if (norm(legalName).isEmpty || norm(legalName) != norm(nameOnId)) {
       return 'name_mismatch';

@@ -103,11 +103,21 @@ void main() {
       expect(missing, contains('For: authorities'));
 
       final reported = state.rideMatch!.id;
-      state.fileSafetyReport('harassment');
-      expect(state.reports.single.status, 'acted');
+      await state.fileSafetyReport('harassment');
+      expect(state.reports.single.status, 'suspended');
       expect(state.reports.single.category, 'harassment');
       expect(state.suspendedPartnerIds, contains(reported));
       expect(state.rideMatch?.id, isNot(reported));
+      expect(
+        await state.appealReport(state.reports.single.id, ''),
+        'appeal_empty',
+      );
+      expect(
+        await state.appealReport(state.reports.single.id, 'wrong rider'),
+        isNull,
+      );
+      expect(state.reports.single.status, 'appealed');
+      expect(state.suspendedPartnerIds, contains(reported));
     },
   );
 }

@@ -54,7 +54,12 @@ class AccountScreen extends StatelessWidget {
                 Text(
                   state.driver == null
                       ? l10n.driverUnverified
-                      : l10n.driverVerified,
+                      : switch (state.driver!.review) {
+                          'pending' => l10n.reviewPending,
+                          'rejected' => l10n.reviewRejected,
+                          'approved' => l10n.reviewApproved,
+                          _ => l10n.driverVerified,
+                        },
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               if (phone && state.driver != null) ...[
@@ -438,6 +443,7 @@ class DriveScreen extends StatefulWidget {
 
 class _DriveScreenState extends State<DriveScreen> {
   late final TextEditingController _note;
+  final _appeal = TextEditingController();
   bool _noteSeeded = false;
 
   @override
@@ -445,7 +451,10 @@ class _DriveScreenState extends State<DriveScreen> {
     super.initState();
     _note = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ChowScope.of(context).clearDriverError();
+      if (!mounted) return;
+      final state = ChowScope.of(context);
+      state.clearDriverError();
+      state.refreshTrust();
     });
   }
 
@@ -460,6 +469,7 @@ class _DriveScreenState extends State<DriveScreen> {
   @override
   void dispose() {
     _note.dispose();
+    _appeal.dispose();
     super.dispose();
   }
 
@@ -478,8 +488,15 @@ class _DriveScreenState extends State<DriveScreen> {
               Text(
                 state.driver == null
                     ? l10n.driverUnverified
-                    : l10n.driverVerified,
+                    : switch (state.driver!.review) {
+                        'pending' => l10n.reviewPending,
+                        'rejected' => l10n.reviewRejected,
+                        'approved' => l10n.reviewApproved,
+                        _ => l10n.driverVerified,
+                      },
               ),
+              if ((state.driver?.reviewNote ?? '').isNotEmpty)
+                Text(state.driver!.reviewNote),
               const SizedBox(height: 8),
               Text(l10n.driveBody),
               if (driverErrorText(l10n, state.driverError) != null) ...[
@@ -515,6 +532,40 @@ class _DriveScreenState extends State<DriveScreen> {
                 },
                 child: Text(l10n.goOnline),
               ),
+              if (state.openPartnerReports.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  l10n.appealHint,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                for (final report in state.openPartnerReports) ...[
+                  const SizedBox(height: 8),
+                  Text('${report.category} · ${report.status}'),
+                  if (report.appeal.isNotEmpty) Text(report.appeal),
+                  if (report.status == 'suspended') ...[
+                    TextField(
+                      controller: _appeal,
+                      decoration: InputDecoration(
+                        labelText: l10n.appealHint,
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        key: Key('appeal_${report.id}'),
+                        onPressed: () =>
+                            state.appealReport(report.id, _appeal.text),
+                        child: Text(l10n.appealSend),
+                      ),
+                    ),
+                  ],
+                ],
+              ],
               if (state.driving) ...[
                 const SizedBox(height: 12),
                 OutlinedButton(
