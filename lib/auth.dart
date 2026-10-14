@@ -9,7 +9,9 @@ class AuthConfig {
   static bool get googleLive => apiLive || googleClientId.isNotEmpty;
   static bool get facebookLive => apiLive || facebookAppId.isNotEmpty;
   static bool get wechatLive => apiLive;
-  static bool get smsLive => apiLive || smsAuth.isNotEmpty;
+  static bool get telegramLive => apiLive;
+  static bool get xLive => apiLive;
+  static bool get whatsappLive => apiLive || smsAuth.isNotEmpty;
 
   static bool liveFor(String method) {
     switch (method) {
@@ -19,8 +21,13 @@ class AuthConfig {
         return facebookLive;
       case 'wechat':
         return wechatLive;
+      case 'telegram':
+        return telegramLive;
+      case 'x':
+        return xLive;
+      case 'whatsapp':
       case 'phone':
-        return smsLive;
+        return whatsappLive;
       default:
         return false;
     }

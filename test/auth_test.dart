@@ -6,9 +6,11 @@ void main() {
   test('AuthConfig is mock when dart-defines are empty', () {
     expect(AuthConfig.googleLive, isFalse);
     expect(AuthConfig.facebookLive, isFalse);
-    expect(AuthConfig.smsLive, isFalse);
+    expect(AuthConfig.whatsappLive, isFalse);
     expect(AuthConfig.liveFor('google'), isFalse);
-    expect(AuthConfig.liveFor('phone'), isFalse);
+    expect(AuthConfig.liveFor('whatsapp'), isFalse);
+    expect(AuthConfig.liveFor('telegram'), isFalse);
+    expect(AuthConfig.liveFor('x'), isFalse);
     expect(AuthConfig.liveFor('wechat'), isFalse);
   });
 

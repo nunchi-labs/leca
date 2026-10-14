@@ -33,6 +33,19 @@ class ScriptedNet extends Net {
   }
 }
 
+String _hostHint(String provider) {
+  switch (provider) {
+    case 'wechat':
+      return 'weixin';
+    case 'x':
+      return 'twitter.com';
+    case 'telegram':
+      return 'telegram.org';
+    default:
+      return provider;
+  }
+}
+
 void main() {
   test('email register then login, and rejects a bad password', () async {
     final core = AuthCore(config: const AuthConfig());
@@ -75,35 +88,35 @@ void main() {
 
   test('phone dev code signs the same number in', () async {
     final core = AuthCore(config: const AuthConfig(devOtp: true));
-    final started = await core.phoneStart('012 345 678');
+    final started = await core.whatsappStart('012 345 678');
     final code = started['devCode'] as String;
     expect(code, hasLength(4));
-    final session = await core.phoneVerify('012345678', code);
+    final session = await core.whatsappVerify('012345678', code);
     final user = session['user'] as Map;
-    expect(user['method'], 'phone');
-    expect(user['id'], 'phone:012345678');
+    expect(user['method'], 'whatsapp');
+    expect(user['id'], 'whatsapp:012345678');
     expect(core.userForToken(session['token'] as String)?.handle, '012345678');
     expect(
-      () => core.phoneVerify('012345678', code),
+      () => core.whatsappVerify('012345678', code),
       throwsA(isA<AuthFailure>()),
     );
   });
 
   test('a short phone and a wrong code are rejected', () async {
     final core = AuthCore(config: const AuthConfig(devOtp: true));
-    expect(() => core.phoneStart('123'), throwsA(isA<AuthFailure>()));
-    await core.phoneStart('012345678');
+    expect(() => core.whatsappStart('123'), throwsA(isA<AuthFailure>()));
+    await core.whatsappStart('012345678');
     expect(
-      () => core.phoneVerify('012345678', '0000'),
+      () => core.whatsappVerify('012345678', '0000'),
       throwsA(isA<AuthFailure>()),
     );
   });
 
-  test('sms stays closed without Twilio or the dev flag', () {
+  test('whatsapp stays closed without a sender or the dev flag', () {
     final core = AuthCore(config: const AuthConfig());
     expect(
-      () => core.phoneStart('012345678'),
-      throwsA(predicate<AuthFailure>((e) => e.code == 'sms_unconfigured')),
+      () => core.whatsappStart('012345678'),
+      throwsA(predicate<AuthFailure>((e) => e.code == 'whatsapp_unconfigured')),
     );
   });
 
@@ -131,6 +144,16 @@ void main() {
         'openid': 'wx1',
         'nickname': 'Wei',
       }),
+      'oauth.telegram.org/token': jsonEncode({'access_token': 't'}),
+      'oauth.telegram.org/userinfo': jsonEncode({
+        'id': 'tg1',
+        'name': 'Tara',
+        'preferred_username': 'tara',
+      }),
+      'api.x.com/2/oauth2/token': jsonEncode({'access_token': 'x'}),
+      'api.x.com/2/users/me': jsonEncode({
+        'data': {'id': 'x1', 'name': 'Xan', 'username': 'xan'},
+      }),
     });
     final core = AuthCore(
       config: const AuthConfig(
@@ -140,15 +163,18 @@ void main() {
         facebookAppSecret: 'fsec',
         wechatAppId: 'wid',
         wechatAppSecret: 'wsec',
+        telegramBotToken: '100:bot-secret',
+        xClientId: 'xid',
+        xClientSecret: 'xsec',
       ),
       net: net,
     );
-    for (final provider in ['google', 'facebook', 'wechat']) {
+    for (final provider in ['google', 'facebook', 'wechat', 'telegram', 'x']) {
       final start = await core.providerStart(provider);
-      expect(
-        start['url'],
-        contains(provider == 'wechat' ? 'weixin' : provider),
-      );
+      expect(start['url'], contains(_hostHint(provider)));
+      if (provider == 'x') {
+        expect(start['url'], contains('code_challenge'));
+      }
       final html = await core.providerCallback(
         provider,
         'auth-code',
@@ -178,7 +204,13 @@ void main() {
           publicUrl: 'http://65.21.232.29:8088',
         ),
       );
-      for (final provider in ['google', 'facebook', 'wechat']) {
+      for (final provider in [
+        'google',
+        'facebook',
+        'wechat',
+        'telegram',
+        'x',
+      ]) {
         final start = await core.providerStart(provider);
         expect(start['mode'], 'test');
         expect(start['url'], contains('/v1/auth/dev/$provider'));

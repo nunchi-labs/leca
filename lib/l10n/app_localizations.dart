@@ -551,14 +551,56 @@ abstract class AppLocalizations {
   /// No description provided for @authMockBanner.
   ///
   /// In km, this message translates to:
-  /// **'លេខទូរស័ព្ទជាមុន។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។'**
+  /// **'Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។'**
   String get authMockBanner;
 
   /// No description provided for @authLiveBanner.
   ///
   /// In km, this message translates to:
-  /// **'ចូលដោយលេខទូរស័ព្ទ។ Google, Facebook, WeChat និងអ៊ីមែលនៅក្រោមវិធីផ្សេងទៀត។'**
+  /// **'ចូលដោយ Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។'**
   String get authLiveBanner;
+
+  /// No description provided for @authTelegram.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្តជាមួយ Telegram (សាកល្បង)'**
+  String get authTelegram;
+
+  /// No description provided for @authTelegramLive.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្តជាមួយ Telegram'**
+  String get authTelegramLive;
+
+  /// No description provided for @authX.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្តជាមួយ X (សាកល្បង)'**
+  String get authX;
+
+  /// No description provided for @authXLive.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្តជាមួយ X'**
+  String get authXLive;
+
+  /// No description provided for @authWhatsappLabel.
+  ///
+  /// In km, this message translates to:
+  /// **'WhatsApp'**
+  String get authWhatsappLabel;
+
+  /// No description provided for @authWhatsappSend.
+  ///
+  /// In km, this message translates to:
+  /// **'ផ្ញើលេខកូដ WhatsApp'**
+  String get authWhatsappSend;
+
+  /// No description provided for @authWhatsappUnconfigured.
+  ///
+  /// In km, this message translates to:
+  /// **'ម៉ាស៊ីនមិនទាន់កំណត់ការចូល WhatsApp ទេ។'**
+  String get authWhatsappUnconfigured;
 
   /// No description provided for @authWechat.
   ///

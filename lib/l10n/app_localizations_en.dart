@@ -264,11 +264,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authMockBanner =>
-      'Phone number first. Without the auth server this device uses a local mock.';
+      'Telegram, WeChat, Facebook, X, Google, email, or WhatsApp. Without the auth server this device uses a local mock.';
 
   @override
   String get authLiveBanner =>
-      'Sign in with your phone number. Google, Facebook, WeChat, and email are under more ways.';
+      'Sign in with Telegram, WeChat, Facebook, X, Google, email, or WhatsApp.';
+
+  @override
+  String get authTelegram => 'Continue with Telegram (mock)';
+
+  @override
+  String get authTelegramLive => 'Continue with Telegram';
+
+  @override
+  String get authX => 'Continue with X (mock)';
+
+  @override
+  String get authXLive => 'Continue with X';
+
+  @override
+  String get authWhatsappLabel => 'WhatsApp';
+
+  @override
+  String get authWhatsappSend => 'Send WhatsApp code';
+
+  @override
+  String get authWhatsappUnconfigured =>
+      'WhatsApp sign-in is not configured on the server.';
 
   @override
   String get authWechat => 'Continue with WeChat (mock)';

@@ -20,7 +20,6 @@ class _SignInScreenState extends State<SignInScreen> {
   final _name = TextEditingController();
   final _country = TextEditingController(text: '+855');
   bool _register = false;
-  bool _more = false;
 
   /// Country code plus the local number. A leading 0 is the trunk prefix
   /// and drops when the country code is present.
@@ -54,7 +53,8 @@ class _SignInScreenState extends State<SignInScreen> {
       case 'provider_unconfigured':
         return l10n.authProviderUnconfigured;
       case 'sms_unconfigured':
-        return l10n.authSmsUnconfigured;
+      case 'whatsapp_unconfigured':
+        return l10n.authWhatsappUnconfigured;
       case 'email_invalid':
         return l10n.authEmailInvalid;
       case 'password_short':
@@ -120,7 +120,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       style: const TextStyle(color: Color(0xFF8B1E1E)),
                     ),
                   ),
-                Text(l10n.authPhoneLabel),
+                Text(l10n.authWhatsappLabel),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -164,122 +164,135 @@ class _SignInScreenState extends State<SignInScreen> {
                   onPressed: state.authLoading
                       ? null
                       : () => state.signIn(
-                          method: 'phone',
+                          method: 'whatsapp',
                           handle: _phoneHandle(),
                           code: _code.text,
                         ),
                   child: Text(
-                    state.phoneCodeSent ? l10n.authVerify : l10n.authSendCode,
+                    state.phoneCodeSent
+                        ? l10n.authVerify
+                        : l10n.authWhatsappSend,
                   ),
                 ),
                 const SizedBox(height: 16),
+                OutlinedButton(
+                  key: const Key('sign_in_google'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'google',
+                          handle: 'sokha@leca.app',
+                        ),
+                  child: Text(
+                    AuthConfig.googleLive
+                        ? l10n.authGoogleLive
+                        : l10n.authGoogle,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const Key('sign_in_facebook'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'facebook',
+                          handle: 'sokha.fb@leca.app',
+                        ),
+                  child: Text(
+                    AuthConfig.facebookLive
+                        ? l10n.authFacebookLive
+                        : l10n.authFacebook,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const Key('sign_in_telegram'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'telegram',
+                          handle: 'sokha.tg',
+                        ),
+                  child: Text(
+                    AuthConfig.telegramLive
+                        ? l10n.authTelegramLive
+                        : l10n.authTelegram,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const Key('sign_in_x'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(method: 'x', handle: 'sokha'),
+                  child: Text(AuthConfig.xLive ? l10n.authXLive : l10n.authX),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const Key('sign_in_wechat'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'wechat',
+                          handle: 'sokha.wx@leca.app',
+                        ),
+                  child: Text(
+                    AuthConfig.wechatLive
+                        ? l10n.authWechatLive
+                        : l10n.authWechat,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(_register ? l10n.authCreateAccount : l10n.authEmailLabel),
+                const SizedBox(height: 6),
+                TextField(
+                  key: const Key('sign_in_email'),
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  decoration: box(l10n.authEmailHint),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  key: const Key('sign_in_email_password'),
+                  controller: _password,
+                  obscureText: true,
+                  decoration: box(l10n.authPasswordHint),
+                ),
+                if (_register) ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _name,
+                    decoration: box(l10n.authNameHint),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                FilledButton.tonal(
+                  key: const Key('sign_in_email_submit'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'email',
+                          handle: _email.text,
+                          password: _password.text,
+                          name: _name.text,
+                          register: _register,
+                        ),
+                  child: Text(
+                    _register ? l10n.authCreateAccount : l10n.authEmailSignIn,
+                  ),
+                ),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
-                    key: const Key('sign_in_more'),
-                    onPressed: () => setState(() => _more = !_more),
-                    child: Text(_more ? l10n.authFewerWays : l10n.authMoreWays),
+                    onPressed: state.authLoading
+                        ? null
+                        : () => setState(() => _register = !_register),
+                    child: Text(
+                      _register ? l10n.authHaveAccount : l10n.authNeedAccount,
+                    ),
                   ),
                 ),
-                if (_more) ...[
-                  OutlinedButton(
-                    key: const Key('sign_in_google'),
-                    onPressed: state.authLoading
-                        ? null
-                        : () => state.signIn(
-                            method: 'google',
-                            handle: 'sokha@leca.app',
-                          ),
-                    child: Text(
-                      AuthConfig.googleLive
-                          ? l10n.authGoogleLive
-                          : l10n.authGoogle,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    key: const Key('sign_in_facebook'),
-                    onPressed: state.authLoading
-                        ? null
-                        : () => state.signIn(
-                            method: 'facebook',
-                            handle: 'sokha.fb@leca.app',
-                          ),
-                    child: Text(
-                      AuthConfig.facebookLive
-                          ? l10n.authFacebookLive
-                          : l10n.authFacebook,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    key: const Key('sign_in_wechat'),
-                    onPressed: state.authLoading
-                        ? null
-                        : () => state.signIn(
-                            method: 'wechat',
-                            handle: 'sokha.wx@leca.app',
-                          ),
-                    child: Text(
-                      AuthConfig.wechatLive
-                          ? l10n.authWechatLive
-                          : l10n.authWechat,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _register ? l10n.authCreateAccount : l10n.authEmailLabel,
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    key: const Key('sign_in_email'),
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    decoration: box(l10n.authEmailHint),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    key: const Key('sign_in_email_password'),
-                    controller: _password,
-                    obscureText: true,
-                    decoration: box(l10n.authPasswordHint),
-                  ),
-                  if (_register) ...[
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _name,
-                      decoration: box(l10n.authNameHint),
-                    ),
-                  ],
-                  const SizedBox(height: 10),
-                  FilledButton.tonal(
-                    key: const Key('sign_in_email_submit'),
-                    onPressed: state.authLoading
-                        ? null
-                        : () => state.signIn(
-                            method: 'email',
-                            handle: _email.text,
-                            password: _password.text,
-                            name: _name.text,
-                            register: _register,
-                          ),
-                    child: Text(
-                      _register ? l10n.authCreateAccount : l10n.authEmailSignIn,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: state.authLoading
-                          ? null
-                          : () => setState(() => _register = !_register),
-                      child: Text(
-                        _register ? l10n.authHaveAccount : l10n.authNeedAccount,
-                      ),
-                    ),
-                  ),
-                ],
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(

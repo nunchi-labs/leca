@@ -19,8 +19,8 @@ Future<void> _signInGoogle(WidgetTester tester) async {
   await tester.pumpWidget(const LecaApp());
   await tester.pump();
   expect(find.byKey(const Key('sign_in_phone')), findsOneWidget);
-  await tester.tap(find.byKey(const Key('sign_in_more')));
-  await tester.pump();
+  expect(find.byKey(const Key('sign_in_telegram')), findsOneWidget);
+  expect(find.byKey(const Key('sign_in_x')), findsOneWidget);
   expect(find.byKey(const Key('sign_in_google')), findsOneWidget);
   await tester.tap(find.byKey(const Key('sign_in_google')));
   await tester.pump();

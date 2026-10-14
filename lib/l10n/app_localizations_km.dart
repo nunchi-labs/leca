@@ -264,11 +264,33 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get authMockBanner =>
-      'លេខទូរស័ព្ទជាមុន។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។';
+      'Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។';
 
   @override
   String get authLiveBanner =>
-      'ចូលដោយលេខទូរស័ព្ទ។ Google, Facebook, WeChat និងអ៊ីមែលនៅក្រោមវិធីផ្សេងទៀត។';
+      'ចូលដោយ Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។';
+
+  @override
+  String get authTelegram => 'បន្តជាមួយ Telegram (សាកល្បង)';
+
+  @override
+  String get authTelegramLive => 'បន្តជាមួយ Telegram';
+
+  @override
+  String get authX => 'បន្តជាមួយ X (សាកល្បង)';
+
+  @override
+  String get authXLive => 'បន្តជាមួយ X';
+
+  @override
+  String get authWhatsappLabel => 'WhatsApp';
+
+  @override
+  String get authWhatsappSend => 'ផ្ញើលេខកូដ WhatsApp';
+
+  @override
+  String get authWhatsappUnconfigured =>
+      'ម៉ាស៊ីនមិនទាន់កំណត់ការចូល WhatsApp ទេ។';
 
   @override
   String get authWechat => 'បន្តជាមួយ WeChat (សាកល្បង)';

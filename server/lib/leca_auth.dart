@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:crypto/crypto.dart';
+
 import 'password.dart';
 import 'quote.dart';
 import 'trust.dart';
@@ -22,9 +24,15 @@ class AuthConfig {
     this.facebookAppSecret = '',
     this.wechatAppId = '',
     this.wechatAppSecret = '',
+    this.telegramBotToken = '',
+    this.xClientId = '',
+    this.xClientSecret = '',
+    this.whatsappToken = '',
+    this.whatsappPhoneId = '',
+    this.whatsappTemplate = 'leca_login',
     this.twilioAccountSid = '',
     this.twilioAuthToken = '',
-    this.twilioFrom = '',
+    this.twilioWhatsappFrom = '',
     this.devOtp = false,
     this.googleMapsKey = '',
   });
@@ -36,9 +44,15 @@ class AuthConfig {
   final String facebookAppSecret;
   final String wechatAppId;
   final String wechatAppSecret;
+  final String telegramBotToken;
+  final String xClientId;
+  final String xClientSecret;
+  final String whatsappToken;
+  final String whatsappPhoneId;
+  final String whatsappTemplate;
   final String twilioAccountSid;
   final String twilioAuthToken;
-  final String twilioFrom;
+  final String twilioWhatsappFrom;
   final bool devOtp;
   final String googleMapsKey;
 
@@ -50,10 +64,18 @@ class AuthConfig {
 
   bool get wechatReady => wechatAppId.isNotEmpty && wechatAppSecret.isNotEmpty;
 
-  bool get twilioReady =>
-      twilioAccountSid.isNotEmpty &&
-      twilioAuthToken.isNotEmpty &&
-      twilioFrom.isNotEmpty;
+  bool get telegramReady => telegramBotToken.contains(':');
+
+  bool get xReady => xClientId.isNotEmpty && xClientSecret.isNotEmpty;
+
+  /// Meta Cloud API, or Twilio's WhatsApp sender.
+  bool get whatsappReady =>
+      (whatsappToken.isNotEmpty && whatsappPhoneId.isNotEmpty) ||
+      (twilioAccountSid.isNotEmpty &&
+          twilioAuthToken.isNotEmpty &&
+          twilioWhatsappFrom.isNotEmpty);
+
+  String get telegramBotId => telegramBotToken.split(':').first;
 
   static AuthConfig fromEnvironment() {
     final env = Platform.environment;
@@ -65,9 +87,17 @@ class AuthConfig {
       facebookAppSecret: env['FACEBOOK_APP_SECRET'] ?? '',
       wechatAppId: env['WECHAT_APP_ID'] ?? '',
       wechatAppSecret: env['WECHAT_APP_SECRET'] ?? '',
+      telegramBotToken: env['TELEGRAM_BOT_TOKEN'] ?? '',
+      xClientId: env['X_CLIENT_ID'] ?? '',
+      xClientSecret: env['X_CLIENT_SECRET'] ?? '',
+      whatsappToken: env['WHATSAPP_TOKEN'] ?? '',
+      whatsappPhoneId: env['WHATSAPP_PHONE_ID'] ?? '',
+      whatsappTemplate: (env['WHATSAPP_TEMPLATE'] ?? '').isEmpty
+          ? 'leca_login'
+          : env['WHATSAPP_TEMPLATE']!,
       twilioAccountSid: env['TWILIO_ACCOUNT_SID'] ?? '',
       twilioAuthToken: env['TWILIO_AUTH_TOKEN'] ?? '',
-      twilioFrom: env['TWILIO_FROM'] ?? '',
+      twilioWhatsappFrom: env['TWILIO_WHATSAPP_FROM'] ?? '',
       devOtp: env['LECA_DEV_OTP'] == '1',
       googleMapsKey: env['GOOGLE_MAPS_API_KEY'] ?? '',
     );
@@ -191,6 +221,9 @@ class _Pending {
   String status = 'pending';
   String? error;
   String? token;
+
+  /// PKCE verifier for X. Empty for the other providers.
+  String verifier = '';
 }
 
 class AuthCore {
@@ -216,21 +249,19 @@ class AuthCore {
   final Map<String, AuthUser> _sessions = {};
   final Map<String, _EmailAccount> _emails = {};
 
-  Future<Map<String, Object?>> phoneStart(String rawPhone) async {
+  Future<Map<String, Object?>> whatsappStart(String rawPhone) async {
     final phone = _digits(rawPhone);
     if (phone.length < 8) throw AuthFailure('phone_invalid');
-    if (!config.twilioReady && !config.devOtp) {
-      throw AuthFailure('sms_unconfigured', 503);
+    if (!config.whatsappReady && !config.devOtp) {
+      throw AuthFailure('whatsapp_unconfigured', 503);
     }
     final code = _random.nextInt(10000).toString().padLeft(4, '0');
     _otps[phone] = _Otp(code, now().add(const Duration(minutes: 5)));
-    if (config.twilioReady) {
-      await _sendSms(phone, code);
-    }
+    if (config.whatsappReady) await _sendWhatsApp(phone, code);
     return {'ok': true, if (config.devOtp) 'devCode': code};
   }
 
-  Future<Map<String, Object?>> phoneVerify(String rawPhone, String code) {
+  Future<Map<String, Object?>> whatsappVerify(String rawPhone, String code) {
     final phone = _digits(rawPhone);
     if (phone.length < 8) throw AuthFailure('phone_invalid');
     final otp = _otps[phone];
@@ -244,8 +275,8 @@ class AuthCore {
     }
     _otps.remove(phone);
     final user = AuthUser(
-      id: 'phone:$phone',
-      method: 'phone',
+      id: 'whatsapp:$phone',
+      method: 'whatsapp',
       displayName: phone,
       handle: phone,
     );
@@ -353,7 +384,9 @@ class AuthCore {
   Future<Map<String, Object?>> providerStart(String provider) async {
     if (!_known(provider)) throw AuthFailure('provider_invalid');
     final id = _token();
-    _pending[id] = _Pending(provider, now().add(const Duration(minutes: 10)));
+    final pending = _Pending(provider, now().add(const Duration(minutes: 10)));
+    if (provider == 'x') pending.verifier = _verifier();
+    _pending[id] = pending;
     if (_ready(provider)) {
       return {
         'pending': id,
@@ -428,7 +461,7 @@ class AuthCore {
       return _page('Sign-in cancelled', 'Return to Leca and try again.');
     }
     try {
-      final user = await _profile(provider, code);
+      final user = await _profile(provider, code, item.verifier);
       final token = _token();
       _sessions[token] = user;
       item
@@ -469,12 +502,30 @@ class AuthCore {
           displayName: 'Wei Test',
           handle: 'wx-dev',
         );
+      case 'telegram':
+        return const AuthUser(
+          id: 'telegram:dev',
+          method: 'telegram',
+          displayName: 'Tara Test',
+          handle: 'tara',
+        );
+      case 'x':
+        return const AuthUser(
+          id: 'x:dev',
+          method: 'x',
+          displayName: 'Xan Test',
+          handle: 'xan',
+        );
       default:
         throw AuthFailure('provider_invalid');
     }
   }
 
-  Future<AuthUser> _profile(String provider, String code) async {
+  Future<AuthUser> _profile(
+    String provider,
+    String code,
+    String verifier,
+  ) async {
     if (code == 'dev') {
       if (!config.devOtp) throw AuthFailure('provider_failed', 403);
       return _devUser(provider);
@@ -486,6 +537,10 @@ class AuthCore {
         return _facebook(code);
       case 'wechat':
         return _wechat(code);
+      case 'telegram':
+        return _telegram(code);
+      case 'x':
+        return _x(code, verifier);
       default:
         throw AuthFailure('provider_invalid');
     }
@@ -596,7 +651,114 @@ class AuthCore {
     );
   }
 
-  Future<void> _sendSms(String phone, String code) async {
+  Future<AuthUser> _telegram(String code) async {
+    final token = await _json(
+      await net.postForm(Uri.parse('https://oauth.telegram.org/token'), {
+        'grant_type': 'authorization_code',
+        'code': code,
+        'client_id': config.telegramBotId,
+        'client_secret': config.telegramBotToken,
+        'redirect_uri': _callback('telegram'),
+      }),
+    );
+    final access = '${token['access_token'] ?? ''}';
+    if (access.isEmpty) throw AuthFailure('provider_failed', 502);
+    final profile = await _json(
+      await net.get(
+        Uri.parse('https://oauth.telegram.org/userinfo'),
+        headers: {'authorization': 'Bearer $access'},
+      ),
+    );
+    final id = '${profile['id'] ?? ''}';
+    if (id.isEmpty) throw AuthFailure('provider_failed', 502);
+    final username =
+        '${profile['preferred_username'] ?? profile['username'] ?? id}';
+    final name = '${profile['name'] ?? username}';
+    return AuthUser(
+      id: 'telegram:$id',
+      method: 'telegram',
+      displayName: name,
+      handle: username,
+    );
+  }
+
+  Future<AuthUser> _x(String code, String verifier) async {
+    final basic = base64Encode(
+      utf8.encode('${config.xClientId}:${config.xClientSecret}'),
+    );
+    final token = await _json(
+      await net.postForm(
+        Uri.parse('https://api.x.com/2/oauth2/token'),
+        {
+          'grant_type': 'authorization_code',
+          'code': code,
+          'redirect_uri': _callback('x'),
+          'code_verifier': verifier,
+        },
+        headers: {'authorization': 'Basic $basic'},
+      ),
+    );
+    final access = '${token['access_token'] ?? ''}';
+    if (access.isEmpty) throw AuthFailure('provider_failed', 502);
+    final profile = await _json(
+      await net.get(
+        Uri.parse('https://api.x.com/2/users/me?user.fields=name,username'),
+        headers: {'authorization': 'Bearer $access'},
+      ),
+    );
+    final data = profile['data'];
+    if (data is! Map) throw AuthFailure('provider_failed', 502);
+    final id = '${data['id'] ?? ''}';
+    if (id.isEmpty) throw AuthFailure('provider_failed', 502);
+    final username = '${data['username'] ?? id}';
+    final name = '${data['name'] ?? username}';
+    return AuthUser(
+      id: 'x:$id',
+      method: 'x',
+      displayName: name,
+      handle: username,
+    );
+  }
+
+  Future<void> _sendWhatsApp(String phone, String code) async {
+    final to = _e164(phone).replaceAll('+', '');
+    if (config.whatsappToken.isNotEmpty && config.whatsappPhoneId.isNotEmpty) {
+      final response = await net.postJson(
+        Uri.parse(
+          'https://graph.facebook.com/v21.0/${config.whatsappPhoneId}/messages',
+        ),
+        {
+          'messaging_product': 'whatsapp',
+          'to': to,
+          'type': 'template',
+          'template': {
+            'name': config.whatsappTemplate,
+            'language': {'code': 'en'},
+            'components': [
+              {
+                'type': 'body',
+                'parameters': [
+                  {'type': 'text', 'text': code},
+                ],
+              },
+              {
+                'type': 'button',
+                'sub_type': 'url',
+                'index': '0',
+                'parameters': [
+                  {'type': 'text', 'text': code},
+                ],
+              },
+            ],
+          },
+        },
+        headers: {'authorization': 'Bearer ${config.whatsappToken}'},
+      );
+      if (response.status < 200 || response.status >= 300) {
+        throw AuthFailure('whatsapp_failed', 502);
+      }
+      return;
+    }
     final sid = config.twilioAccountSid;
     final basic = base64Encode(utf8.encode('$sid:${config.twilioAuthToken}'));
     final response = await net.postForm(
@@ -604,14 +766,14 @@ class AuthCore {
         'https://api.twilio.com/2010-04-01/Accounts/$sid/Messages.json',
       ),
       {
-        'To': _e164(phone),
-        'From': config.twilioFrom,
+        'To': 'whatsapp:+$to',
+        'From': config.twilioWhatsappFrom,
         'Body': 'Leca code: $code',
       },
       headers: {'authorization': 'Basic $basic'},
     );
     if (response.status < 200 || response.status >= 300) {
-      throw AuthFailure('sms_failed', 502);
+      throw AuthFailure('whatsapp_failed', 502);
     }
   }
 
@@ -641,6 +803,25 @@ class AuthCore {
         }).toString();
       case 'wechat':
         return '${Uri.https('open.weixin.qq.com', '/connect/qrconnect', {'appid': config.wechatAppId, 'redirect_uri': redirect, 'response_type': 'code', 'scope': 'snsapi_login', 'state': state})}#wechat_redirect';
+      case 'telegram':
+        return Uri.https('oauth.telegram.org', '/auth', {
+          'client_id': config.telegramBotId,
+          'redirect_uri': redirect,
+          'response_type': 'code',
+          'scope': 'openid',
+          'state': state,
+        }).toString();
+      case 'x':
+        final verifier = _pending[state]?.verifier ?? '';
+        return Uri.https('twitter.com', '/i/oauth2/authorize', {
+          'response_type': 'code',
+          'client_id': config.xClientId,
+          'redirect_uri': redirect,
+          'scope': 'users.read',
+          'state': state,
+          'code_challenge': _challenge(verifier),
+          'code_challenge_method': 'S256',
+        }).toString();
       default:
         throw AuthFailure('provider_invalid');
     }
@@ -657,13 +838,31 @@ class AuthCore {
         return config.facebookReady;
       case 'wechat':
         return config.wechatReady;
+      case 'telegram':
+        return config.telegramReady;
+      case 'x':
+        return config.xReady;
       default:
         return false;
     }
   }
 
   bool _known(String provider) =>
-      provider == 'google' || provider == 'facebook' || provider == 'wechat';
+      provider == 'google' ||
+      provider == 'facebook' ||
+      provider == 'wechat' ||
+      provider == 'telegram' ||
+      provider == 'x';
+
+  String _verifier() {
+    final bytes = List<int>.generate(32, (_) => _random.nextInt(256));
+    return base64Url.encode(bytes).replaceAll('=', '');
+  }
+
+  String _challenge(String verifier) {
+    final digest = sha256.convert(utf8.encode(verifier)).bytes;
+    return base64Url.encode(digest).replaceAll('=', '');
+  }
 
   Future<Map<String, Object?>> _json(NetResponse response) async {
     if (response.status < 200 || response.status >= 300) {
@@ -902,17 +1101,20 @@ Future<void> handleAuth(
       await _json(response, 200, RateCard.active.toJson());
       return;
     }
-    if (request.method == 'POST' && path == '/v1/auth/phone/start') {
+    if (request.method == 'POST' &&
+        (path == '/v1/auth/whatsapp/start' || path == '/v1/auth/phone/start')) {
       final body = await _readJson(request);
-      await _json(response, 200, await core.phoneStart('${body['phone']}'));
+      await _json(response, 200, await core.whatsappStart('${body['phone']}'));
       return;
     }
-    if (request.method == 'POST' && path == '/v1/auth/phone/verify') {
+    if (request.method == 'POST' &&
+        (path == '/v1/auth/whatsapp/verify' ||
+            path == '/v1/auth/phone/verify')) {
       final body = await _readJson(request);
       await _json(
         response,
         200,
-        await core.phoneVerify('${body['phone']}', '${body['code']}'),
+        await core.whatsappVerify('${body['phone']}', '${body['code']}'),
       );
       return;
     }
@@ -973,7 +1175,7 @@ Future<void> handleAuth(
       await _json(response, 200, {'user': user.toJson()});
       return;
     }
-    for (final provider in ['google', 'facebook', 'wechat']) {
+    for (final provider in ['google', 'facebook', 'wechat', 'telegram', 'x']) {
       if (request.method == 'GET' && path == '/v1/auth/$provider/callback') {
         final html = await core.providerCallback(
           provider,

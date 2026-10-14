@@ -666,7 +666,7 @@ class LecaState extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      if (method == 'phone') {
+      if (method == 'whatsapp' || method == 'phone') {
         final digits = handle.replaceAll(RegExp(r'\D'), '');
         if (digits.length < 8) {
           throw const AuthException('phone_invalid');
@@ -688,7 +688,9 @@ class LecaState extends ChangeNotifier {
       session = Session(
         id: 'u_${DateTime.now().toUtc().millisecondsSinceEpoch}',
         method: method,
-        displayName: method == 'phone' ? handle : handle.split('@').first,
+        displayName: method == 'whatsapp' || method == 'phone'
+            ? handle
+            : handle.split('@').first,
         handle: handle,
       );
       pendingPhone = null;
@@ -723,11 +725,11 @@ class LecaState extends ChangeNotifier {
       );
       return;
     }
-    if (method == 'phone') {
+    if (method == 'whatsapp' || method == 'phone') {
       final digits = handle.replaceAll(RegExp(r'\D'), '');
       if (digits.length < 8) throw const AuthException('phone_invalid');
       if (!phoneCodeSent) {
-        final started = await AuthApi.post('/v1/auth/phone/start', {
+        final started = await AuthApi.post('/v1/auth/whatsapp/start', {
           'phone': handle,
         });
         pendingPhone = handle;
@@ -739,7 +741,7 @@ class LecaState extends ChangeNotifier {
         throw const AuthException('code_invalid');
       }
       _takeSession(
-        await AuthApi.post('/v1/auth/phone/verify', {
+        await AuthApi.post('/v1/auth/whatsapp/verify', {
           'phone': handle,
           'code': code.trim(),
         }),

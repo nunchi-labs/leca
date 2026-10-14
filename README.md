@@ -16,12 +16,12 @@ Native on **Android, iOS, macOS, Windows, Linux, and web** (Flutter). A phone is
 
 ## Sign in
 
-Google, Facebook, WeChat, email and password, or a phone number. Without the auth server the app still signs you in locally (Google → `sokha@leca.app`, Facebook → `sokha.fb@leca.app`, WeChat → `sokha.wx@leca.app`, phone → 8+ digits then a 4+ digit code). Email accounts stay on this device until you point the app at the auth server.
+Telegram, WeChat, Facebook, X, Google, email and password, or a WhatsApp code. Without the auth server the app still signs you in locally. Email accounts stay on this device until you point the app at the auth server.
 
 The server in `server/` checks the real accounts:
 
-- Phone: a 4-digit code. Twilio sends it when `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM` are set. `LECA_DEV_OTP=1` returns the code in the response instead.
-- Google, Facebook, and WeChat: the server opens the provider, takes the callback, and keeps the session. WeChat uses the website QR login.
+- WhatsApp: a 4-digit code. Meta sends it when `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_ID` are set, using the authentication template in `WHATSAPP_TEMPLATE`. Twilio sends it when `TWILIO_WHATSAPP_FROM` is set instead. `LECA_DEV_OTP=1` returns the code in the response instead.
+- Telegram, WeChat, Facebook, X, and Google: the server opens the provider, takes the callback, and keeps the session. Telegram uses the bot token. X uses OAuth 2.0 with PKCE. WeChat uses the website QR login.
 
 The live server is `root@65.21.232.29`. The main address is [https://leca.world](https://leca.world). These names serve the same site once each A record is `65.21.232.29`: `leca.my`, `leca.homes`, `leca.quest`, `leca.autos`, `leca.boats`, `leca.beer`, `leca.beauty`, and `leca.baby`. Email and password are real accounts. Test sign-in is off. Google, Facebook, WeChat, and phone SMS start only after their secrets are in `/etc/leca-auth.env`. Google’s redirect is `https://leca.world/v1/auth/google/callback`.
 
