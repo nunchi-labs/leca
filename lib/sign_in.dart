@@ -120,6 +120,59 @@ class _SignInScreenState extends State<SignInScreen> {
                       style: const TextStyle(color: Color(0xFF8B1E1E)),
                     ),
                   ),
+                Text(l10n.authEmailLabel),
+                const SizedBox(height: 6),
+                TextField(
+                  key: const Key('sign_in_email'),
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  autofocus: true,
+                  decoration: box(l10n.authEmailHint),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  key: const Key('sign_in_email_password'),
+                  controller: _password,
+                  obscureText: true,
+                  decoration: box(l10n.authPasswordHint),
+                ),
+                if (_register) ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    key: const Key('sign_in_email_name'),
+                    controller: _name,
+                    decoration: box(l10n.authNameHint),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                FilledButton(
+                  key: const Key('sign_in_email_submit'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'email',
+                          handle: _email.text,
+                          password: _password.text,
+                          name: _name.text,
+                          register: _register,
+                        ),
+                  child: Text(
+                    _register ? l10n.authCreateAccount : l10n.authEmailSignIn,
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: state.authLoading
+                        ? null
+                        : () => setState(() => _register = !_register),
+                    child: Text(
+                      _register ? l10n.authHaveAccount : l10n.authNeedAccount,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Text(l10n.authWhatsappLabel),
                 const SizedBox(height: 6),
                 Row(
@@ -139,7 +192,6 @@ class _SignInScreenState extends State<SignInScreen> {
                         key: const Key('sign_in_phone_number'),
                         controller: _phone,
                         keyboardType: TextInputType.phone,
-                        autofocus: true,
                         decoration: box(l10n.authPhoneHint),
                       ),
                     ),
@@ -240,57 +292,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     AuthConfig.wechatLive
                         ? l10n.authWechatLive
                         : l10n.authWechat,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(_register ? l10n.authCreateAccount : l10n.authEmailLabel),
-                const SizedBox(height: 6),
-                TextField(
-                  key: const Key('sign_in_email'),
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: box(l10n.authEmailHint),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  key: const Key('sign_in_email_password'),
-                  controller: _password,
-                  obscureText: true,
-                  decoration: box(l10n.authPasswordHint),
-                ),
-                if (_register) ...[
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _name,
-                    decoration: box(l10n.authNameHint),
-                  ),
-                ],
-                const SizedBox(height: 10),
-                FilledButton.tonal(
-                  key: const Key('sign_in_email_submit'),
-                  onPressed: state.authLoading
-                      ? null
-                      : () => state.signIn(
-                          method: 'email',
-                          handle: _email.text,
-                          password: _password.text,
-                          name: _name.text,
-                          register: _register,
-                        ),
-                  child: Text(
-                    _register ? l10n.authCreateAccount : l10n.authEmailSignIn,
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: state.authLoading
-                        ? null
-                        : () => setState(() => _register = !_register),
-                    child: Text(
-                      _register ? l10n.authHaveAccount : l10n.authNeedAccount,
-                    ),
                   ),
                 ),
                 Align(

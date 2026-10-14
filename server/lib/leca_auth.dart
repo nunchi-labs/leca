@@ -237,6 +237,7 @@ class AuthCore {
        now = now ?? DateTime.now,
        _random = random ?? Random.secure() {
     _loadAccounts();
+    _loadSessions();
   }
 
   final AuthConfig config;
@@ -365,6 +366,53 @@ class AuthCore {
     }
   }
 
+  String? get _sessionPath {
+    final path = accountPath;
+    if (path == null) return null;
+    return '${File(path).parent.path}/sessions.json';
+  }
+
+  void _loadSessions() {
+    final path = _sessionPath;
+    if (path == null) return;
+    final file = File(path);
+    if (!file.existsSync()) return;
+    try {
+      final decoded = jsonDecode(file.readAsStringSync());
+      if (decoded is! Map) return;
+      for (final entry in decoded.entries) {
+        final value = entry.value;
+        if (value is! Map) continue;
+        _sessions['${entry.key}'] = AuthUser(
+          id: '${value['id']}',
+          method: '${value['method']}',
+          displayName: '${value['displayName']}',
+          handle: '${value['handle']}',
+        );
+      }
+    } catch (_) {}
+  }
+
+  void _saveSessions() {
+    final path = _sessionPath;
+    if (path == null) return;
+    final file = File(path);
+    file.parent.createSync(recursive: true);
+    final tmp = File('$path.tmp');
+    tmp.writeAsStringSync(
+      jsonEncode({
+        for (final entry in _sessions.entries) entry.key: entry.value.toJson(),
+      }),
+      flush: true,
+    );
+    tmp.renameSync(path);
+  }
+
+  void _remember(String token, AuthUser user) {
+    _sessions[token] = user;
+    _saveSessions();
+  }
+
   void _saveAccounts() {
     final path = accountPath;
     if (path == null) return;
@@ -463,7 +511,7 @@ class AuthCore {
     try {
       final user = await _profile(provider, code, item.verifier);
       final token = _token();
-      _sessions[token] = user;
+      _remember(token, user);
       item
         ..status = 'ready'
         ..token = token;
@@ -779,7 +827,7 @@ class AuthCore {
 
   Map<String, Object?> _issue(AuthUser user) {
     final token = _token();
-    _sessions[token] = user;
+    _remember(token, user);
     return {'token': token, 'user': user.toJson()};
   }
 

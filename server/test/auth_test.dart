@@ -86,6 +86,26 @@ void main() {
     );
   });
 
+  test('an email session is still valid after a restart', () async {
+    final dir = Directory.systemTemp.createTempSync('leca-email');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final path = '${dir.path}/accounts.json';
+    final first = AuthCore(config: const AuthConfig(), accountPath: path);
+    final created = await first.emailRegister(
+      email: 'sokha@leca.app',
+      password: 'correct-horse',
+      name: 'Sokha',
+    );
+    final token = created['token'] as String;
+    final second = AuthCore(config: const AuthConfig(), accountPath: path);
+    expect(second.userForToken(token)?.displayName, 'Sokha');
+    final again = await second.emailLogin(
+      email: 'sokha@leca.app',
+      password: 'correct-horse',
+    );
+    expect(again['token'], isNotEmpty);
+  });
+
   test('phone dev code signs the same number in', () async {
     final core = AuthCore(config: const AuthConfig(devOtp: true));
     final started = await core.whatsappStart('012 345 678');

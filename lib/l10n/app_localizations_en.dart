@@ -268,7 +268,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authLiveBanner =>
-      'Sign in with Telegram, WeChat, Facebook, X, Google, email, or WhatsApp.';
+      'Sign in with email. The other buttons are on this page too.';
 
   @override
   String get authTelegram => 'Continue with Telegram (mock)';

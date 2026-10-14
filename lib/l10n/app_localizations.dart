@@ -557,7 +557,7 @@ abstract class AppLocalizations {
   /// No description provided for @authLiveBanner.
   ///
   /// In km, this message translates to:
-  /// **'ចូលដោយ Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។'**
+  /// **'ចូលដោយអ៊ីមែល។ ប៊ូតុងផ្សេងទៀតនៅលើទំព័រនេះដែរ។'**
   String get authLiveBanner;
 
   /// No description provided for @authTelegram.

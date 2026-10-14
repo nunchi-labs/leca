@@ -143,7 +143,7 @@
   "vehicleExamplesNote": "Examples only — any legal vehicle can be rented, with or without a driver.",
   "ok": "OK",
   "authMockBanner": "Telegram, WeChat, Facebook, X, Google, email, or WhatsApp. Without the auth server this device uses a local mock.",
-  "authLiveBanner": "Sign in with Telegram, WeChat, Facebook, X, Google, email, or WhatsApp.",
+  "authLiveBanner": "Sign in with email. The other buttons are on this page too.",
   "authTelegram": "Continue with Telegram (mock)",
   "authTelegramLive": "Continue with Telegram",
   "authX": "Continue with X (mock)",

@@ -267,8 +267,7 @@ class AppLocalizationsKm extends AppLocalizations {
       'Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។';
 
   @override
-  String get authLiveBanner =>
-      'ចូលដោយ Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។';
+  String get authLiveBanner => 'ចូលដោយអ៊ីមែល។ ប៊ូតុងផ្សេងទៀតនៅលើទំព័រនេះដែរ។';
 
   @override
   String get authTelegram => 'បន្តជាមួយ Telegram (សាកល្បង)';
