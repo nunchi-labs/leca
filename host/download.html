@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leca</title>
+<link rel="icon" href="/favicon.png">
+<style>
+@font-face {
+  font-family: KantumruyPro;
+  src: url("/fonts/KantumruyPro-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: KantumruyPro;
+  src: url("/fonts/KantumruyPro-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: KantumruyPro;
+  src: url("/fonts/KantumruyPro-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #f6f0e6;
+  color: #1a1410;
+  font-family: KantumruyPro, "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+}
+main { max-width: 40rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+h1 { margin: 0; color: #b42318; font-size: 3rem; font-weight: 700; }
+.lead { font-size: 1.15rem; line-height: 1.5; }
+.km { color: #5c5148; }
+.actions { display: grid; gap: 0.75rem; margin: 1.5rem 0 2rem; }
+a.button {
+  display: block;
+  text-decoration: none;
+  text-align: center;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: #b42318;
+  color: white;
+  font-weight: 600;
+}
+a.button.alt { background: white; color: #1a1410; border: 1px solid #1a1410; }
+a.button small { display: block; font-weight: 400; opacity: 0.85; }
+h2 { font-size: 1.1rem; margin: 2rem 0 0.4rem; }
+p { line-height: 1.5; }
+.note { color: #5c5148; }
+</style>
+</head>
+<body>
+<main>
+<h1>Leca</h1>
+<p class="lead">អាហារ ជិះ ជួល និងដឹកជញ្ជូន នៅគ្រប់ទីកន្លែងក្នុងប្រទេសកម្ពុជា។</p>
+<p class="lead km">Food, rides, rentals, and delivery anywhere in Cambodia.</p>
+<div class="actions">
+  <a class="button" href="/app/">ចូលប្រើក្នុងកម្មវិធីរុករក<small>Use Leca in the browser</small></a>
+  <a class="button alt" href="/downloads/chow-android.apk">ទាញយក Android<small>APK for phones and tablets</small></a>
+  <a class="button alt" href="/downloads/chow-macos.zip">ទាញយក Mac<small>Apple silicon</small></a>
+  <a class="button alt" href="/downloads/chow-windows.zip">ទាញយក Windows<small>64-bit</small></a>
+</div>
+<h2>របៀបដំឡើង</h2>
+<p>Android សុំឱ្យអនុញ្ញាតការដំឡើងពីកម្មវិធីរុករកនេះ។ On Android, allow this browser to install the app when the phone asks.</p>
+<p>Mac: unzip, then right-click Leca and choose Open the first time.</p>
+<p>Windows: if a blue SmartScreen window appears, choose More info, then Run anyway.</p>
+<p class="note">iPhone នឹងមាននៅ App Store។ The iPhone app waits on the Apple App Store.</p>
+<p class="note">Sign in with email, phone, Google, Facebook, or WeChat. The same account works in the browser and in the downloaded app.</p>
+</main>
+</body>
+</html>

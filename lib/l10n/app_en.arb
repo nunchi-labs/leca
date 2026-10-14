@@ -1,0 +1,375 @@
+{
+  "@@locale": "en",
+  "appName": "Leca",
+  "tagline": "Cheaper · better · without the silly limits",
+  "languageToggle": "ខ្មែរ",
+  "cityPhnomPenh": "Phnom Penh",
+  "citySiemReap": "Siem Reap",
+  "serviceFood": "Food",
+  "serviceSend": "Send anything",
+  "serviceRides": "Rides",
+  "serviceRent": "Rent",
+  "bornInCambodia": "Every city and village in Cambodia.",
+  "searchHint": "Search dishes or kitchens",
+  "popularTitle": "Most popular within {km} km",
+  "@popularTitle": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "radiusCountry": "All of Cambodia",
+  "popularCountry": "Most popular in Cambodia",
+  "radiusLabel": "{km} km",
+  "@radiusLabel": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "windowHour": "This hour",
+  "windowDay": "Today",
+  "windowWeek": "This week",
+  "windowMonth": "This month",
+  "popularOrders": "{count} orders",
+  "@popularOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "popularEmpty": "No popularity data for this window yet.",
+  "feePromise": "5% service fee · delivery from {price}",
+  "@feePromise": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "etaMins": "{mins} min",
+  "@etaMins": {
+    "placeholders": {
+      "mins": {
+        "type": "int"
+      }
+    }
+  },
+  "deliveryFrom": "Delivery {price}",
+  "@deliveryFrom": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingPlaces": "Loading kitchens…",
+  "emptySearchTitle": "Nothing matches",
+  "emptySearchBody": "Nothing in this radius. Increase the kilometres.",
+  "catalogError": "Could not load kitchens.",
+  "retry": "Try again",
+  "add": "Add",
+  "cart": "Cart",
+  "cartItems": "{count} items",
+  "@cartItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkout": "Order",
+  "emptyCartTitle": "Cart is empty",
+  "emptyCartBody": "Add a dish first, then come back to pay.",
+  "backToFood": "Back to food",
+  "noteLabel": "Order note",
+  "noteHint": "e.g. no soy sauce, extra chilli",
+  "amountLabel": "Amount",
+  "subtotal": "Food",
+  "deliveryFee": "Delivery",
+  "serviceFee": "Service fee",
+  "serviceFeeNone": "5% of this sale.",
+  "driverMinutes": "{name} is {minutes} minutes away",
+  "@driverMinutes": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "deliveryMinutes": "Delivery is {minutes} minutes away",
+  "@deliveryMinutes": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "total": "Total",
+  "payTitle": "Pay",
+  "scanToPay": "Scan the QR code to pay",
+  "payWith": "Pay with",
+  "stripePay": "Pay with Stripe",
+  "stripeHint": "Stripe Checkout for Visa, Mastercard, Discover, UnionPay, and Alipay. Pass STRIPE_PK when you have a live publishable key.",
+  "stripeHintLive": "Stripe is ready for Visa, Mastercard, Discover, UnionPay, and Alipay — scan or tap to pay.",
+  "stripeBrands": "Visa · Mastercard · Discover · UnionPay · Alipay",
+  "khqrHint": "Scan with {bank} or Bakong. KHQR is generated on-device — no live merchant account is connected.",
+  "@khqrHint": {
+    "placeholders": {
+      "bank": {
+        "type": "String"
+      }
+    }
+  },
+  "otherHint": "Generic fallback payload for other scanner apps.",
+  "loadingQr": "Creating QR code…",
+  "errorQr": "Could not create the QR code.",
+  "invalidAmount": "Enter a valid amount.",
+  "iPaid": "I have paid",
+  "paidTitle": "Order received",
+  "paidBody": "Keep the receipt in your bank app. Leca does not hold this payment.",
+  "close": "Close",
+  "sendTitle": "Send anything",
+  "sendBody": "Send a parcel, documents, food, or anything legal. Anyone can deliver.",
+  "sendAnythingTitle": "Send now",
+  "sendAnythingDetail": "No category bans except the law.",
+  "ridesTitle": "Rides",
+  "ridesBody": "Book a ride. Any legal vehicle, with a driver or without.",
+  "rentBody": "Rent a regular or autonomous vehicle. The list below is examples, not a closed set.",
+  "regularVehicles": "Regular vehicles",
+  "autonomousVehicles": "Autonomous vehicles",
+  "autonomousHint": "No driver — the vehicle drives itself.",
+  "withOrWithoutDriver": "With a driver or self-drive",
+  "vehicleExamplesNote": "Examples only — any legal vehicle can be rented, with or without a driver.",
+  "ok": "OK",
+  "authMockBanner": "Sign in with Google, Facebook, WeChat, or a phone number. Without the auth server this device uses a local mock.",
+  "authLiveBanner": "Sign in with Google, Facebook, WeChat, or a phone number.",
+  "authWechat": "Continue with WeChat (mock)",
+  "authWechatLive": "Continue with WeChat",
+  "authDevCode": "Development code",
+  "authProviderUnconfigured": "That sign-in provider is not configured on the server.",
+  "authSmsUnconfigured": "Phone sign-in is not configured on the server.",
+  "authPhoneInvalid": "Enter a phone number with at least 8 digits.",
+  "authCodeInvalid": "That code is not valid.",
+  "authHandleEmpty": "Enter an account.",
+  "authFailed": "Could not sign in.",
+  "authGoogle": "Continue with Google (mock)",
+  "authGoogleLive": "Continue with Google",
+  "authFacebook": "Continue with Facebook (mock)",
+  "authFacebookLive": "Continue with Facebook",
+  "authPhoneLabel": "Phone number",
+  "authPhoneHint": "012 345 678",
+  "authCodeHint": "4-digit code",
+  "authVerify": "Verify",
+  "authSendCode": "Send code",
+  "authEmailLabel": "Email",
+  "authEmailHint": "you@example.com",
+  "authPasswordHint": "Password, at least 8 characters",
+  "authNameHint": "Your name",
+  "authEmailSignIn": "Sign in with email",
+  "authCreateAccount": "Create account",
+  "authNeedAccount": "Need an account?",
+  "authHaveAccount": "Already have an account?",
+  "authEmailInvalid": "Enter a valid email address.",
+  "authPasswordShort": "Use a password of at least 8 characters.",
+  "authEmailTaken": "That email already has an account.",
+  "authCredentialsInvalid": "That email or password is not right.",
+  "deskLead": "Manage products, prices, and shops. This computer can receive a delivery. It does not go out and make one.",
+  "deskOrder": "Get a delivery",
+  "deliverTo": "Deliver to",
+  "accountTitle": "Account",
+  "earnTitle": "Earn with Leca",
+  "earnBody": "Open any lawful business, drive, or list a vehicle. One app — not a separate driver app.",
+  "openBusiness": "Open a business",
+  "driveCta": "Drive",
+  "listVehicle": "List a vehicle",
+  "myBusinesses": "My businesses",
+  "emptyBusinesses": "No businesses yet.",
+  "myVehicles": "My vehicles",
+  "emptyVehicles": "No vehicles listed yet.",
+  "withDriver": "With a driver",
+  "selfDrive": "Self-drive",
+  "drivingOn": "You are online — you can take rides",
+  "drivingOff": "You are offline",
+  "signOut": "Sign out",
+  "businessKindHint": "Restaurant, computers, baby items, pharmacy, or any lawful kind. Not a closed list.",
+  "businessKind": "Business kind",
+  "businessName": "Business name",
+  "businessInvalid": "Enter a kind and a name.",
+  "saveBusiness": "Save business",
+  "driveBody": "Go online after the partner file and training are complete. You are an independent partner, not an employee.",
+  "driveVehicleNote": "Vehicle you drive (e.g. tuktuk)",
+  "goOnline": "Go online",
+  "listVehicleBody": "List a vehicle you own. Any lawful kind, with a driver or self-drive.",
+  "vehicleKind": "Vehicle kind",
+  "autonomousToggle": "Autonomous",
+  "vehicleInvalid": "Enter a vehicle kind.",
+  "saveVehicle": "Save vehicle",
+  "jobsCta": "Accept jobs",
+  "jobsTitle": "Jobs",
+  "jobsBody": "Take rides, food, parcels — any lawful job. Not a closed list.",
+  "jobsOffline": "Go online first, then accept jobs.",
+  "emptyJobs": "No open jobs right now.",
+  "emptyAcceptedJobs": "No accepted jobs yet.",
+  "loadingJobs": "Loading jobs…",
+  "jobsError": "Could not load jobs.",
+  "acceptJob": "Accept",
+  "declineJob": "Decline",
+  "jobAccepted": "Accepted",
+  "jobDeclined": "Declined",
+  "acceptedJobs": "Accepted jobs",
+  "openJobs": "Open jobs",
+  "driverSignup": "Driver signup",
+  "driverSignupBody": "Your photo and ID card must match. In Cambodia, file a Cambodian driving licence, plate, registration, commercial insurance, the Leca logo, and training. Motorcycles do not need a technical inspection or a domestic transport certificate. Tuk-tuks and remorques do not need the transport certificate.",
+  "legalName": "Your legal name",
+  "nameOnId": "Name printed on the ID",
+  "idNumber": "ID number",
+  "selfiePhoto": "Your photo",
+  "idCardPhoto": "ID card",
+  "pickPhoto": "Add photo",
+  "saveDriver": "Submit",
+  "driverVerified": "Identity verified",
+  "driverUnverified": "Identity not verified yet",
+  "identityNameMismatch": "That name does not match the ID.",
+  "identityIdInvalid": "Enter the ID number from the card (at least 6 digits).",
+  "identityPhotoInvalid": "Use a real photo — JPEG, PNG, or WebP.",
+  "identityPhotoSame": "The selfie and the ID card must be different photos.",
+  "identityPhotoMissing": "Add both photos.",
+  "chat": "Chat",
+  "chatHint": "Message",
+  "sendMessage": "Send",
+  "replyAsBusiness": "Reply as the business",
+  "emptyChat": "No messages yet. You can write from day one.",
+  "replyFast": "Fast reply",
+  "replySlow": "Slow reply",
+  "replyNew": "No reply time yet",
+  "workingHours": "Working hours {open}–{close}",
+  "addItem": "Add item",
+  "itemDescription": "Short description",
+  "itemPrice": "Price (USD)",
+  "saveItem": "Save item",
+  "itemInvalid": "Add a photo, a short description, and a price.",
+  "emptyItems": "No items yet.",
+  "forSale": "For sale",
+  "forRent": "For rent",
+  "appPrice": "App price",
+  "driverPrice": "Driver price",
+  "proposeFare": "Propose",
+  "allowFare": "Allow this price",
+  "fareWaiting": "The rider has not allowed this price yet. The app price still applies.",
+  "saleHint": "Car, motorcycle, bicycle, or tuktuk — rent or buy, with a driver or without.",
+  "shopTitle": "Shop",
+  "ridesPartnerBody": "Rides match independent Cambodian partners. Leca does not own the vehicles. The fare is shown up front and is not discounted after you accept it.",
+  "rentPartnerBody": "Rent or buy a vehicle the owner listed. Leca does not operate a fleet.",
+  "rentExamplesKh": "Examples of partner-owned vehicles. Leca does not own or operate them.",
+  "platformFleetBlocked": "Leca does not operate autonomous or company-owned vehicles in Cambodia.",
+  "ownerConfirm": "I own this vehicle. Leca does not.",
+  "ownerRequired": "Confirm that you own the vehicle.",
+  "licenceNumber": "Cambodian driving licence number",
+  "plateNumber": "Plate",
+  "plateLabel": "Plate",
+  "registrationNumber": "Vehicle registration number",
+  "inspectionNumber": "Technical inspection number",
+  "domesticCertNumber": "Domestic transport certificate number",
+  "insuranceNumber": "Commercial insurance number",
+  "logoConfirm": "The Leca logo will be on this vehicle",
+  "partnerConfirm": "I am an independent partner, not an employee. The fare stays with me.",
+  "trainTraffic": "I have studied the road traffic law",
+  "trainDriving": "I have studied driving",
+  "trainService": "I have studied customer service",
+  "trainConduct": "I have studied the code of conduct",
+  "onlineBlocked": "Finish the partner file and training before going online.",
+  "licenceInvalid": "Enter the Cambodian driving licence number.",
+  "plateInvalid": "Enter the plate.",
+  "registrationInvalid": "Enter the vehicle registration number.",
+  "inspectionInvalid": "Enter the technical inspection number.",
+  "transportCertInvalid": "Enter the domestic transport certificate number.",
+  "insuranceInvalid": "Enter the commercial insurance number.",
+  "logoRequired": "The vehicle needs the Leca logo.",
+  "partnerRequired": "Confirm that you are an independent partner.",
+  "trainingRequired": "Finish all four training topics first.",
+  "partnerNotice": "Drivers are independent Cambodian partners. Leca does not own taxis, tuk-tuks, or other public-transport vehicles.",
+  "sellerName": "Seller name",
+  "sellerPhone": "Seller phone",
+  "sellerId": "Seller ID number",
+  "sellerKycInvalid": "Enter the seller name, phone, and ID number.",
+  "sellerLine": "{name} · {phone}",
+  "itemDescriptionKm": "Description in Khmer",
+  "itemKhmer": "Product information must include Khmer.",
+  "payMethods": "Pay with ABA Pay, Bakong, ACLEDA, Wing Bank, cash, or Visa, Mastercard, Discover, UnionPay, and Alipay through Stripe. Leca does not hold a balance.",
+  "consumerReport": "Complaint",
+  "consumerReportDone": "The complaint is recorded. Leca will review it.",
+  "takedown": "Remove item",
+  "takedownDone": "The item was removed.",
+  "driverPhoto": "Driver photo",
+  "staffIdLabel": "Staff ID",
+  "shareFamily": "Share this trip with family",
+  "shareAuthorities": "Share this trip with authorities",
+  "shareCopied": "Copied. Send it to the recipient.",
+  "shareTripHint": "Includes the driver, plate, city, time, and location when the device provides it.",
+  "reportSafety": "Report",
+  "reportIntoxication": "Driving under the influence",
+  "reportViolence": "Violence",
+  "reportHarassment": "Sexual harassment",
+  "reportActed": "Leca recorded this and suspended this partner from new trips.",
+  "upfrontFare": "Upfront fare",
+  "noWallet": "Money settles in the bank app, with Stripe for Visa, Mastercard, Discover, UnionPay, and Alipay, or in cash. Leca has no wallet and does not take Bitcoin.",
+  "cashHint": "Pay the partner or seller in riel or US dollars. Leca does not take the cash.",
+  "dropoff": "Drop off",
+  "autoFare": "{km} km · {minutes} min",
+  "@autoFare": {
+    "placeholders": {
+      "km": {"type": "String"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "fareProof": "Proof {proof}",
+  "@fareProof": {
+    "placeholders": {
+      "proof": {"type": "String"}
+    }
+  },
+  "talkVoice": "Voice",
+  "talkVideo": "Video",
+  "talkProof": "This chat checks out",
+  "talkIroh": "Text, voice, and video connect through iroh. People in the chat do not exchange addresses.",
+  "talkWith": "Talk",
+  "whoDriver": "Driver",
+  "whoCustomer": "Customer",
+  "yourPrice": "{who} price",
+  "@yourPrice": {
+    "placeholders": {
+      "who": {"type": "String"}
+    }
+  },
+  "proposedBy": "{who} proposes {price}. The app price applies until the other side allows it.",
+  "@proposedBy": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "price": {"type": "String"}
+    }
+  },
+  "agreedPrice": "Agreed price",
+  "priceAllowed": "{price} allowed",
+  "@priceAllowed": {
+    "placeholders": {
+      "price": {"type": "String"}
+    }
+  },
+  "priceInChat": "Price is negotiated here. Either side can propose; the other allows.",
+  "trainAll": "I completed all four training topics",
+  "signupReady": "Everything is here. Save to get your staff ID.",
+  "signupNext": "Next: {step}",
+  "@signupNext": {
+    "placeholders": {
+      "step": {"type": "String"}
+    }
+  },
+  "talkInCall": "{name} started {kind}",
+  "@talkInCall": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "kind": {"type": "String"}
+    }
+  }
+}

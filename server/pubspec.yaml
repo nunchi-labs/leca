@@ -1,0 +1,13 @@
+name: chow_auth
+description: Chow sign-in server for phone, Google, Facebook, and WeChat.
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+dependencies:
+  crypto: ^3.0.6
+
+dev_dependencies:
+  test: ^1.25.0

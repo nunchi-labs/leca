@@ -1,0 +1,35 @@
+{
+    "name": "Leca",
+    "short_name": "Leca",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#F6F0E6",
+    "theme_color": "#B42318",
+    "description": "Leca — food, send anything, and rides. Pay with ABA KHQR.",
+    "orientation": "any",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

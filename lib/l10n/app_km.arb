@@ -1,0 +1,395 @@
+{
+  "@@locale": "km",
+  "appName": "Leca",
+  "tagline": "ថោកជាង · គុណភាពខ្ពស់ · គ្មានដែនកំណត់ឆោត",
+  "languageToggle": "EN",
+  "cityPhnomPenh": "ភ្នំពេញ",
+  "citySiemReap": "សៀមរាប",
+  "serviceFood": "អាហារ",
+  "serviceSend": "ផ្ញើអ្វីក៏បាន",
+  "serviceRides": "ជិះ",
+  "serviceRent": "ជួលយាន",
+  "bornInCambodia": "គ្រប់ក្រុង ឃុំ និងភូមិក្នុងកម្ពុជា។",
+  "searchHint": "ស្វែងរកម្ហូប ឬភោជនីយដ្ឋាន",
+  "popularTitle": "ម្ហូបពេញនិយមក្នុងចម្ងាយ {km} គីឡូម៉ែត្រ",
+  "@popularTitle": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "radiusCountry": "ទូទាំងកម្ពុជា",
+  "popularCountry": "ម្ហូបពេញនិយមទូទាំងកម្ពុជា",
+  "radiusLabel": "{km} គីឡូម៉ែត្រ",
+  "@radiusLabel": {
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "windowHour": "ម៉ោងនេះ",
+  "windowDay": "ថ្ងៃនេះ",
+  "windowWeek": "សប្ដាហ៍នេះ",
+  "windowMonth": "ខែនេះ",
+  "popularOrders": "{count} ការកម្មង់",
+  "@popularOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "popularEmpty": "មិនទាន់មានទិន្នន័យសម្រាប់ពេលនេះទេ",
+  "feePromise": "ថ្លៃសេវា ៥% · ថ្លៃដឹកចាប់ពី {price}",
+  "@feePromise": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "etaMins": "{mins} នាទី",
+  "@etaMins": {
+    "placeholders": {
+      "mins": {
+        "type": "int"
+      }
+    }
+  },
+  "deliveryFrom": "ដឹក {price}",
+  "@deliveryFrom": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingPlaces": "កំពុងផ្ទុកភោជនីយដ្ឋាន…",
+  "emptySearchTitle": "រកមិនឃើញ",
+  "emptySearchBody": "គ្មានអ្វីក្នុងរង្វង់នេះទេ។ បង្កើនចំនួនគីឡូម៉ែត្រ។",
+  "catalogError": "មិនអាចផ្ទុកភោជនីយដ្ឋានបានទេ។",
+  "retry": "ព្យាយាមម្ដងទៀត",
+  "add": "បន្ថែម",
+  "cart": "រទេះ",
+  "cartItems": "{count} មុខ",
+  "@cartItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "checkout": "បញ្ជាទិញ",
+  "emptyCartTitle": "រទេះទទេ",
+  "emptyCartBody": "ជ្រើសម្ហូបសិន រួចត្រឡប់មកបង់ប្រាក់។",
+  "backToFood": "ត្រឡប់ទៅអាហារ",
+  "noteLabel": "កំណត់ចំណាំការកម្មង់",
+  "noteHint": "ឧទាហរណ៍៖ មិនដាក់ទឹកស៊ីអ៊ីវ បន្ថែមម្ទេស",
+  "amountLabel": "ចំនួនទឹកប្រាក់",
+  "subtotal": "ម្ហូប",
+  "deliveryFee": "ថ្លៃដឹក",
+  "serviceFee": "ថ្លៃសេវា",
+  "serviceFeeNone": "៥% នៃការលក់នេះ។",
+  "driverMinutes": "{name} នៅចម្ងាយ {minutes} នាទី",
+  "@driverMinutes": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "deliveryMinutes": "ការដឹកនៅចម្ងាយ {minutes} នាទី",
+  "@deliveryMinutes": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "total": "សរុប",
+  "payTitle": "បង់ប្រាក់",
+  "scanToPay": "ស្កេនកូដ QR ដើម្បីបង់",
+  "payWith": "បង់តាម",
+  "stripePay": "បង់តាម Stripe",
+  "stripeHint": "Stripe Checkout សម្រាប់ Visa, Mastercard, Discover, UnionPay និង Alipay។ ដាក់ STRIPE_PK ពេលមានសោពិត។",
+  "stripeHintLive": "Stripe រួចរាល់សម្រាប់ Visa, Mastercard, Discover, UnionPay និង Alipay — ស្កេន ឬប៉ះដើម្បីបង់។",
+  "stripeBrands": "Visa · Mastercard · Discover · UnionPay · Alipay",
+  "khqrHint": "ស្កេនដោយ {bank} ឬ Bakong។ KHQR បង្កើតក្នុងឧបករណ៍ — មិនទាន់ភ្ជាប់គណនីពិត។",
+  "@khqrHint": {
+    "placeholders": {
+      "bank": {
+        "type": "String"
+      }
+    }
+  },
+  "otherHint": "QR ទូទៅ សម្រាប់កម្មវិធីស្កេនផ្សេង។",
+  "loadingQr": "កំពុងបង្កើតកូដ QR…",
+  "errorQr": "មិនអាចបង្កើតកូដ QR បានទេ។",
+  "invalidAmount": "ចំនួនទឹកប្រាក់មិនត្រឹមត្រូវ។",
+  "iPaid": "ខ្ញុំបានបង់ហើយ",
+  "paidTitle": "បានទទួលការកម្មង់",
+  "paidBody": "រក្សាវិក្កយបត្រក្នុងកម្មវិធីធនាគារ។ Leca មិនកាន់ប្រាក់នេះទេ។",
+  "close": "បិទ",
+  "sendTitle": "ផ្ញើអ្វីក៏បាន",
+  "sendBody": "ផ្ញើកញ្ចប់ ឯកសារ ម្ហូប ឬអ្វីដែលស្របច្បាប់។ អ្នកណាក៏អាចដឹកបាន។",
+  "sendAnythingTitle": "ផ្ញើឥឡូវ",
+  "sendAnythingDetail": "គ្មានប្រភេទហាមឃាត់លើកលែងតែច្បាប់។",
+  "ridesTitle": "ជិះ",
+  "ridesBody": "កក់ការជិះ។ យានស្របច្បាប់ណាក៏បាន ទាំងមានអ្នកបើក និងបើកផ្ទាល់។",
+  "rentBody": "ជួលយានធម្មតា ឬស្វយ័ត។ បញ្ជីខាងក្រោមជាឧទាហរណ៍ មិនមែនបញ្ជីបិទ។",
+  "regularVehicles": "យានធម្មតា",
+  "autonomousVehicles": "យានស្វយ័ត",
+  "autonomousHint": "គ្មានអ្នកបើក — រថយន្តបើកដោយខ្លួនឯង។",
+  "withOrWithoutDriver": "មានអ្នកបើក ឬបើកផ្ទាល់",
+  "vehicleExamplesNote": "ឧទាហរណ៍ — យានស្របច្បាប់ផ្សេងទៀតអាចជួលបាន ទាំងមានអ្នកបើក និងគ្មាន។",
+  "ok": "យល់ព្រម",
+  "authMockBanner": "ចូលដោយ Google, Facebook, WeChat ឬលេខទូរស័ព្ទ។ បើគ្មានម៉ាស៊ីនផ្ទៀងផ្ទាត់ នឹងប្រើការចូលក្នុងម៉ាស៊ីននេះ។",
+  "authLiveBanner": "ចូលដោយ Google, Facebook, WeChat ឬលេខទូរស័ព្ទ។",
+  "authWechat": "បន្តជាមួយ WeChat (សាកល្បង)",
+  "authWechatLive": "បន្តជាមួយ WeChat",
+  "authDevCode": "លេខកូដសាកល្បង",
+  "authProviderUnconfigured": "ម៉ាស៊ីនមិនទាន់កំណត់ការចូលនេះទេ។",
+  "authSmsUnconfigured": "ម៉ាស៊ីនមិនទាន់កំណត់ការចូលដោយទូរស័ព្ទទេ។",
+  "authPhoneInvalid": "បញ្ចូលលេខទូរស័ព្ទយ៉ាងតិច ៨ ខ្ទង់។",
+  "authCodeInvalid": "លេខកូដមិនត្រឹមត្រូវ។",
+  "authHandleEmpty": "បញ្ចូលគណនី។",
+  "authFailed": "មិនអាចចូលបានទេ។",
+  "authGoogle": "បន្តជាមួយ Google (សាកល្បង)",
+  "authGoogleLive": "បន្តជាមួយ Google",
+  "authFacebook": "បន្តជាមួយ Facebook (សាកល្បង)",
+  "authFacebookLive": "បន្តជាមួយ Facebook",
+  "authPhoneLabel": "លេខទូរស័ព្ទ",
+  "authPhoneHint": "០១២ ៣៤៥ ៦៧៨",
+  "authCodeHint": "លេខកូដ ៤ ខ្ទង់",
+  "authVerify": "ផ្ទៀងផ្ទាត់",
+  "authSendCode": "ផ្ញើលេខកូដ",
+  "authEmailLabel": "អ៊ីមែល",
+  "authEmailHint": "you@example.com",
+  "authPasswordHint": "ពាក្យសម្ងាត់ យ៉ាងតិច ៨ តួ",
+  "authNameHint": "ឈ្មោះរបស់អ្នក",
+  "authEmailSignIn": "ចូលដោយអ៊ីមែល",
+  "authCreateAccount": "បង្កើតគណនី",
+  "authNeedAccount": "មិនទាន់មានគណនី?",
+  "authHaveAccount": "មានគណនីហើយ?",
+  "authEmailInvalid": "បញ្ចូលអ៊ីមែលឲ្យបានត្រឹមត្រូវ។",
+  "authPasswordShort": "ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៨ តួ។",
+  "authEmailTaken": "អ៊ីមែលនេះមានគណនីហើយ។",
+  "authCredentialsInvalid": "អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ។",
+  "deskLead": "គ្រប់គ្រងទំនិញ តម្លៃ និងហាង។ កុំព្យូទ័រនេះអាចទទួលការដឹកបាន។ វាមិនចេញទៅដឹកទេ។",
+  "deskOrder": "ទទួលការដឹក",
+  "deliverTo": "ដឹកទៅ",
+  "accountTitle": "គណនី",
+  "earnTitle": "រកប្រាក់ជាមួយ Leca",
+  "earnBody": "បើកអាជីវកម្មស្របច្បាប់ណាក៏បាន បើកបរ ឬដាក់យានឲ្យជួល។ មួយកម្មវិធី — មិនមែនកម្មវិធីអ្នកបើកដាច់ដោយឡែក។",
+  "openBusiness": "បើកអាជីវកម្ម",
+  "driveCta": "បើកបរ",
+  "listVehicle": "ដាក់យាន",
+  "myBusinesses": "អាជីវកម្មរបស់ខ្ញុំ",
+  "emptyBusinesses": "មិនទាន់មានអាជីវកម្ម។",
+  "myVehicles": "យានរបស់ខ្ញុំ",
+  "emptyVehicles": "មិនទាន់មានយានដាក់។",
+  "withDriver": "មានអ្នកបើក",
+  "selfDrive": "បើកផ្ទាល់",
+  "drivingOn": "អ្នកកំពុងនៅលើបណ្ដាញ — អាចទទួលការជិះ",
+  "drivingOff": "អ្នកនៅក្រៅបណ្ដាញ",
+  "signOut": "ចាកចេញ",
+  "businessKindHint": "ភោជនីយដ្ឋាន កុំព្យូទ័រ ទំនិញទារក ឱសថស្ថាន ឬប្រភេទស្របច្បាប់ណាក៏បាន។ មិនមែនបញ្ជីបិទ។",
+  "businessKind": "ប្រភេទអាជីវកម្ម",
+  "businessName": "ឈ្មោះអាជីវកម្ម",
+  "businessInvalid": "បញ្ចូលប្រភេទ និងឈ្មោះ។",
+  "saveBusiness": "រក្សាទុកអាជីវកម្ម",
+  "driveBody": "ចូលបណ្ដាញបានបន្ទាប់ពីឯកសារដៃគូ និងការបណ្ដុះបណ្ដាលគ្រប់។ អ្នកជាដៃគូឯករាជ្យ មិនមែននិយោជិត។",
+  "driveVehicleNote": "យានដែលអ្នកបើក (ឧ. ទូកទូក)",
+  "goOnline": "ចូលបណ្ដាញ",
+  "listVehicleBody": "ដាក់យានដែលអ្នកជាម្ចាស់។ ប្រភេទស្របច្បាប់ណាក៏បាន មានអ្នកបើក ឬបើកផ្ទាល់។",
+  "vehicleKind": "ប្រភេទយាន",
+  "autonomousToggle": "ស្វយ័ត",
+  "vehicleInvalid": "បញ្ចូលប្រភេទយាន។",
+  "saveVehicle": "រក្សាទុកយាន",
+  "jobsCta": "ទទួលការងារ",
+  "jobsTitle": "ការងារ",
+  "jobsBody": "ទទួលការជិះ ដឹកម្ហូប ផ្ញើអ្វីស្របច្បាប់។ មិនមែនបញ្ជីបិទ។",
+  "jobsOffline": "ចូលបណ្ដាញសិន រួចទទួលការងារ។",
+  "emptyJobs": "មិនទាន់មានការងារបើក។",
+  "emptyAcceptedJobs": "មិនទាន់មានការងារបានទទួល។",
+  "loadingJobs": "កំពុងផ្ទុកការងារ…",
+  "jobsError": "មិនអាចផ្ទុកការងារបានទេ។",
+  "acceptJob": "ទទួល",
+  "declineJob": "បដិសេធ",
+  "jobAccepted": "បានទទួល",
+  "jobDeclined": "បានបដិសេធ",
+  "acceptedJobs": "ការងារបានទទួល",
+  "openJobs": "ការងារបើក",
+  "driverSignup": "ចុះឈ្មោះអ្នកបើក",
+  "driverSignupBody": "រូបមុខ និងអត្តសញ្ញាណប័ណ្ណត្រូវត្រូវគ្នា។ នៅកម្ពុជា ត្រូវមានប័ណ្ណបើកបរកម្ពុជា ផ្លាក បណ្ណសម្គាល់យាន ធានារ៉ាប់រងពាណិជ្ជកម្ម ស្លាក Leca និងការបណ្ដុះបណ្ដាល។ ម៉ូតូមិនត្រូវការលិខិតត្រួតពិនិត្យ និងវិញ្ញាបនបត្រដឹកជញ្ជូនទេ។ ទូកទូក និងរម៉កមិនត្រូវការវិញ្ញាបនបត្រដឹកជញ្ជូនទេ។",
+  "legalName": "ឈ្មោះពេញ",
+  "nameOnId": "ឈ្មោះលើអត្តសញ្ញាណប័ណ្ណ",
+  "idNumber": "លេខអត្តសញ្ញាណ",
+  "selfiePhoto": "រូបមុខ",
+  "idCardPhoto": "អត្តសញ្ញាណប័ណ្ណ",
+  "pickPhoto": "បន្ថែមរូប",
+  "saveDriver": "ផ្ញើ",
+  "driverVerified": "អត្តសញ្ញាណបានផ្ទៀងផ្ទាត់",
+  "driverUnverified": "មិនទាន់ផ្ទៀងផ្ទាត់អត្តសញ្ញាណ",
+  "identityNameMismatch": "ឈ្មោះមិនដូចនឹងលើអត្តសញ្ញាណប័ណ្ណ។",
+  "identityIdInvalid": "បញ្ចូលលេខអត្តសញ្ញាណយ៉ាងតិច ៦ ខ្ទង់។",
+  "identityPhotoInvalid": "ប្រើរូបពិត — JPEG, PNG ឬ WebP។",
+  "identityPhotoSame": "រូបមុខ និងអត្តសញ្ញាណប័ណ្ណត្រូវខុសគ្នា។",
+  "identityPhotoMissing": "បន្ថែមរូបទាំងពីរ។",
+  "chat": "ជជែក",
+  "chatHint": "សារ",
+  "sendMessage": "ផ្ញើ",
+  "replyAsBusiness": "ឆ្លើយជាអាជីវកម្ម",
+  "emptyChat": "មិនទាន់មានសារ។ អាចសរសេរបានតាំងពីថ្ងៃដំបូង។",
+  "replyFast": "ឆ្លើយរហ័ស",
+  "replySlow": "ឆ្លើយយឺត",
+  "replyNew": "មិនទាន់មានពេលឆ្លើយ",
+  "workingHours": "ម៉ោងធ្វើការ {open}–{close}",
+  "@workingHours": {
+    "placeholders": {
+      "open": {
+        "type": "String"
+      },
+      "close": {
+        "type": "String"
+      }
+    }
+  },
+  "addItem": "បន្ថែមទំនិញ",
+  "itemDescription": "ការពិពណ៌នាខ្លី",
+  "itemPrice": "តម្លៃ (USD)",
+  "saveItem": "រក្សាទុកទំនិញ",
+  "itemInvalid": "បន្ថែមរូប ការពិពណ៌នាខ្លី និងតម្លៃ។",
+  "emptyItems": "មិនទាន់មានទំនិញ។",
+  "forSale": "លក់",
+  "forRent": "ជួល",
+  "appPrice": "តម្លៃកម្មវិធី",
+  "driverPrice": "តម្លៃអ្នកបើក",
+  "proposeFare": "ស្នើ",
+  "allowFare": "យល់ព្រមតម្លៃនេះ",
+  "fareWaiting": "អ្នកជិះមិនទាន់យល់ព្រមតម្លៃនេះ។ តម្លៃកម្មវិធីនៅតែប្រើ។",
+  "saleHint": "ឡាន ម៉ូតូ កង់ ទូកទូក — ជួល ឬទិញ មានអ្នកបើក ឬអត់។",
+  "shopTitle": "ហាង",
+  "ridesPartnerBody": "ការជិះផ្គូផ្គងជាមួយអ្នកបើកកម្ពុជាឯករាជ្យ។ Leca មិនកាន់កាប់យានទេ។ តម្លៃបង្ហាញមុន ហើយមិនបញ្ចុះក្រោយពេលអ្នកជិះយល់ព្រម។",
+  "rentPartnerBody": "ជួល ឬទិញយានដែលម្ចាស់ដាក់ឯង។ Leca មិនដំណើរការកងយានទេ។",
+  "rentExamplesKh": "ឧទាហរណ៍យានរបស់ដៃគូ។ Leca មិនកាន់កាប់ និងមិនដំណើរការយានទេ។",
+  "platformFleetBlocked": "Leca មិនដំណើរការយានស្វយ័ត ឬកងយានផ្ទាល់ខ្លួននៅកម្ពុជាទេ។",
+  "ownerConfirm": "ខ្ញុំជាម្ចាស់យាននេះ។ Leca មិនមែនម្ចាស់។",
+  "ownerRequired": "បញ្ជាក់ថាអ្នកជាម្ចាស់យាន។",
+  "licenceNumber": "លេខប័ណ្ណបើកបរកម្ពុជា",
+  "plateNumber": "ផ្លាកលេខ",
+  "plateLabel": "ផ្លាក",
+  "registrationNumber": "លេខបណ្ណសម្គាល់យានយន្ត",
+  "inspectionNumber": "លេខលិខិតត្រួតពិនិត្យបច្ចេកទេស",
+  "domesticCertNumber": "លេខវិញ្ញាបនបត្រដឹកជញ្ជូនក្នុងស្រុក",
+  "insuranceNumber": "លេខធានារ៉ាប់រងពាណិជ្ជកម្ម",
+  "logoConfirm": "ខ្ញុំនឹងដាក់ស្លាកសញ្ញា Leca លើយាន",
+  "partnerConfirm": "ខ្ញុំជាដៃគូឯករាជ្យ មិនមែននិយោជិត។ ចំណូលនៅជាមួយខ្ញុំ។",
+  "trainTraffic": "ខ្ញុំបានរៀនច្បាប់ចរាចរណ៍ផ្លូវគោក",
+  "trainDriving": "ខ្ញុំបានរៀនការបើកបរ",
+  "trainService": "ខ្ញុំបានរៀនសេវាអតិថិជន",
+  "trainConduct": "ខ្ញុំបានរៀនក្រមសីលធម៌",
+  "onlineBlocked": "បំពេញឯកសារដៃគូ និងការបណ្ដុះបណ្ដាលសិន ទើបចូលបណ្ដាញបាន។",
+  "licenceInvalid": "បញ្ចូលលេខប័ណ្ណបើកបរកម្ពុជា។",
+  "plateInvalid": "បញ្ចូលផ្លាកលេខ។",
+  "registrationInvalid": "បញ្ចូលលេខបណ្ណសម្គាល់យានយន្ត។",
+  "inspectionInvalid": "បញ្ចូលលេខលិខិតត្រួតពិនិត្យបច្ចេកទេស។",
+  "transportCertInvalid": "បញ្ចូលលេខវិញ្ញាបនបត្រដឹកជញ្ជូនក្នុងស្រុក។",
+  "insuranceInvalid": "បញ្ចូលលេខធានារ៉ាប់រងពាណិជ្ជកម្ម។",
+  "logoRequired": "យានត្រូវមានស្លាកសញ្ញា Leca។",
+  "partnerRequired": "បញ្ជាក់ថាអ្នកជាដៃគូឯករាជ្យ។",
+  "trainingRequired": "បញ្ចប់ការបណ្ដុះបណ្ដាលទាំងបួនសិន។",
+  "partnerNotice": "អ្នកបើកជាដៃគូកម្ពុជាឯករាជ្យ។ Leca មិនកាន់កាប់តាក់ស៊ី រ៉ឺម៉ក ឬយានសាធារណៈផ្សេងទេ។",
+  "sellerName": "ឈ្មោះអ្នកលក់",
+  "sellerPhone": "ទូរស័ព្ទអ្នកលក់",
+  "sellerId": "លេខអត្តសញ្ញាណអ្នកលក់",
+  "sellerKycInvalid": "បញ្ចូលឈ្មោះ ទូរស័ព្ទ និងលេខអត្តសញ្ញាណអ្នកលក់។",
+  "sellerLine": "{name} · {phone}",
+  "@sellerLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "itemDescriptionKm": "ការពិពណ៌នាជាភាសាខ្មែរ",
+  "itemKhmer": "ព័ត៌មានទំនិញត្រូវមានអក្សរខ្មែរ។",
+  "payMethods": "បង់តាម ABA Pay, Bakong, ACLEDA, Wing Bank, សាច់ប្រាក់ ឬ Visa, Mastercard, Discover, UnionPay និង Alipay តាម Stripe។ Leca មិនកាន់សមតុល្យ។",
+  "consumerReport": "តវ៉ា",
+  "consumerReportDone": "ការតវ៉ាត្រូវបានកត់ត្រា។ Leca នឹងពិនិត្យ។",
+  "takedown": "ដកទំនិញ",
+  "takedownDone": "ទំនិញត្រូវបានដក។",
+  "driverPhoto": "រូបអ្នកបើក",
+  "staffIdLabel": "បណ្ណបុគ្គលិក",
+  "shareFamily": "ចែកការជិះនេះទៅគ្រួសារ",
+  "shareAuthorities": "ចែកការជិះនេះទៅអាជ្ញាធរ",
+  "shareCopied": "បានចម្លង។ ផ្ញើទៅអ្នកទទួល។",
+  "shareTripHint": "រួមមានអ្នកបើក ផ្លាក ក្រុង ម៉ោង និងទីតាំងបើឧបករណ៍ផ្ដល់។",
+  "reportSafety": "រាយការណ៍",
+  "reportIntoxication": "បើកបរក្រោមឥទ្ធិពល",
+  "reportViolence": "អំពើហិង្សា",
+  "reportHarassment": "ការបៀតបៀនផ្លូវភេទ",
+  "reportActed": "Leca បានកត់ត្រា ហើយផ្អាកដៃគូនេះពីការជិះថ្មី។",
+  "upfrontFare": "តម្លៃបង្ហាញមុន",
+  "noWallet": "ប្រាក់ចូលធនាគារ តាម Stripe សម្រាប់ Visa, Mastercard, Discover, UnionPay និង Alipay ឬជាសាច់ប្រាក់។ Leca មិនមានកាបូបប្រាក់ ឬ Bitcoin។",
+  "cashHint": "បង់ជារៀល ឬដុល្លារទៅដៃគូ ឬអ្នកលក់។ Leca មិនទទួលសាច់ប្រាក់នេះទេ។",
+  "dropoff": "ទម្លាក់",
+  "autoFare": "{km} គ.ម · {minutes} នាទី",
+  "@autoFare": {
+    "placeholders": {
+      "km": {"type": "String"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "fareProof": "ភស្តុតាង {proof}",
+  "@fareProof": {
+    "placeholders": {
+      "proof": {"type": "String"}
+    }
+  },
+  "talkVoice": "សំឡេង",
+  "talkVideo": "វីដេអូ",
+  "talkProof": "ការជជែកនេះផ្ទៀងផ្ទាត់បាន",
+  "talkIroh": "អក្សរ សំឡេង និងវីដេអូភ្ជាប់តាម iroh។ អ្នកនៅក្នុងការជជែកមិនបាច់ផ្លាស់អាសយដ្ឋាន។",
+  "talkWith": "ជជែក",
+  "whoDriver": "អ្នកបើក",
+  "whoCustomer": "អតិថិជន",
+  "yourPrice": "តម្លៃ{who}",
+  "@yourPrice": {
+    "placeholders": {
+      "who": {"type": "String"}
+    }
+  },
+  "proposedBy": "{who} ស្នើ {price}។ តម្លៃកម្មវិធីនៅអនុវត្តរហូតដល់ម្ខាងទៀតយល់ព្រម។",
+  "@proposedBy": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "price": {"type": "String"}
+    }
+  },
+  "agreedPrice": "តម្លៃព្រមព្រៀង",
+  "priceAllowed": "យល់ព្រម {price}",
+  "@priceAllowed": {
+    "placeholders": {
+      "price": {"type": "String"}
+    }
+  },
+  "priceInChat": "តម្លៃចរចានៅទីនេះ។ ម្ខាងស្នើ ម្ខាងទៀតយល់ព្រម។",
+  "trainAll": "ខ្ញុំបានបញ្ចប់ការបណ្តុះបណ្តាលទាំងបួន",
+  "signupReady": "គ្រប់គ្រាន់ហើយ។ រក្សាទុកដើម្បីទទួលលេខបុគ្គលិក។",
+  "signupNext": "បន្ទាប់៖ {step}",
+  "@signupNext": {
+    "placeholders": {
+      "step": {"type": "String"}
+    }
+  },
+  "talkInCall": "{name} បានចាប់ផ្ដើម {kind}",
+  "@talkInCall": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "kind": {"type": "String"}
+    }
+  }
+}

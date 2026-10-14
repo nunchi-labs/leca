@@ -1,0 +1,151 @@
+/// Auth seams. Live keys are optional — the binary never requires them.
+class AuthConfig {
+  static const apiBase = String.fromEnvironment('AUTH_API');
+  static const googleClientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
+  static const facebookAppId = String.fromEnvironment('FACEBOOK_APP_ID');
+  static const smsAuth = String.fromEnvironment('SMS_AUTH');
+
+  static bool get apiLive => apiBase.isNotEmpty;
+  static bool get googleLive => apiLive || googleClientId.isNotEmpty;
+  static bool get facebookLive => apiLive || facebookAppId.isNotEmpty;
+  static bool get wechatLive => apiLive;
+  static bool get smsLive => apiLive || smsAuth.isNotEmpty;
+
+  static bool liveFor(String method) {
+    switch (method) {
+      case 'google':
+        return googleLive;
+      case 'facebook':
+        return facebookLive;
+      case 'wechat':
+        return wechatLive;
+      case 'phone':
+        return smsLive;
+      default:
+        return false;
+    }
+  }
+}
+
+class Session {
+  const Session({
+    required this.id,
+    required this.method,
+    required this.displayName,
+    required this.handle,
+    this.token,
+  });
+
+  final String id;
+  final String method;
+  final String displayName;
+  final String handle;
+  final String? token;
+}
+
+/// Opaque [kind] — restaurant, pharmacy, or any lawful string. Not an enum.
+class BusinessListing {
+  const BusinessListing({
+    required this.id,
+    required this.kind,
+    required this.name,
+    required this.cityId,
+    this.note = '',
+    this.openHour = 8,
+    this.closeHour = 21,
+    this.sellerName = '',
+    this.sellerPhone = '',
+    this.sellerId = '',
+    this.latitude = 11.5564,
+    this.longitude = 104.9282,
+  });
+
+  final String id;
+  final String kind;
+  final String name;
+  final String cityId;
+  final String note;
+  final int openHour;
+  final int closeHour;
+  final String sellerName;
+  final String sellerPhone;
+  final String sellerId;
+  final double latitude;
+  final double longitude;
+}
+
+/// Opaque [kind] — same rule as customer rentals.
+class ListedVehicle {
+  const ListedVehicle({
+    required this.id,
+    required this.kind,
+    required this.withDriver,
+    required this.autonomous,
+    this.note = '',
+    this.owner = false,
+    this.latitude = 11.5564,
+    this.longitude = 104.9282,
+  });
+
+  final String id;
+  final String kind;
+  final bool withDriver;
+  final bool autonomous;
+  final String note;
+  final bool owner;
+  final double latitude;
+  final double longitude;
+}
+
+/// Opaque [kind] — food, ride, send, or any lawful job string.
+class OperatorJob {
+  const OperatorJob({
+    required this.id,
+    required this.kind,
+    required this.titleKm,
+    required this.titleEn,
+    required this.detailKm,
+    required this.detailEn,
+    required this.usd,
+    this.status = 'open',
+    this.latitude = 11.5564,
+    this.longitude = 104.9282,
+    this.room = '',
+  });
+
+  final String id;
+  final String kind;
+  final String titleKm;
+  final String titleEn;
+  final String detailKm;
+  final String detailEn;
+  final double usd;
+  final String status;
+  final double latitude;
+  final double longitude;
+
+  /// Chat room shared with the customer. Empty means a room of its own.
+  final String room;
+
+  String get talkRoom => room.isEmpty ? 'job:$id' : room;
+
+  String titleFor(bool km) => km ? titleKm : titleEn;
+
+  String detailFor(bool km) => km ? detailKm : detailEn;
+
+  OperatorJob copyWith({String? status}) {
+    return OperatorJob(
+      id: id,
+      kind: kind,
+      titleKm: titleKm,
+      titleEn: titleEn,
+      detailKm: detailKm,
+      detailEn: detailEn,
+      usd: usd,
+      status: status ?? this.status,
+      latitude: latitude,
+      longitude: longitude,
+      room: room,
+    );
+  }
+}

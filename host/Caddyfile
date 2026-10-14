@@ -1,0 +1,57 @@
+{
+	on_demand_tls {
+		ask http://127.0.0.1:8088/tls-ask
+	}
+}
+
+:443 {
+	tls {
+		on_demand
+	}
+
+	encode gzip
+
+	handle /v1/* {
+		reverse_proxy 127.0.0.1:8088
+	}
+	handle /health {
+		reverse_proxy 127.0.0.1:8088
+	}
+	handle /tls-ask {
+		reverse_proxy 127.0.0.1:8088
+	}
+
+	handle /downloads/* {
+		root * /var/www/chow
+		header Cache-Control "no-cache"
+		header Content-Disposition "attachment"
+		file_server
+	}
+
+	@site {
+		path /download /download.html /favicon.png /fonts/*
+	}
+	handle @site {
+		root * /var/www/chow
+		rewrite /download /download.html
+		file_server
+	}
+
+	redir /app /app/ permanent
+
+	handle_path /app/* {
+		root * /var/www/chow/web
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle {
+		root * /var/www/chow
+		rewrite * /download.html
+		file_server
+	}
+}
+
+:80 {
+	redir https://{host}{uri} permanent
+}

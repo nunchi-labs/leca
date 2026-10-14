@@ -1,0 +1,42 @@
+name: chow
+description: Leca — Cambodia. Food, rides, rentals.
+publish_to: "none"
+version: 0.2.0+2
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  qr_flutter: ^4.1.0
+  file_selector: ^1.0.3
+  geolocator: ^14.1.1
+  http: ^1.6.0
+  url_launcher: ^6.3.3
+  crypto: ^3.0.7
+  web_socket_channel: ^3.0.3
+  iroh_flutter: ^1.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+  fonts:
+    - family: KantumruyPro
+      fonts:
+        - asset: assets/fonts/KantumruyPro-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/KantumruyPro-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/KantumruyPro-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/KantumruyPro-Bold.ttf
+          weight: 700
