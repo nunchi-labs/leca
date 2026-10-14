@@ -27,8 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _future = Catalog.load();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !chowOnPhone(context)) return;
-      ChowScope.of(context).loadHere();
+      if (!mounted || !lecaOnPhone(context)) return;
+      LecaScope.of(context).loadHere();
     });
   }
 
@@ -45,10 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final query = _search.text.trim().toLowerCase();
 
-    if (!chowOnPhone(context)) {
+    if (!lecaOnPhone(context)) {
       return _DeskHome(
         l10n: l10n,
         state: state,
@@ -97,8 +97,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Slider(
                           value: state.radiusKm,
                           min: 1,
-                          max: ChowState.countryWide,
-                          divisions: ChowState.countryWide.toInt() - 1,
+                          max: LecaState.countryWide,
+                          divisions: LecaState.countryWide.toInt() - 1,
                           label: _radiusText(l10n, state),
                           onChanged: state.setRadius,
                         ),
@@ -267,7 +267,7 @@ class _DeskHome extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
   final String query;
   final TextEditingController search;
   final Future<List<Kitchen>> future;
@@ -373,8 +373,8 @@ class _DeskHome extends StatelessWidget {
                       child: Slider(
                         value: state.radiusKm,
                         min: 1,
-                        max: ChowState.countryWide,
-                        divisions: ChowState.countryWide.toInt() - 1,
+                        max: LecaState.countryWide,
+                        divisions: LecaState.countryWide.toInt() - 1,
                         label: _radiusText(l10n, state),
                         onChanged: state.setRadius,
                       ),
@@ -464,7 +464,7 @@ class _DeskHome extends StatelessWidget {
   }
 }
 
-String _radiusText(AppLocalizations l10n, ChowState state) {
+String _radiusText(AppLocalizations l10n, LecaState state) {
   if (state.wholeCountry) return l10n.radiusCountry;
   return l10n.radiusLabel(state.radiusKm.round());
 }
@@ -473,7 +473,7 @@ class _Header extends StatelessWidget {
   const _Header({required this.l10n, required this.state});
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
 
   @override
   Widget build(BuildContext context) {
@@ -599,7 +599,7 @@ class PopularCard extends StatelessWidget {
   const PopularCard({super.key, required this.l10n, required this.state});
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
 
   @override
   Widget build(BuildContext context) {
@@ -737,7 +737,7 @@ class KitchenTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${kitchen.areaFor(lang)} · ${l10n.etaMins(kitchen.etaMin)} · ${l10n.deliveryFrom(moneyUsd(ChowScope.of(context).deliveryQuoteOf(kitchen).usd))}',
+                      '${kitchen.areaFor(lang)} · ${l10n.etaMins(kitchen.etaMin)} · ${l10n.deliveryFrom(moneyUsd(LecaScope.of(context).deliveryQuoteOf(kitchen).usd))}',
                     ),
                     const SizedBox(height: 6),
                     ReplyMark(placeId: kitchen.id),
@@ -752,8 +752,8 @@ class KitchenTile extends StatelessWidget {
                       builder: (_) => ChatScreen(
                         placeId: kitchen.id,
                         title: kitchen.nameFor(lang),
-                        fareKey: ChowScope.of(context).deliveryFareKey(kitchen),
-                        appUsd: ChowScope.of(context)
+                        fareKey: LecaScope.of(context).deliveryFareKey(kitchen),
+                        appUsd: LecaScope.of(context)
                             .deliveryQuoteOf(kitchen)
                             .usd,
                       ),
@@ -782,7 +782,7 @@ class _CartBar extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
   final VoidCallback onCheckout;
 
   @override

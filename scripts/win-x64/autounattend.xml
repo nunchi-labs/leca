@@ -66,8 +66,8 @@
       </ImageInstall>
       <UserData>
         <AcceptEula>true</AcceptEula>
-        <FullName>Chow</FullName>
-        <Organization>Chow</Organization>
+        <FullName>Leca</FullName>
+        <Organization>Leca</Organization>
         <ProductKey>
           <Key>VK7JG-NPHTM-C97JM-9MPGT-3V66T</Key>
           <WillShowUI>OnError</WillShowUI>
@@ -77,7 +77,7 @@
   </settings>
   <settings pass="specialize">
     <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
-      <ComputerName>CHOW-WINX64</ComputerName>
+      <ComputerName>LECA-WINX64</ComputerName>
       <TimeZone>SE Asia Standard Time</TimeZone>
     </component>
     <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
@@ -107,10 +107,10 @@
       <UserAccounts>
         <LocalAccounts>
           <LocalAccount wcm:action="add">
-            <Name>chow</Name>
+            <Name>leca</Name>
             <Group>Administrators</Group>
             <Password>
-              <Value>ChowBuild1</Value>
+              <Value>LecaBuild1</Value>
               <PlainText>true</PlainText>
             </Password>
           </LocalAccount>
@@ -118,9 +118,9 @@
       </UserAccounts>
       <AutoLogon>
         <Enabled>true</Enabled>
-        <Username>chow</Username>
+        <Username>leca</Username>
         <Password>
-          <Value>ChowBuild1</Value>
+          <Value>LecaBuild1</Value>
           <PlainText>true</PlainText>
         </Password>
         <LogonCount>5</LogonCount>

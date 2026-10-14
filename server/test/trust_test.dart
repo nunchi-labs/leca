@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:chow_auth/chow_auth.dart';
-import 'package:chow_auth/trust.dart';
+import 'package:leca_auth/leca_auth.dart';
+import 'package:leca_auth/trust.dart';
 import 'package:test/test.dart';
 
 final _png = base64Encode(

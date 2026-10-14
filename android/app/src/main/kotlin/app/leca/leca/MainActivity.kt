@@ -1,4 +1,4 @@
-package app.chow.chow
+package app.leca.leca
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,12 +1,12 @@
-# Installed by autounattend on first logon, then again after each reboot until C:\chow\ready exists.
+# Installed by autounattend on first logon, then again after each reboot until C:\leca\ready exists.
 $ErrorActionPreference = 'Continue'
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
   Start-Process -FilePath powershell.exe -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$PSCommandPath`""
   exit 0
 }
-New-Item -ItemType Directory -Force -Path C:\chow | Out-Null
-$log = 'C:\chow\provision.log'
+New-Item -ItemType Directory -Force -Path C:\leca | Out-Null
+$log = 'C:\leca\provision.log'
 function Log($msg) {
   $line = "$(Get-Date -Format o) $msg"
   Add-Content -Path $log -Value $line
@@ -14,13 +14,13 @@ function Log($msg) {
 }
 
 $here = $PSCommandPath
-$installed = 'C:\chow\provision.ps1'
+$installed = 'C:\leca\provision.ps1'
 if ($here -and $here -ne $installed -and (Test-Path $here)) {
   Copy-Item $here $installed -Force
 }
-$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-ExecutionPolicy Bypass -File C:\chow\provision.ps1'
-$trigger = New-ScheduledTaskTrigger -AtLogOn -User chow
-Register-ScheduledTask -TaskName ChowProvision -Action $action -Trigger $trigger -User chow -RunLevel Highest -Force | Out-Null
+$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-ExecutionPolicy Bypass -File C:\leca\provision.ps1'
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User leca
+Register-ScheduledTask -TaskName LecaProvision -Action $action -Trigger $trigger -User leca -RunLevel Highest -Force | Out-Null
 
 New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -Force | Out-Null
 New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -Name AllowDevelopmentWithoutDevLicense -PropertyType DWord -Value 1 -Force | Out-Null
@@ -32,7 +32,7 @@ Stop-Service -Name wuauserv -Force -ErrorAction SilentlyContinue
 Set-Service -Name UsoSvc -StartupType Disabled -ErrorAction SilentlyContinue
 Stop-Service -Name UsoSvc -Force -ErrorAction SilentlyContinue
 
-if (Test-Path C:\chow\ready) { exit 0 }
+if (Test-Path C:\leca\ready) { exit 0 }
 Log 'provision start'
 
 foreach ($d in 'D','E','F','G') {
@@ -88,7 +88,7 @@ if (Test-Path $vswhere) {
 }
 if (-not $cl) {
   Log 'install Visual Studio Build Tools'
-  $setup = 'C:\chow\vs_buildtools.exe'
+  $setup = 'C:\leca\vs_buildtools.exe'
   if (-not (Test-Path $setup)) {
     Invoke-WebRequest -Uri https://aka.ms/vs/17/release/vs_buildtools.exe -OutFile $setup
   }
@@ -133,5 +133,5 @@ if (-not (Test-Path C:\flutter\bin\flutter.bat)) {
   exit 1
 }
 
-Set-Content -Path C:\chow\ready -Value 'ok'
+Set-Content -Path C:\leca\ready -Value 'ok'
 Log 'provision done'

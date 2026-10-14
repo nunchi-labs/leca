@@ -73,7 +73,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     InputDecoration box(String hint) => InputDecoration(
       hintText: hint,
       filled: true,
@@ -188,7 +188,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         ? null
                         : () => state.signIn(
                             method: 'google',
-                            handle: 'sokha@chow.app',
+                            handle: 'sokha@leca.app',
                           ),
                     child: Text(
                       AuthConfig.googleLive
@@ -203,7 +203,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         ? null
                         : () => state.signIn(
                             method: 'facebook',
-                            handle: 'sokha.fb@chow.app',
+                            handle: 'sokha.fb@leca.app',
                           ),
                     child: Text(
                       AuthConfig.facebookLive
@@ -218,7 +218,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         ? null
                         : () => state.signIn(
                             method: 'wechat',
-                            handle: 'sokha.wx@chow.app',
+                            handle: 'sokha.wx@leca.app',
                           ),
                     child: Text(
                       AuthConfig.wechatLive

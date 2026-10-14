@@ -16,14 +16,14 @@ Native on **Android, iOS, macOS, Windows, Linux, and web** (Flutter). A phone is
 
 ## Sign in
 
-Google, Facebook, WeChat, email and password, or a phone number. Without the auth server the app still signs you in locally (Google → `sokha@chow.app`, Facebook → `sokha.fb@chow.app`, WeChat → `sokha.wx@chow.app`, phone → 8+ digits then a 4+ digit code). Email accounts stay on this device until you point the app at the auth server.
+Google, Facebook, WeChat, email and password, or a phone number. Without the auth server the app still signs you in locally (Google → `sokha@leca.app`, Facebook → `sokha.fb@leca.app`, WeChat → `sokha.wx@leca.app`, phone → 8+ digits then a 4+ digit code). Email accounts stay on this device until you point the app at the auth server.
 
 The server in `server/` checks the real accounts:
 
-- Phone: a 4-digit code. Twilio sends it when `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM` are set. `CHOW_DEV_OTP=1` returns the code in the response instead.
+- Phone: a 4-digit code. Twilio sends it when `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM` are set. `LECA_DEV_OTP=1` returns the code in the response instead.
 - Google, Facebook, and WeChat: the server opens the provider, takes the callback, and keeps the session. WeChat uses the website QR login.
 
-The live server is `root@65.21.232.29`. The main address is [https://leca.world](https://leca.world). These names serve the same site once each A record is `65.21.232.29`: `leca.my`, `leca.homes`, `leca.quest`, `leca.autos`, `leca.boats`, `leca.beer`, `leca.beauty`, and `leca.baby`. Email and password are real accounts. Test sign-in is off. Google, Facebook, WeChat, and phone SMS start only after their secrets are in `/etc/chow-auth.env`. Google’s redirect is `https://leca.world/v1/auth/google/callback`.
+The live server is `root@65.21.232.29`. The main address is [https://leca.world](https://leca.world). These names serve the same site once each A record is `65.21.232.29`: `leca.my`, `leca.homes`, `leca.quest`, `leca.autos`, `leca.boats`, `leca.beer`, `leca.beauty`, and `leca.baby`. Email and password are real accounts. Test sign-in is off. Google, Facebook, WeChat, and phone SMS start only after their secrets are in `/etc/leca-auth.env`. Google’s redirect is `https://leca.world/v1/auth/google/callback`.
 
 ```bash
 flutter run --dart-define=AUTH_API=https://leca.world
@@ -43,7 +43,7 @@ A driver's arrival time comes from Google Routes with live traffic (`GOOGLE_MAPS
 flutter run --dart-define=STRIPE_PK=pk_test_...
 ```
 
-Without a key, Stripe still shows a Checkout-style QR (`cs_test_chow_…`). ABA / Bakong / ACLEDA / Wing Bank QRs are **on-device EMVCo KHQR**. No live merchant accounts are bundled. Bank apps may reject scans until real Bakong IDs are attached. The payer’s bank holds the money.
+Without a key, Stripe still shows a Checkout-style QR (`cs_test_leca_…`). ABA / Bakong / ACLEDA / Wing Bank QRs are **on-device EMVCo KHQR**. No live merchant accounts are bundled. Bank apps may reject scans until real Bakong IDs are attached. The payer’s bank holds the money.
 
 ## Requirements
 
@@ -97,7 +97,7 @@ Output: `build/app/outputs/flutter-apk/app-release.apk`.
 | macos, ios, android | this Mac |
 | linux-arm64, windows-arm64 | Ubuntu and Windows 11 ARM VMs on this Mac |
 | linux-x64 | the Omarchy PC in `scripts/x86.host` (`omarchy pkg add`, Flutter from mise) |
-| windows-x64 | a KVM Windows guest on that PC (`scripts/win-x64.sh`, `CHOW_WIN_MEM` default `32G`) |
+| windows-x64 | a KVM Windows guest on that PC (`scripts/win-x64.sh`, `LECA_WIN_MEM` default `32G`) |
 
 ```bash
 ./build.sh
@@ -105,7 +105,7 @@ Output: `build/app/outputs/flutter-apk/app-release.apk`.
 ./build.sh linux-arm64 windows-arm64
 ```
 
-The ARM VMs are `./qemu/build.sh linux` and `./qemu/build.sh windows`. Disks stay in `qemu/.cache`. `CHOW_QEMU_MEM` (default `8G`) and `CHOW_QEMU_CPUS` (default `4`) size them. Delete `qemu/.cache/linux` or `qemu/.cache/windows` to recreate that VM.
+The ARM VMs are `./qemu/build.sh linux` and `./qemu/build.sh windows`. Disks stay in `qemu/.cache`. `LECA_QEMU_MEM` (default `8G`) and `LECA_QEMU_CPUS` (default `4`) size them. Delete `qemu/.cache/linux` or `qemu/.cache/windows` to recreate that VM.
 
 ## Driver, shops, rides
 
@@ -125,7 +125,7 @@ Everyone on a trip shares one room: text, voice, video, and price lines. Each li
 
 ### Nothing is lost on restart
 
-The app saves its state (session, cart, booking, chat chains, bargains, driver file, listed vehicles, reports) to local storage a moment after every change and restores it on launch. The server appends every room line to `$CHOW_TALK_DIR/<room>.jsonl` (default `/var/lib/chow-auth/rooms`) as it happens and re-reads the chain, verifying each proof, the first time a room is opened after a restart.
+The app saves its state (session, cart, booking, chat chains, bargains, driver file, listed vehicles, reports) to local storage a moment after every change and restores it on launch. The server appends every room line to `$LECA_TALK_DIR/<room>.jsonl` (default `/var/lib/leca-auth/rooms`) as it happens and re-reads the chain, verifying each proof, the first time a room is opened after a restart.
 
 ### Signing up
 

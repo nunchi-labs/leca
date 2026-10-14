@@ -19,8 +19,8 @@ import 'records.dart';
 import 'traffic.dart';
 import 'vault.dart';
 
-class ChowState extends ChangeNotifier {
-  ChowState({Vault? vault})
+class LecaState extends ChangeNotifier {
+  LecaState({Vault? vault})
     : vault = vault ?? MemoryVault(),
       locale = MarketConfig.active.defaultLocale,
       cityId = MarketConfig.active.defaultCityId,
@@ -347,7 +347,7 @@ class ChowState extends ChangeNotifier {
     return payable(deliveryFareKey(kitchen), quote.usd);
   }
 
-  /// Price before Chow's fee. Food includes its delivery charge.
+  /// Price before Leca's fee. Food includes its delivery charge.
   double get saleUsd {
     if (itemCount > 0) return subtotalUsd + deliveryUsd;
     return booking?.amountUsd ?? 0;
@@ -1413,7 +1413,7 @@ class ChowState extends ChangeNotifier {
     final now = DateTime.now().toUtc();
     final stamp =
         '${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-    return 'CHW$stamp';
+    return 'LECA$stamp';
   }
 }
 
@@ -1422,16 +1422,16 @@ class AuthException implements Exception {
   final String code;
 }
 
-class ChowScope extends InheritedNotifier<ChowState> {
-  const ChowScope({
+class LecaScope extends InheritedNotifier<LecaState> {
+  const LecaScope({
     super.key,
-    required ChowState super.notifier,
+    required LecaState super.notifier,
     required super.child,
   });
 
-  static ChowState of(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<ChowScope>();
-    assert(scope != null, 'ChowScope missing');
+  static LecaState of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<LecaScope>();
+    assert(scope != null, 'LecaScope missing');
     return scope!.notifier!;
   }
 }

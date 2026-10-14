@@ -92,14 +92,14 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
     _legal.addListener(_mirrorName);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final state = ChowScope.of(context);
+      final state = LecaScope.of(context);
       state.clearDriverError();
       _prefill(state);
     });
   }
 
   /// Start from what the account already knows. Nothing to retype.
-  void _prefill(ChowState state) {
+  void _prefill(LecaState state) {
     final session = state.session;
     if (session == null) return;
     if (_legal.text.isEmpty) _legal.text = session.displayName;
@@ -189,7 +189,7 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final error = driverErrorText(l10n, state.driverError);
     final kh = CambodiaRules.applies();
     final motor = kh && CambodiaRules.needsMotorFile(_vehicle);

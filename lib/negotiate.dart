@@ -45,7 +45,7 @@ class _FareNegotiateState extends State<FareNegotiate> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final ask = state.askFor(widget.fareKey);
     final side = state.fareSide;
     final pending = ask?.open == true ? ask!.pending : null;

@@ -65,7 +65,7 @@ class MarketConfig {
         nameKm: 'ABA Pay',
         nameEn: 'ABA Pay',
         kind: RailKind.khqr,
-        bakongAccountId: 'chow.kh@abaa',
+        bakongAccountId: 'leca.kh@abaa',
         acquiringBank: 'ABA Bank',
       ),
       PaymentRail(
@@ -73,7 +73,7 @@ class MarketConfig {
         nameKm: 'Bakong KHQR',
         nameEn: 'Bakong KHQR',
         kind: RailKind.khqr,
-        bakongAccountId: 'chow.kh@bakong',
+        bakongAccountId: 'leca.kh@bakong',
         acquiringBank: 'Bakong',
       ),
       PaymentRail(
@@ -81,7 +81,7 @@ class MarketConfig {
         nameKm: 'ACLEDA',
         nameEn: 'ACLEDA',
         kind: RailKind.khqr,
-        bakongAccountId: 'chow.kh@aclb',
+        bakongAccountId: 'leca.kh@aclb',
         acquiringBank: 'ACLEDA Bank',
       ),
       PaymentRail(
@@ -89,7 +89,7 @@ class MarketConfig {
         nameKm: 'Wing Bank',
         nameEn: 'Wing Bank',
         kind: RailKind.khqr,
-        bakongAccountId: 'chow.kh@wing',
+        bakongAccountId: 'leca.kh@wing',
         acquiringBank: 'Wing Bank',
       ),
       PaymentRail(

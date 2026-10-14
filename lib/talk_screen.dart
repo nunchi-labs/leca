@@ -70,7 +70,7 @@ class _TalkScreenState extends State<TalkScreen> {
       scheme: base.scheme == 'https' ? 'wss' : 'ws',
       path: '/v1/room',
     );
-    final session = ChowScope.of(context).session;
+    final session = LecaScope.of(context).session;
     final name = session?.displayName ?? 'Guest';
     final channel = WebSocketChannel.connect(uri);
     _channel = channel;
@@ -102,7 +102,7 @@ class _TalkScreenState extends State<TalkScreen> {
   void _onData(Object? raw) {
     final decoded = jsonDecode('$raw');
     if (decoded is! Map || !mounted) return;
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     switch (decoded['type']) {
       case 'welcome':
         final log = decoded['log'];
@@ -139,7 +139,7 @@ class _TalkScreenState extends State<TalkScreen> {
 
   /// A price line from another account moves the bargain on this device
   /// too. Lines are matched by account handle, never by display name.
-  void _applyPrice(ChowState state, TalkLine line) {
+  void _applyPrice(LecaState state, TalkLine line) {
     final key = widget.fareKey;
     if (key == null || line.kind != 'price') return;
     if (line.who.isNotEmpty && line.who == state.who) return;
@@ -161,7 +161,7 @@ class _TalkScreenState extends State<TalkScreen> {
     }
   }
 
-  void _price(ChowState state, String verb, double usd, String side) {
+  void _price(LecaState state, String verb, double usd, String side) {
     final text = PriceLine(verb, usd, side).encode();
     if (_live) {
       _channel?.sink.add(
@@ -179,7 +179,7 @@ class _TalkScreenState extends State<TalkScreen> {
   }
 
   void _send(
-    ChowState state, {
+    LecaState state, {
     required bool asBusiness,
     String kind = 'text',
   }) {
@@ -232,7 +232,7 @@ class _TalkScreenState extends State<TalkScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final thread = state.thread(widget.room);
     final owned = state.owns(widget.room);
     ChatMessage? call;

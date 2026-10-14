@@ -84,7 +84,7 @@ class _PayScreenState extends State<PayScreen> {
     super.didChangeDependencies();
     if (_ready) return;
     _ready = true;
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     _orderId = state.newOrderId();
     _note = TextEditingController(text: state.note);
     state.syncRideMatch(notify: false);
@@ -100,7 +100,7 @@ class _PayScreenState extends State<PayScreen> {
 
   Future<void> _rebuild() async {
     final token = ++_gen;
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     setState(() {
       _phase = _QrPhase.loading;
       _errorCode = null;
@@ -147,7 +147,7 @@ class _PayScreenState extends State<PayScreen> {
   }
 
   void _onNoteChanged(String value) {
-    ChowScope.of(context).setNote(value);
+    LecaScope.of(context).setNote(value);
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 450), _rebuild);
   }
@@ -178,7 +178,7 @@ class _PayScreenState extends State<PayScreen> {
       return const Scaffold(body: SizedBox.shrink());
     }
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final wide = MediaQuery.sizeOf(context).width >= 840;
     final empty = !state.hasPayable;
 
@@ -271,7 +271,7 @@ class _Details extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
   final TextEditingController note;
   final ValueChanged<String> onRail;
   final ValueChanged<String> onNote;
@@ -451,7 +451,7 @@ class _PartnerCard extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
   final Future<void> Function(BuildContext context, String audience) onShare;
 
   @override

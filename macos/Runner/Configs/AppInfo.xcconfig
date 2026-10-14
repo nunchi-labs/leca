@@ -8,7 +8,7 @@
 PRODUCT_NAME = Leca
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = app.chow.chow
+PRODUCT_BUNDLE_IDENTIFIER = app.leca.leca
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 app.chow. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 app.leca. All rights reserved.

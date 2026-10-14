@@ -15,7 +15,7 @@ set -euo pipefail
 export COPYFILE_DISABLE=1
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-AUTH_DEFINE=(--dart-define="AUTH_API=${CHOW_AUTH_API:-https://gno.money}")
+AUTH_DEFINE=(--dart-define="AUTH_API=${LECA_AUTH_API:-https://gno.money}")
 X86_CACHE="$ROOT/qemu/.cache/x86"
 HOST="$(tr -d '[:space:]' < "$ROOT/scripts/x86.host")"
 KEY="$X86_CACHE/id_ed25519"
@@ -36,7 +36,7 @@ flutter_ref() {
 ensure_key() {
   mkdir -p "$X86_CACHE"
   if [[ ! -f $KEY ]]; then
-    ssh-keygen -t ed25519 -N "" -f "$KEY" -C chow-build >/dev/null
+    ssh-keygen -t ed25519 -N "" -f "$KEY" -C leca-build >/dev/null
   fi
 }
 
@@ -154,49 +154,49 @@ build_x86() {
   ref="$(flutter_ref)"
   echo "build: $HOST is $kind, flutter $ref"
   if [[ $kind == linux ]]; then
-    x86_ssh "mkdir -p ~/chow" || return 1
-    sync_tree "tar -xzf - -C ~/chow" || return 1
+    x86_ssh "mkdir -p ~/leca" || return 1
+    sync_tree "tar -xzf - -C ~/leca" || return 1
     local sudo_pass=""
     [[ -f $X86_CACHE/password ]] && sudo_pass="$(tr -d '[:space:]' < "$X86_CACHE/password")"
     [[ -n $sudo_pass ]] || die "qemu/.cache/x86/password is empty"
-    local envp="CHOW_SUDO_PASSWORD=$(printf '%q' "$sudo_pass") CHOW_FLUTTER_REF=$(printf '%q' "$ref")"
+    local envp="LECA_SUDO_PASSWORD=$(printf '%q' "$sudo_pass") LECA_FLUTTER_REF=$(printf '%q' "$ref")"
     local t want_linux=no want_win=no
     for t in "${want[@]}"; do
       [[ $t == linux-x64 ]] && want_linux=yes
       [[ $t == windows-x64 ]] && want_win=yes
     done
     if [[ $want_linux == yes ]]; then
-      x86_ssh "$envp bash ~/chow/scripts/remote.sh" || return 1
+      x86_ssh "$envp bash ~/leca/scripts/remote.sh" || return 1
       mkdir -p "$ROOT/build/linux"
-      x86_ssh "tar -C ~/chow/build/linux -czf - x64" | tar -xzf - -C "$ROOT/build/linux" || return 1
+      x86_ssh "tar -C ~/leca/build/linux -czf - x64" | tar -xzf - -C "$ROOT/build/linux" || return 1
       [[ -e $ROOT/build/linux/x64/release/bundle ]] || return 1
       echo "build: linux-x64 bundle is in build/linux/x64/"
     fi
     if [[ $want_win == yes ]]; then
-      x86_ssh "$envp bash ~/chow/scripts/win-x64.sh" || return 1
+      x86_ssh "$envp bash ~/leca/scripts/win-x64.sh" || return 1
       mkdir -p "$ROOT/build/windows"
-      x86_ssh "tar -C ~/chow/build/windows -czf - x64" | tar -xzf - -C "$ROOT/build/windows" || return 1
-      [[ -f $ROOT/build/windows/x64/runner/Release/chow.exe ]] || return 1
+      x86_ssh "tar -C ~/leca/build/windows -czf - x64" | tar -xzf - -C "$ROOT/build/windows" || return 1
+      [[ -f $ROOT/build/windows/x64/runner/Release/leca.exe ]] || return 1
       echo "build: windows-x64 bundle is in build/windows/x64/"
     fi
     return 0
   fi
-  x86_ssh 'powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path C:\chow\src | Out-Null"'
-  sync_tree "tar -xzf - -C C:/chow/src"
+  x86_ssh 'powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path C:\leca\src | Out-Null"'
+  sync_tree "tar -xzf - -C C:/leca/src"
   local args=""
   local t
   for t in "${want[@]}"; do
     args+=" $t"
   done
-  x86_ssh "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\chow\\src\\scripts\\remote.ps1 -Ref $ref $args"
+  x86_ssh "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\leca\\src\\scripts\\remote.ps1 -Ref $ref $args"
   for t in "${want[@]}"; do
     if [[ $t == windows-x64 ]]; then
       mkdir -p "$ROOT/build/windows"
-      x86_ssh "tar -C C:/chow/src/build/windows -czf - x64" | tar -xzf - -C "$ROOT/build/windows"
+      x86_ssh "tar -C C:/leca/src/build/windows -czf - x64" | tar -xzf - -C "$ROOT/build/windows"
       echo "build: windows-x64 bundle is in build/windows/x64/"
     else
       mkdir -p "$ROOT/build/linux"
-      x86_ssh "tar -C C:/chow/src/build/linux -czf - x64" | tar -xzf - -C "$ROOT/build/linux"
+      x86_ssh "tar -C C:/leca/src/build/linux -czf - x64" | tar -xzf - -C "$ROOT/build/linux"
       echo "build: linux-x64 bundle is in build/linux/x64/"
     fi
   done

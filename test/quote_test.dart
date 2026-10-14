@@ -1,9 +1,9 @@
-import 'package:chow/catalog.dart';
-import 'package:chow/quote.dart';
-import 'package:chow/records.dart';
-import 'package:chow/state.dart';
-import 'package:chow/talk.dart';
-import 'package:chow/vault.dart';
+import 'package:leca/catalog.dart';
+import 'package:leca/quote.dart';
+import 'package:leca/records.dart';
+import 'package:leca/state.dart';
+import 'package:leca/talk.dart';
+import 'package:leca/vault.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -33,7 +33,7 @@ void main() {
   });
 
   test('chat, voice, and video form one proof, and a changed line fails', () {
-    final state = ChowState();
+    final state = LecaState();
     final at = DateTime.utc(2026, 10, 14, 3);
     state.sendMessage(
       placeId: 'shop',
@@ -80,7 +80,7 @@ void main() {
   test(
     'a proposed price waits for allow, and the automatic fare still proves',
     () {
-      final state = ChowState();
+      final state = LecaState();
       final kitchen = Catalog.kitchens.first;
       state.addDish(kitchen.menu.first, kitchen);
       final automatic = state.deliveryQuoteOf(kitchen);
@@ -205,7 +205,7 @@ void main() {
   });
 
   test('bargaining goes back and forth until one side ends it', () {
-    final state = ChowState();
+    final state = LecaState();
     const key = 'rent:car:driver:1000:5';
     state.proposeFare(key, 10, 8, proposer: 'customer');
     expect(state.askFor(key)?.pending?.side, 'customer');
@@ -243,7 +243,7 @@ void main() {
 
   test('state survives a restart: chat chain, bargain, cart, driver', () async {
     final vault = MemoryVault();
-    final first = ChowState(vault: vault);
+    final first = LecaState(vault: vault);
     await first.restore();
     final kitchen = Catalog.kitchens.first;
     first.addDish(kitchen.menu.first, kitchen);
@@ -269,7 +269,7 @@ void main() {
     await first.save();
     expect(vault.json, isNotNull);
 
-    final second = ChowState(vault: vault);
+    final second = LecaState(vault: vault);
     await second.restore();
     expect(second.restored, isTrue);
     expect(second.itemCount, 1);
@@ -282,7 +282,7 @@ void main() {
     expect(second.radiusKm, 25);
     expect(second.deliveryUsd, 2.4);
 
-    final blank = ChowState(vault: MemoryVault('not json'));
+    final blank = LecaState(vault: MemoryVault('not json'));
     await blank.restore();
     expect(blank.restored, isTrue);
     expect(blank.itemCount, 0);
@@ -317,7 +317,7 @@ void main() {
   });
 
   test('a price line sits in the same chain as the words', () {
-    final state = ChowState();
+    final state = LecaState();
     final at = DateTime.utc(2026, 10, 14, 3);
     state.sendMessage(
       placeId: 'nom_banh_chok',

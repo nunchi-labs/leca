@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'chow_auth.dart';
+import 'leca_auth.dart';
 
 /// Driver files waiting for a human, and reports a partner can contest.
 ///

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:chow_auth/chow_auth.dart';
+import 'package:leca_auth/leca_auth.dart';
 import 'package:test/test.dart';
 
 class ScriptedNet extends Net {
@@ -37,15 +37,15 @@ void main() {
   test('email register then login, and rejects a bad password', () async {
     final core = AuthCore(config: const AuthConfig());
     final created = await core.emailRegister(
-      email: 'Sokha@Chow.app',
+      email: 'Sokha@Leca.app',
       password: 'correct-horse',
       name: 'Sokha',
     );
-    expect((created['user'] as Map)['id'], 'email:sokha@chow.app');
+    expect((created['user'] as Map)['id'], 'email:sokha@leca.app');
     expect((created['user'] as Map)['displayName'], 'Sokha');
     expect(
       () =>
-          core.emailRegister(email: 'sokha@chow.app', password: 'another-one'),
+          core.emailRegister(email: 'sokha@leca.app', password: 'another-one'),
       throwsA(predicate<AuthFailure>((e) => e.code == 'email_taken')),
     );
     expect(
@@ -57,18 +57,18 @@ void main() {
       throwsA(predicate<AuthFailure>((e) => e.code == 'password_short')),
     );
     final signed = await core.emailLogin(
-      email: 'sokha@chow.app',
+      email: 'sokha@leca.app',
       password: 'correct-horse',
     );
     expect((signed['user'] as Map)['method'], 'email');
     expect(
       () =>
-          core.emailLogin(email: 'sokha@chow.app', password: 'wrong-password'),
+          core.emailLogin(email: 'sokha@leca.app', password: 'wrong-password'),
       throwsA(predicate<AuthFailure>((e) => e.code == 'credentials_invalid')),
     );
     expect(
       () =>
-          core.emailLogin(email: 'missing@chow.app', password: 'correct-horse'),
+          core.emailLogin(email: 'missing@leca.app', password: 'correct-horse'),
       throwsA(predicate<AuthFailure>((e) => e.code == 'credentials_invalid')),
     );
   });
@@ -112,7 +112,7 @@ void main() {
       'oauth2.googleapis.com/token': jsonEncode({'access_token': 'g'}),
       'www.googleapis.com/oauth2/v3/userinfo': jsonEncode({
         'sub': 'g1',
-        'email': 'ada@chow.app',
+        'email': 'ada@leca.app',
         'name': 'Ada',
       }),
       'graph.facebook.com/v21.0/oauth/access_token': jsonEncode({
@@ -121,7 +121,7 @@ void main() {
       'graph.facebook.com/me': jsonEncode({
         'id': 'f1',
         'name': 'Grace',
-        'email': 'grace@chow.app',
+        'email': 'grace@leca.app',
       }),
       'api.weixin.qq.com/sns/oauth2/access_token': jsonEncode({
         'access_token': 'w',

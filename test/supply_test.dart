@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:chow/identity.dart';
-import 'package:chow/rate.dart';
-import 'package:chow/state.dart';
+import 'package:leca/identity.dart';
+import 'package:leca/rate.dart';
+import 'package:leca/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _pngA = base64Decode(
@@ -118,7 +118,7 @@ void main() {
   test(
     'driver signup, shop item, chat rate, and rider fare permission',
     () async {
-      final state = ChowState();
+      final state = LecaState();
       expect(
         await state.registerDriver(
           legalName: 'Sokha',

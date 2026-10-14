@@ -18,7 +18,7 @@ class ReplyMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final seconds = state.replySecondsFor(placeId);
     final hours = state.hoursFor(placeId);
     final color = seconds == null
@@ -60,7 +60,7 @@ class ShopScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final matches = state.businesses.where((b) => b.id == businessId).toList();
     if (matches.isEmpty) {
       return Scaffold(appBar: AppBar(title: Text(l10n.shopTitle)));
@@ -195,7 +195,7 @@ class ShopScreen extends StatelessWidget {
 
   Future<void> _complain(
     BuildContext context,
-    ChowState state,
+    LecaState state,
     String businessId,
   ) async {
     final l10n = AppLocalizations.of(context);
@@ -264,7 +264,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.addItem)),
       body: Center(

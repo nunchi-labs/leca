@@ -8,8 +8,8 @@
 # Disks, ISOs, and keys stay in qemu/.cache. The next build only syncs
 # the tree and compiles. Delete qemu/.cache/<os> to start that VM over.
 #
-# CHOW_QEMU_MEM   default 8G
-# CHOW_QEMU_CPUS  default 4
+# LECA_QEMU_MEM   default 8G
+# LECA_QEMU_CPUS  default 4
 set -euo pipefail
 # macOS tar otherwise stuffs AppleDouble ._* files into the archive, and
 # Flutter then tries to parse them as source.
@@ -17,8 +17,8 @@ export COPYFILE_DISABLE=1
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CACHE="$ROOT/qemu/.cache"
-MEM="${CHOW_QEMU_MEM:-8G}"
-CPUS="${CHOW_QEMU_CPUS:-4}"
+MEM="${LECA_QEMU_MEM:-8G}"
+CPUS="${LECA_QEMU_CPUS:-4}"
 LINUX_PORT=2222
 WIN_PORT=2223
 
@@ -30,7 +30,7 @@ Usage: ./qemu/build.sh linux|windows|stop [linux|windows]
   windows   flutter build windows inside a Windows 11 ARM VM
   stop      power the VM off
 
-Images live in qemu/.cache and are reused. CHOW_QEMU_MEM=$MEM CHOW_QEMU_CPUS=$CPUS
+Images live in qemu/.cache and are reused. LECA_QEMU_MEM=$MEM LECA_QEMU_CPUS=$CPUS
 EOF
 }
 
@@ -80,7 +80,7 @@ ensure_key() {
   local dir=$1
   mkdir -p "$dir"
   if [[ ! -f $dir/id_ed25519 ]]; then
-    ssh-keygen -t ed25519 -N "" -f "$dir/id_ed25519" -C chow-qemu >/dev/null
+    ssh-keygen -t ed25519 -N "" -f "$dir/id_ed25519" -C leca-qemu >/dev/null
   fi
 }
 
@@ -149,9 +149,9 @@ guest() {
 ensure_linux_flutter() {
   local key=$1 ref=$2
   echo "qemu: waiting for cloud-init"
-  guest "$LINUX_PORT" "$key" chow sudo cloud-init status --wait || true
-  if guest "$LINUX_PORT" "$key" chow test -x /home/chow/flutter/bin/flutter; then
-    guest "$LINUX_PORT" "$key" chow mkdir -p /home/chow/src
+  guest "$LINUX_PORT" "$key" leca sudo cloud-init status --wait || true
+  if guest "$LINUX_PORT" "$key" leca test -x /home/leca/flutter/bin/flutter; then
+    guest "$LINUX_PORT" "$key" leca mkdir -p /home/leca/src
     return
   fi
   echo "qemu: installing flutter ${ref}"
@@ -160,19 +160,19 @@ ensure_linux_flutter() {
   cat >"$script" <<EOF
 #!/bin/bash
 set -euo pipefail
-if [[ ! -x /home/chow/flutter/bin/flutter ]]; then
-  git clone --depth 1 --branch ${ref} https://github.com/flutter/flutter.git /home/chow/flutter || git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /home/chow/flutter
+if [[ ! -x /home/leca/flutter/bin/flutter ]]; then
+  git clone --depth 1 --branch ${ref} https://github.com/flutter/flutter.git /home/leca/flutter || git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /home/leca/flutter
 fi
-/home/chow/flutter/bin/flutter config --no-analytics --enable-linux-desktop
-/home/chow/flutter/bin/flutter precache --linux
-mkdir -p /home/chow/src
+/home/leca/flutter/bin/flutter config --no-analytics --enable-linux-desktop
+/home/leca/flutter/bin/flutter precache --linux
+mkdir -p /home/leca/src
 EOF
-  guest "$LINUX_PORT" "$key" chow sudo chown chow:chow /home/chow
+  guest "$LINUX_PORT" "$key" leca sudo lecan leca:leca /home/leca
   scp -i "$key" -P "$LINUX_PORT" \
     -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
-    "$script" chow@127.0.0.1:provision.sh
+    "$script" leca@127.0.0.1:provision.sh
   rm -f "$script"
-  guest "$LINUX_PORT" "$key" chow bash /home/chow/provision.sh \
+  guest "$LINUX_PORT" "$key" leca bash /home/leca/provision.sh \
     || die "flutter install in the linux vm failed"
 }
 
@@ -191,7 +191,7 @@ sync_linux() {
     --exclude '**/ephemeral/' \
     --exclude '**/.gradle/' \
     -e "$rsh" \
-    "$ROOT/" "chow@127.0.0.1:src/"
+    "$ROOT/" "leca@127.0.0.1:src/"
 }
 
 write_linux_seed() {
@@ -201,8 +201,8 @@ write_linux_seed() {
   seed="$dir/seed"
   mkdir -p "$seed"
   cat >"$seed/meta-data" <<EOF
-instance-id: chow-linux
-local-hostname: chow-linux
+instance-id: leca-linux
+local-hostname: leca-linux
 EOF
   cat >"$seed/network-config" <<'EOF'
 version: 2
@@ -214,14 +214,14 @@ ethernets:
 EOF
   cat >"$seed/user-data" <<EOF
 #cloud-config
-hostname: chow-linux
+hostname: leca-linux
 users:
-  - name: chow
+  - name: leca
     groups: sudo
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
     lock_passwd: false
-    plain_text_passwd: chow
+    plain_text_passwd: leca
     ssh_authorized_keys:
       - ${pub}
 ssh_pwauth: false
@@ -243,22 +243,22 @@ packages:
   - liblzma-dev
   - rsync
 write_files:
-  - path: /home/chow/provision.sh
+  - path: /home/leca/provision.sh
     defer: true
-    owner: chow:chow
+    owner: leca:leca
     permissions: "0755"
     content: |
       #!/bin/bash
       set -euo pipefail
-      if [[ ! -x /home/chow/flutter/bin/flutter ]]; then
-        git clone --depth 1 --branch ${ref} https://github.com/flutter/flutter.git /home/chow/flutter || git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /home/chow/flutter
+      if [[ ! -x /home/leca/flutter/bin/flutter ]]; then
+        git clone --depth 1 --branch ${ref} https://github.com/flutter/flutter.git /home/leca/flutter || git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /home/leca/flutter
       fi
-      /home/chow/flutter/bin/flutter config --no-analytics --enable-linux-desktop
-      /home/chow/flutter/bin/flutter precache --linux
-      mkdir -p /home/chow/src
+      /home/leca/flutter/bin/flutter config --no-analytics --enable-linux-desktop
+      /home/leca/flutter/bin/flutter precache --linux
+      mkdir -p /home/leca/src
 runcmd:
-  - chown chow:chow /home/chow
-  - su - chow -c /home/chow/provision.sh
+  - lecan leca:leca /home/leca
+  - su - leca -c /home/leca/provision.sh
 EOF
   (
     cd "$seed"
@@ -276,7 +276,7 @@ boot_linux() {
     cp "$vars" "$dir/efi-vars.fd"
   fi
   launch "$dir/qemu.pid" \
-    -name chow-linux \
+    -name leca-linux \
     -machine virt,accel=hvf,highmem=on \
     -cpu host \
     -smp "$CPUS" \
@@ -309,16 +309,16 @@ build_linux() {
     write_linux_seed "$dir" "$ref"
   fi
   boot_linux "$dir"
-  wait_ssh "$LINUX_PORT" "$dir/id_ed25519" chow 600
+  wait_ssh "$LINUX_PORT" "$dir/id_ed25519" leca 600
   ensure_linux_flutter "$dir/id_ed25519" "$ref"
   sync_linux "$dir/id_ed25519"
   echo "qemu: flutter build linux"
-  guest "$LINUX_PORT" "$dir/id_ed25519" chow \
+  guest "$LINUX_PORT" "$dir/id_ed25519" leca \
     "bash -lc 'export PATH=\$HOME/flutter/bin:\$PATH; cd \$HOME/src && flutter build linux --release --dart-define=AUTH_API=https://gno.money'"
   mkdir -p "$ROOT/build"
   rsync -az \
     -e "$(ssh_base "$LINUX_PORT" "$dir/id_ed25519")" \
-    "chow@127.0.0.1:src/build/linux/" "$ROOT/build/linux/"
+    "leca@127.0.0.1:src/build/linux/" "$ROOT/build/linux/"
   echo "qemu: linux bundle is in build/linux/"
 }
 
@@ -349,7 +349,7 @@ prepare_windows_bootdisk() {
   [[ -f $iso_mnt/sources/boot.wim ]] || die "windows iso did not mount ($iso_mnt)"
   dmg="$dir/boot.dmg"
   rm -f "$dmg"
-  hdiutil create -size 1024m -fs FAT32 -volname CHOWBOOT -layout MBRSPUD -ov "$dmg" >/dev/null
+  hdiutil create -size 1024m -fs FAT32 -volname LECABOOT -layout MBRSPUD -ov "$dmg" >/dev/null
   mnt="$(hdiutil attach -nobrowse "$dmg" | awk 'END { print $NF }')"
   [[ -d $mnt ]] || die "FAT boot disk did not mount ($mnt)"
   mkdir -p "$mnt/EFI/BOOT" "$mnt/sources"
@@ -377,7 +377,7 @@ write_windows_seed() {
   echo "$ref" >"$seed/flutter.ref"
   (
     cd "$seed"
-    mkisofs -output "$dir/seed.iso" -volid CHOWSEED -joliet -rock -quiet \
+    mkisofs -output "$dir/seed.iso" -volid LECASEED -joliet -rock -quiet \
       autounattend.xml provision.ps1 id_ed25519.pub flutter.ref
   )
 }
@@ -391,7 +391,7 @@ boot_windows() {
     cp "$vars" "$dir/efi-vars.fd"
   fi
   local -a args=(
-    -name chow-windows
+    -name leca-windows
     -machine virt,accel=hvf,highmem=on
     -cpu host
     -smp "$CPUS"
@@ -403,7 +403,7 @@ boot_windows() {
     -device qemu-xhci,id=xhci
     -device usb-kbd
     -device usb-tablet
-    -device nvme,drive=system,serial=chowdisk,bootindex=0
+    -device nvme,drive=system,serial=lecadisk,bootindex=0
     -drive if=none,id=system,format=qcow2,file="$dir/disk.qcow2"
     -device usb-storage,drive=seed
     -drive if=none,id=seed,format=raw,media=cdrom,file="$dir/seed.iso",readonly=on
@@ -429,7 +429,7 @@ boot_windows() {
 
 windows_ready() {
   local key=$1
-  guest "$WIN_PORT" "$key" chow "cmd /c if exist C:\\chow\\ready exit 0 else exit 1"
+  guest "$WIN_PORT" "$key" leca "cmd /c if exist C:\\leca\\ready exit 0 else exit 1"
 }
 
 build_windows() {
@@ -450,7 +450,7 @@ build_windows() {
   write_windows_seed "$dir" "$ref"
   prepare_windows_bootdisk "$dir"
   local installed=no
-  if vm_running "$dir/qemu.pid" && ssh_ok "$WIN_PORT" "$dir/id_ed25519" chow; then
+  if vm_running "$dir/qemu.pid" && ssh_ok "$WIN_PORT" "$dir/id_ed25519" leca; then
     if windows_ready "$dir/id_ed25519"; then
       installed=yes
     fi
@@ -460,7 +460,7 @@ build_windows() {
     echo "qemu: installing Windows (headless). First boot installs the OS, OpenSSH, Visual Studio, and Flutter"
     local i
     for ((i = 0; i < 240; i++)); do
-      if ssh_ok "$WIN_PORT" "$dir/id_ed25519" chow && windows_ready "$dir/id_ed25519"; then
+      if ssh_ok "$WIN_PORT" "$dir/id_ed25519" leca && windows_ready "$dir/id_ed25519"; then
         installed=yes
         break
       fi
@@ -469,9 +469,9 @@ build_windows() {
       fi
       sleep 30
     done
-    [[ $installed == yes ]] || die "Windows did not finish provisioning. See $dir and the guest log C:\\chow\\provision.log"
+    [[ $installed == yes ]] || die "Windows did not finish provisioning. See $dir and the guest log C:\\leca\\provision.log"
     # Reboot onto the installed disk without the setup ISO.
-    guest "$WIN_PORT" "$dir/id_ed25519" chow "shutdown /s /t 0" || true
+    guest "$WIN_PORT" "$dir/id_ed25519" leca "shutdown /s /t 0" || true
     local pid
     pid="$(cat "$dir/qemu.pid")"
     for ((i = 0; i < 60; i++)); do
@@ -482,9 +482,9 @@ build_windows() {
     sleep 2
   fi
   boot_windows "$dir" no
-  wait_ssh "$WIN_PORT" "$dir/id_ed25519" chow 180
+  wait_ssh "$WIN_PORT" "$dir/id_ed25519" leca 180
   echo "qemu: syncing project into the windows vm"
-  guest "$WIN_PORT" "$dir/id_ed25519" chow "cmd /c mkdir C:\\chow\\src" || true
+  guest "$WIN_PORT" "$dir/id_ed25519" leca "cmd /c mkdir C:\\leca\\src" || true
   tar -C "$ROOT" -czf - \
     --exclude build \
     --exclude .dart_tool \
@@ -492,12 +492,12 @@ build_windows() {
     --exclude qemu/.cache \
     --exclude '._*' \
     --exclude .DS_Store \
-    . | guest "$WIN_PORT" "$dir/id_ed25519" chow "tar -xzf - -C C:/chow/src"
+    . | guest "$WIN_PORT" "$dir/id_ed25519" leca "tar -xzf - -C C:/leca/src"
   echo "qemu: flutter build windows"
-  guest "$WIN_PORT" "$dir/id_ed25519" chow \
-    'cmd /c "set PATH=C:\flutter\bin;%PATH%&& cd /d C:\chow\src&& flutter build windows --release --dart-define=AUTH_API=https://gno.money"'
+  guest "$WIN_PORT" "$dir/id_ed25519" leca \
+    'cmd /c "set PATH=C:\flutter\bin;%PATH%&& cd /d C:\leca\src&& flutter build windows --release --dart-define=AUTH_API=https://gno.money"'
   mkdir -p "$ROOT/build"
-  guest "$WIN_PORT" "$dir/id_ed25519" chow "tar -C C:/chow/src/build -czf - windows" \
+  guest "$WIN_PORT" "$dir/id_ed25519" leca "tar -C C:/leca/src/build -czf - windows" \
     | tar -xzf - -C "$ROOT/build"
   echo "qemu: windows bundle is in build/windows/"
 }
@@ -538,11 +538,11 @@ main() {
     windows) build_windows ;;
     stop)
       case ${2:-all} in
-        linux) stop_one linux "$LINUX_PORT" chow ;;
-        windows) stop_one windows "$WIN_PORT" chow ;;
+        linux) stop_one linux "$LINUX_PORT" leca ;;
+        windows) stop_one windows "$WIN_PORT" leca ;;
         all)
-          stop_one linux "$LINUX_PORT" chow
-          stop_one windows "$WIN_PORT" chow
+          stop_one linux "$LINUX_PORT" leca
+          stop_one windows "$WIN_PORT" leca
           ;;
         *) die "stop linux|windows" ;;
       esac

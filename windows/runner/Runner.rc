@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "app.chow" "\0"
-            VALUE "FileDescription", "chow" "\0"
+            VALUE "CompanyName", "app.leca" "\0"
+            VALUE "FileDescription", "leca" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "chow" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 app.chow. All rights reserved." "\0"
-            VALUE "OriginalFilename", "chow.exe" "\0"
-            VALUE "ProductName", "chow" "\0"
+            VALUE "InternalName", "leca" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 app.leca. All rights reserved." "\0"
+            VALUE "OriginalFilename", "leca.exe" "\0"
+            VALUE "ProductName", "leca" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

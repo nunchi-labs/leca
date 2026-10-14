@@ -159,7 +159,7 @@ Uint8List? _bytes(Object? raw) {
   }
 }
 
-/// Independent partner shown to a passenger. Not a Chow-owned vehicle.
+/// Independent partner shown to a passenger. Not a Leca-owned vehicle.
 class RidePartner {
   const RidePartner({
     required this.id,

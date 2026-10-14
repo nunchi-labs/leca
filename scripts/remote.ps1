@@ -1,4 +1,4 @@
-# Runs on the x86 Windows PC after the tree is at C:\chow\src.
+# Runs on the x86 Windows PC after the tree is at C:\leca\src.
 # Usage: remote.ps1 -Ref 3.47.5 windows-x64 linux-x64
 param(
   [string]$Ref = 'stable',
@@ -7,7 +7,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if (-not $Targets -or $Targets.Count -eq 0) { $Targets = @('windows-x64') }
-$src = 'C:\chow\src'
+$src = 'C:\leca\src'
 $flutter = Join-Path $env:USERPROFILE 'flutter'
 $built = @()
 
@@ -47,7 +47,7 @@ function Build-LinuxX64 {
   if (-not $?) {
     throw 'linux-x64 on this PC needs WSL. In an admin PowerShell: wsl --install -d Ubuntu'
   }
-  $cmd = "export CHOW_FLUTTER_REF='$Ref'; export CHOW_PUBLISH=/mnt/c/chow/src/build/linux; bash /mnt/c/chow/src/scripts/remote.sh"
+  $cmd = "export LECA_FLUTTER_REF='$Ref'; export LECA_PUBLISH=/mnt/c/leca/src/build/linux; bash /mnt/c/leca/src/scripts/remote.sh"
   wsl -e bash -lc $cmd
   if (-not $?) { throw 'flutter build linux in WSL failed' }
   $script:built += 'linux-x64'
@@ -60,4 +60,4 @@ foreach ($t in $Targets) {
     default { throw "unknown target $t" }
   }
 }
-Write-Output ("CHOW_BUILT " + ($built -join ' '))
+Write-Output ("LECA_BUILT " + ($built -join ' '))

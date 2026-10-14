@@ -15,9 +15,9 @@ class AccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final session = state.session;
-    final phone = chowOnPhone(context);
+    final phone = lecaOnPhone(context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.accountTitle)),
       body: Center(
@@ -267,7 +267,7 @@ class _OpenBusinessScreenState extends State<OpenBusinessScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ChowScope.of(context).clearSupplyError();
+      if (mounted) LecaScope.of(context).clearSupplyError();
     });
   }
 
@@ -285,7 +285,7 @@ class _OpenBusinessScreenState extends State<OpenBusinessScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.openBusiness)),
       body: Center(
@@ -452,7 +452,7 @@ class _DriveScreenState extends State<DriveScreen> {
     _note = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final state = ChowScope.of(context);
+      final state = LecaScope.of(context);
       state.clearDriverError();
       state.refreshTrust();
     });
@@ -462,7 +462,7 @@ class _DriveScreenState extends State<DriveScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_noteSeeded) return;
-    _note.text = ChowScope.of(context).driveNote;
+    _note.text = LecaScope.of(context).driveNote;
     _noteSeeded = true;
   }
 
@@ -476,7 +476,7 @@ class _DriveScreenState extends State<DriveScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.driveCta)),
       body: Center(
@@ -600,7 +600,7 @@ class _ListVehicleScreenState extends State<ListVehicleScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ChowScope.of(context).clearSupplyError();
+      if (mounted) LecaScope.of(context).clearSupplyError();
     });
   }
 
@@ -614,7 +614,7 @@ class _ListVehicleScreenState extends State<ListVehicleScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.listVehicle)),
       body: Center(
@@ -727,7 +727,7 @@ class JobsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final km = state.lang.name == 'km';
     return Scaffold(
       appBar: AppBar(title: Text(l10n.jobsTitle)),
@@ -816,7 +816,7 @@ class _JobCard extends StatelessWidget {
   final OperatorJob job;
   final bool km;
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
 
   @override
   Widget build(BuildContext context) {

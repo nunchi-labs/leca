@@ -18,7 +18,7 @@ class BookScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final market = MarketConfig.active;
 
     return Scaffold(
@@ -74,7 +74,7 @@ class BookScreen extends StatelessWidget {
   List<Widget> _cards(
     BuildContext context,
     AppLocalizations l10n,
-    ChowState state,
+    LecaState state,
     MarketConfig market,
   ) {
     switch (kind) {
@@ -110,7 +110,7 @@ class BookScreen extends StatelessWidget {
     }
   }
 
-  void _pay(BuildContext context, ChowState state, Booking booking) {
+  void _pay(BuildContext context, LecaState state, Booking booking) {
     state.setBooking(booking);
     Navigator.of(context)
         .push(MaterialPageRoute<void>(builder: (_) => const PayScreen()));
@@ -127,7 +127,7 @@ class _Dropoff extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
   final String value;
   final ValueChanged<String> onChanged;
 
@@ -159,7 +159,7 @@ class _Dropoff extends StatelessWidget {
 /// Prices from the device to [dropoff]. With a routed [road] the fare uses
 /// the road's metres and today's minutes; without one, the card's estimate.
 TripQuote _routeQuote(
-  ChowState state, {
+  LecaState state, {
   required String dropoff,
   required RoadRoute? road,
   required String kind,
@@ -181,7 +181,7 @@ TripQuote _routeQuote(
   );
 }
 
-Future<RoadRoute?> _roadTo(ChowState state, String dropoff) {
+Future<RoadRoute?> _roadTo(LecaState state, String dropoff) {
   final city = MarketConfig.active.city(dropoff);
   return roadRoute(
     from: state.origin,
@@ -202,7 +202,7 @@ class _AutoTrip extends StatefulWidget {
   });
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
   final List<VehicleOffer> offers;
   final bool delivery;
   final void Function(Booking booking) onPay;
@@ -318,7 +318,7 @@ class _TradeBoard extends StatefulWidget {
   });
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
   final MarketConfig market;
   final void Function(Booking booking) onPay;
 
@@ -557,7 +557,7 @@ class _OfferTileState extends State<_OfferTile> {
   @override
   Widget build(BuildContext context) {
     final l10n = widget.l10n;
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final quote = widget.quoteFor?.call(_withDriver);
     final appUsd = quote?.usd ?? widget.usd;
     final base = widget.fareKey;

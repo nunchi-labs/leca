@@ -1,14 +1,14 @@
 #!/bin/bash
 # Windows x64 build on the Omarchy PC, inside a KVM guest.
-# The disk, ISO, and keys stay in ~/.cache/chow/windows-x64.
+# The disk, ISO, and keys stay in ~/.cache/leca/windows-x64.
 set -euo pipefail
 
-ref="${CHOW_FLUTTER_REF:-stable}"
-src="${CHOW_SRC:-$HOME/chow}"
-cache="${CHOW_WIN_CACHE:-$HOME/.cache/chow/windows-x64}"
-mem="${CHOW_WIN_MEM:-32G}"
-cpus="${CHOW_WIN_CPUS:-8}"
-port="${CHOW_WIN_PORT:-2224}"
+ref="${LECA_FLUTTER_REF:-stable}"
+src="${LECA_SRC:-$HOME/leca}"
+cache="${LECA_WIN_CACHE:-$HOME/.cache/leca/windows-x64}"
+mem="${LECA_WIN_MEM:-32G}"
+cpus="${LECA_WIN_CPUS:-8}"
+port="${LECA_WIN_PORT:-2224}"
 iso_url="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26200.6584.250915-1905.25h2_ge_release_svc_refresh_CLIENT_CONSUMER_x64fre_en-us.iso"
 iso_bytes=7736125440
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -22,11 +22,11 @@ as_root() {
     "$@"
     return
   fi
-  if [[ -z ${CHOW_SUDO_PASSWORD:-} ]]; then
+  if [[ -z ${LECA_SUDO_PASSWORD:-} ]]; then
     sudo -n "$@"
     return
   fi
-  echo "$CHOW_SUDO_PASSWORD" | sudo -S -p '' "$@"
+  echo "$LECA_SUDO_PASSWORD" | sudo -S -p '' "$@"
 }
 
 ensure_host() {
@@ -40,7 +40,7 @@ ensure_host() {
   [[ -f $code && -f $vars_src ]] || { echo "win-x64: OVMF firmware is missing" >&2; exit 1; }
   mkdir -p "$cache"
   if [[ ! -f $cache/id_ed25519 ]]; then
-    ssh-keygen -t ed25519 -N "" -f "$cache/id_ed25519" -C chow-win-x64 >/dev/null
+    ssh-keygen -t ed25519 -N "" -f "$cache/id_ed25519" -C leca-win-x64 >/dev/null
   fi
   if [[ ! -f $cache/efi-vars.fd ]]; then
     cp "$vars_src" "$cache/efi-vars.fd"
@@ -88,7 +88,7 @@ write_seed() {
   echo "$ref" >"$seed/flutter.ref"
   (
     cd "$seed"
-    mkisofs -output "$cache/seed.iso" -volid CHOWSEED -joliet -rock -quiet \
+    mkisofs -output "$cache/seed.iso" -volid LECASEED -joliet -rock -quiet \
       autounattend.xml provision.ps1 id_ed25519.pub flutter.ref
   )
 }
@@ -109,7 +109,7 @@ guest() {
     -o ConnectTimeout=10 \
     -o LogLevel=ERROR \
     -p "$port" \
-    chow@127.0.0.1 "$@"
+    leca@127.0.0.1 "$@"
 }
 
 ssh_ok() { guest echo ok >/dev/null 2>&1; }
@@ -118,7 +118,7 @@ ssh_ok() { guest echo ok >/dev/null 2>&1; }
 # cmd only attaches else to a parenthesized block, and that form still
 # goes wrong once OpenSSH wraps the line in another cmd /c.
 windows_ready() {
-  guest 'type C:\chow\ready' >/dev/null 2>&1
+  guest 'type C:\leca\ready' >/dev/null 2>&1
 }
 
 vm_mem_matches() {
@@ -146,7 +146,7 @@ prepare_bootdisk() {
   printf 'label: dos\nstart=2048, type=ef, bootable\n' | sfdisk "$img" >/dev/null
   local loop
   loop="$(as_root losetup -Pf --show "$img" | tr -d '[:space:]')"
-  as_root mkfs.fat -F 32 -n CHOWBOOT "${loop}p1"
+  as_root mkfs.fat -F 32 -n LECABOOT "${loop}p1"
   as_root mount "${loop}p1" "$mntboot"
   as_root mkdir -p "$mntboot/EFI/BOOT" "$mntboot/sources" "$mntboot/boot"
   as_root cp "$mntiso/efi/boot/bootx64.efi" "$mntboot/EFI/BOOT/BOOTX64.EFI"
@@ -170,7 +170,7 @@ boot() {
   # plain IDE disk. OVMF never got past the driver screen.
   local -a args=(
     qemu-system-x86_64
-    -name chow-win-x64
+    -name leca-win-x64
     -machine pc,accel=kvm
     -cpu host
     -smp "$cpus"
@@ -237,7 +237,7 @@ wait_ready() {
     fi
     sleep 30
   done
-  echo "win-x64: Windows did not finish. See $cache/serial.log and C:\\chow\\provision.log" >&2
+  echo "win-x64: Windows did not finish. See $cache/serial.log and C:\\leca\\provision.log" >&2
   exit 1
 }
 
@@ -273,7 +273,7 @@ using_installer() {
 
 sync_and_build() {
   say "syncing the project into the guest"
-  guest "cmd /c mkdir C:\\chow\\src" >/dev/null 2>&1 || true
+  guest "cmd /c mkdir C:\\leca\\src" >/dev/null 2>&1 || true
   tar -C "$src" -czf - \
     --exclude build \
     --exclude .dart_tool \
@@ -281,19 +281,19 @@ sync_and_build() {
     --exclude qemu/.cache \
     --exclude '._*' \
     --exclude .DS_Store \
-    . | guest "tar -xzf - -C C:/chow/src"
+    . | guest "tar -xzf - -C C:/leca/src"
   # Call flutter.bat by path. A quoted `set PATH=...` is a nested cmd that
   # exits before flutter runs, so Windows reports that flutter is missing.
   say "flutter build windows"
-  guest 'rmdir /s /q C:\chow\src\build\windows' || true
-  guest 'cd /d C:\chow\src && C:\flutter\bin\flutter.bat build windows --release --dart-define=AUTH_API=https://gno.money'
+  guest 'rmdir /s /q C:\leca\src\build\windows' || true
+  guest 'cd /d C:\leca\src && C:\flutter\bin\flutter.bat build windows --release --dart-define=AUTH_API=https://gno.money'
   mkdir -p "$src/build/windows"
-  guest "tar -C C:/chow/src/build/windows -czf - x64" | tar -xzf - -C "$src/build/windows"
-  [[ -f $src/build/windows/x64/runner/Release/chow.exe ]] || {
-    echo "win-x64: chow.exe was not produced" >&2
+  guest "tar -C C:/leca/src/build/windows -czf - x64" | tar -xzf - -C "$src/build/windows"
+  [[ -f $src/build/windows/x64/runner/Release/leca.exe ]] || {
+    echo "win-x64: leca.exe was not produced" >&2
     exit 1
   }
-  echo "CHOW_BUILT windows-x64"
+  echo "LECA_BUILT windows-x64"
 }
 
 reboot_disk() {
@@ -320,7 +320,7 @@ enable_guest_build() {
   guest 'sc stop UsoSvc' >/dev/null || true
   guest 'shutdown /a' >/dev/null || true
   # Defender locks .obj files mid-compile and cl.exe reports permission denied.
-  guest 'powershell -NoProfile -Command Add-MpPreference -ExclusionPath C:\chow' >/dev/null || true
+  guest 'powershell -NoProfile -Command Add-MpPreference -ExclusionPath C:\leca' >/dev/null || true
   guest 'powershell -NoProfile -Command Add-MpPreference -ExclusionPath C:\flutter' >/dev/null || true
   guest 'powershell -NoProfile -Command Set-MpPreference -DisableRealtimeMonitoring $true' >/dev/null || true
 }

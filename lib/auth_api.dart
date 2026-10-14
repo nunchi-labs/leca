@@ -11,7 +11,7 @@ class AuthApiException implements Exception {
   final String code;
 }
 
-/// Talks to the Chow auth server. The app keeps its local mock when
+/// Talks to the Leca auth server. The app keeps its local mock when
 /// [AuthConfig.apiBase] is empty.
 class AuthApi {
   static Future<Map<String, Object?>> post(

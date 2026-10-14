@@ -12,7 +12,7 @@ if (-not (Get-NetFirewallRule -Name sshd -ErrorAction SilentlyContinue)) {
   New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 | Out-Null
 }
 
-$key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFigLNcGpzU40+owWiqS0fv8FdBrEi5VHng1ESf5LXVz chow-build'
+$key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFigLNcGpzU40+owWiqS0fv8FdBrEi5VHng1ESf5LXVz leca-build'
 $sshDir = Join-Path $env:USERPROFILE '.ssh'
 New-Item -ItemType Directory -Force -Path $sshDir | Out-Null
 $auth = Join-Path $sshDir 'authorized_keys'

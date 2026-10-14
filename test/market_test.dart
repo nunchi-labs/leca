@@ -1,13 +1,13 @@
-import 'package:chow/catalog.dart';
-import 'package:chow/market.dart';
-import 'package:chow/state.dart';
+import 'package:leca/catalog.dart';
+import 'package:leca/market.dart';
+import 'package:leca/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('every sale adds a 5 percent fee', () {
     expect(saleFeeUsd(1.80), 0.09);
     expect(saleFeeUsd(0), 0);
-    final state = ChowState();
+    final state = LecaState();
     state.setBooking(
       const Booking(
         kind: BookKind.ride,
@@ -76,7 +76,7 @@ void main() {
       MarketConfig.active.cities.map((c) => c.id),
       contains('tboung_khmum'),
     );
-    final here = ChowState();
+    final here = LecaState();
     final toulTomPoung = Catalog.kitchens.firstWhere(
       (k) => k.id == 'nom_banh_chok',
     );
@@ -85,7 +85,7 @@ void main() {
     expect(here.covers(angkor.latitude, angkor.longitude), isFalse);
     here.setRadius(1);
     expect(here.covers(toulTomPoung.latitude, toulTomPoung.longitude), isFalse);
-    here.setRadius(ChowState.countryWide);
+    here.setRadius(LecaState.countryWide);
     expect(here.wholeCountry, isTrue);
     expect(here.covers(angkor.latitude, angkor.longitude), isTrue);
     final wheels = MarketConfig.cambodia.exampleVehicles;

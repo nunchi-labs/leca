@@ -1,4 +1,4 @@
-import 'package:chow/main.dart';
+import 'package:leca/main.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,7 +16,7 @@ Future<void> _signInGoogle(WidgetTester tester) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
-  await tester.pumpWidget(const ChowApp());
+  await tester.pumpWidget(const LecaApp());
   await tester.pump();
   expect(find.byKey(const Key('sign_in_phone')), findsOneWidget);
   await tester.tap(find.byKey(const Key('sign_in_more')));
@@ -108,7 +108,7 @@ void main() {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
-      await tester.pumpWidget(const ChowApp());
+      await tester.pumpWidget(const LecaApp());
       await tester.pump();
       await tester.enterText(
         find.byKey(const Key('sign_in_phone_number')),

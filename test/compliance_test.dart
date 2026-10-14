@@ -1,7 +1,7 @@
-import 'package:chow/compliance.dart';
-import 'package:chow/location.dart';
-import 'package:chow/market.dart';
-import 'package:chow/state.dart';
+import 'package:leca/compliance.dart';
+import 'package:leca/location.dart';
+import 'package:leca/market.dart';
+import 'package:leca/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -55,7 +55,7 @@ void main() {
   test(
     'a platform fleet and a missing owner are rejected in Cambodia',
     () async {
-      final state = ChowState();
+      final state = LecaState();
       await state.listVehicle(
         kind: 'car',
         withDriver: false,
@@ -76,7 +76,7 @@ void main() {
   test(
     'a safety report suspends the partner and a share carries the fix',
     () async {
-      final state = ChowState();
+      final state = LecaState();
       state.setBooking(
         const Booking(
           kind: BookKind.ride,

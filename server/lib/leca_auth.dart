@@ -68,7 +68,7 @@ class AuthConfig {
       twilioAccountSid: env['TWILIO_ACCOUNT_SID'] ?? '',
       twilioAuthToken: env['TWILIO_AUTH_TOKEN'] ?? '',
       twilioFrom: env['TWILIO_FROM'] ?? '',
-      devOtp: env['CHOW_DEV_OTP'] == '1',
+      devOtp: env['LECA_DEV_OTP'] == '1',
       googleMapsKey: env['GOOGLE_MAPS_API_KEY'] ?? '',
     );
   }
@@ -453,14 +453,14 @@ class AuthCore {
           id: 'google:dev',
           method: 'google',
           displayName: 'Ada Test',
-          handle: 'ada@chow.app',
+          handle: 'ada@leca.app',
         );
       case 'facebook':
         return const AuthUser(
           id: 'facebook:dev',
           method: 'facebook',
           displayName: 'Grace Test',
-          handle: 'grace@chow.app',
+          handle: 'grace@leca.app',
         );
       case 'wechat':
         return const AuthUser(

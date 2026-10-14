@@ -20,9 +20,9 @@ class StripeCheckout {
     final id = Uri.encodeComponent(orderId);
     final card = Uri.encodeComponent(brand);
     if (hasPublishableKey) {
-      return 'https://checkout.stripe.com/c/pay/chow_${id}_${card}_${amountUsd.toStringAsFixed(2)}';
+      return 'https://checkout.stripe.com/c/pay/leca_${id}_${card}_${amountUsd.toStringAsFixed(2)}';
     }
-    return 'https://checkout.stripe.com/c/pay/cs_test_chow_${id}_$card';
+    return 'https://checkout.stripe.com/c/pay/cs_test_leca_${id}_$card';
   }
 }
 
@@ -44,7 +44,7 @@ class QrFactory {
         return PayPayload(
           rail: rail,
           text: Khqr.generate(
-            bakongAccountId: rail.bakongAccountId ?? 'chow.kh@abaa',
+            bakongAccountId: rail.bakongAccountId ?? 'leca.kh@abaa',
             merchantName: market.merchantName,
             merchantCity: merchantCity,
             amount: amountUsd,
@@ -69,7 +69,7 @@ class QrFactory {
         return PayPayload(
           rail: rail,
           text:
-              'CHOW|${market.countryCode}|$orderId|USD${amountUsd.toStringAsFixed(2)}|$note',
+              'LECA|${market.countryCode}|$orderId|USD${amountUsd.toStringAsFixed(2)}|$note',
         );
       case RailKind.cash:
         return PayPayload(

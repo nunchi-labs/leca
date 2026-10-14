@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:chow_auth/quote.dart';
-import 'package:chow_auth/talk_hub.dart';
+import 'package:leca_auth/quote.dart';
+import 'package:leca_auth/talk_hub.dart';
 import 'package:test/test.dart';
 
 void main() {

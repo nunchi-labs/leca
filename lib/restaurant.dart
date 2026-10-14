@@ -16,7 +16,7 @@ class RestaurantScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     final wide = MediaQuery.sizeOf(context).width >= 840;
 
     final menu = ListView.separated(
@@ -215,7 +215,7 @@ class _CheckoutSummary extends StatelessWidget {
   });
 
   final AppLocalizations l10n;
-  final ChowState state;
+  final LecaState state;
   final VoidCallback onPay;
 
   @override

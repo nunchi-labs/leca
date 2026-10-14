@@ -1,5 +1,5 @@
-import 'package:chow/auth.dart';
-import 'package:chow/state.dart';
+import 'package:leca/auth.dart';
+import 'package:leca/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -13,9 +13,9 @@ void main() {
   });
 
   test('Google mock sign-in creates a session', () async {
-    final state = ChowState();
+    final state = LecaState();
     expect(state.signedIn, isFalse);
-    final future = state.signIn(method: 'google', handle: 'sokha@chow.app');
+    final future = state.signIn(method: 'google', handle: 'sokha@leca.app');
     expect(state.authLoading, isTrue);
     await future;
     expect(state.session?.method, 'google');
@@ -26,51 +26,51 @@ void main() {
   test(
     'email register then sign-in, and a wrong password is rejected',
     () async {
-      final state = ChowState();
+      final state = LecaState();
       await state.signIn(
         method: 'email',
-        handle: 'Sokha@Chow.app',
+        handle: 'Sokha@Leca.app',
         password: 'short',
         register: true,
       );
       expect(state.authError, 'password_short');
       await state.signIn(
         method: 'email',
-        handle: 'Sokha@Chow.app',
+        handle: 'Sokha@Leca.app',
         password: 'correct-horse',
         name: 'Sokha',
         register: true,
       );
       expect(state.session?.method, 'email');
-      expect(state.session?.handle, 'sokha@chow.app');
+      expect(state.session?.handle, 'sokha@leca.app');
       expect(state.session?.displayName, 'Sokha');
       state.signOut();
       await state.signIn(
         method: 'email',
-        handle: 'sokha@chow.app',
+        handle: 'sokha@leca.app',
         password: 'wrong-password',
       );
       expect(state.authError, 'credentials_invalid');
       expect(state.session, isNull);
       await state.signIn(
         method: 'email',
-        handle: 'sokha@chow.app',
+        handle: 'sokha@leca.app',
         password: 'correct-horse',
       );
-      expect(state.session?.id, 'email:sokha@chow.app');
+      expect(state.session?.id, 'email:sokha@leca.app');
     },
   );
 
   test('WeChat mock sign-in creates a session', () async {
-    final state = ChowState();
-    await state.signIn(method: 'wechat', handle: 'sokha.wx@chow.app');
+    final state = LecaState();
+    await state.signIn(method: 'wechat', handle: 'sokha.wx@leca.app');
     expect(state.session?.method, 'wechat');
     expect(state.session?.displayName, 'sokha.wx');
     expect(state.session?.token, isNull);
   });
 
   test('phone mock sends a code then verifies', () async {
-    final state = ChowState();
+    final state = LecaState();
     await state.signIn(method: 'phone', handle: '012345678');
     expect(state.phoneCodeSent, isTrue);
     expect(state.session, isNull);
@@ -82,7 +82,7 @@ void main() {
   });
 
   test('open business and list vehicle reject blank kinds', () async {
-    final state = ChowState();
+    final state = LecaState();
     await state.openBusiness(kind: '  ', name: 'Sokha');
     expect(state.supplyError, 'business_invalid');
     expect(state.businesses, isEmpty);
@@ -117,7 +117,7 @@ void main() {
   });
 
   test('going online stays closed without a Cambodia partner file', () async {
-    final state = ChowState();
+    final state = LecaState();
     await state.loadJobs();
     expect(state.jobsError, 'jobs_offline');
     expect(state.setDriving(value: true, note: 'tuktuk'), 'online_blocked');

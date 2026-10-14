@@ -10,21 +10,21 @@ import 'vault.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ChowApp(vault: PrefsVault()));
+  runApp(const LecaApp(vault: PrefsVault()));
 }
 
-class ChowApp extends StatefulWidget {
-  const ChowApp({super.key, this.vault});
+class LecaApp extends StatefulWidget {
+  const LecaApp({super.key, this.vault});
 
   /// Where state lives between launches. Null keeps it in memory.
   final Vault? vault;
 
   @override
-  State<ChowApp> createState() => _ChowAppState();
+  State<LecaApp> createState() => _LecaAppState();
 }
 
-class _ChowAppState extends State<ChowApp> {
-  late final ChowState _state = ChowState(vault: widget.vault);
+class _LecaAppState extends State<LecaApp> {
+  late final LecaState _state = LecaState(vault: widget.vault);
 
   @override
   void initState() {
@@ -40,7 +40,7 @@ class _ChowAppState extends State<ChowApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ChowScope(
+    return LecaScope(
       notifier: _state,
       child: AnimatedBuilder(
         animation: _state,
@@ -56,7 +56,7 @@ class _ChowAppState extends State<ChowApp> {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            theme: chowTheme,
+            theme: lecaTheme,
             home: const _SessionGate(),
           );
         },
@@ -70,7 +70,7 @@ class _SessionGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = ChowScope.of(context);
+    final state = LecaScope.of(context);
     if (!state.restored) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -84,7 +84,7 @@ const _rice = Color(0xFFF6F0E6);
 const _ink = Color(0xFF1A1410);
 const _gold = Color(0xFF8A6A2F);
 
-final ThemeData chowTheme = ThemeData(
+final ThemeData lecaTheme = ThemeData(
   useMaterial3: true,
   colorScheme: const ColorScheme.light(
     primary: _pepper,

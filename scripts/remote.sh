@@ -4,15 +4,15 @@
 # On Debian or WSL: apt, then a Flutter git checkout.
 set -euo pipefail
 
-ref="${CHOW_FLUTTER_REF:-stable}"
+ref="${LECA_FLUTTER_REF:-stable}"
 here="$(cd "$(dirname "$0")" && pwd)"
 src="$(cd "$here/.." && pwd)"
 
 # A tree on /mnt/c is a Windows drive. Flutter needs a Linux filesystem.
 case "$src" in
   /mnt/*)
-    publish="${CHOW_PUBLISH:-$src/build/linux}"
-    dest="$HOME/chow"
+    publish="${LECA_PUBLISH:-$src/build/linux}"
+    dest="$HOME/leca"
     mkdir -p "$dest"
     tar -C "$src" -cf - \
       --exclude build --exclude .dart_tool --exclude .git --exclude qemu/.cache \
@@ -26,12 +26,12 @@ as_root() {
     "$@"
     return
   fi
-  if [[ -z ${CHOW_SUDO_PASSWORD:-} ]]; then
+  if [[ -z ${LECA_SUDO_PASSWORD:-} ]]; then
     sudo -n "$@"
     return
   fi
   # One sudo. A cached timestamp does not carry into Omarchy's own sudo.
-  echo "$CHOW_SUDO_PASSWORD" | sudo -S -p '' "$@"
+  echo "$LECA_SUDO_PASSWORD" | sudo -S -p '' "$@"
 }
 
 install_omarchy() {
@@ -64,10 +64,10 @@ fi
 
 flutter config --no-analytics --enable-linux-desktop >/dev/null
 cd "$src"
-flutter build linux --release --dart-define="AUTH_API=${CHOW_AUTH_API:-https://gno.money}"
+flutter build linux --release --dart-define="AUTH_API=${LECA_AUTH_API:-https://gno.money}"
 if [[ -n ${publish:-} ]]; then
   mkdir -p "$publish"
   rm -rf "$publish/x64"
   tar -C "$src/build/linux" -cf - x64 | tar -C "$publish" -xf -
 fi
-echo "CHOW_BUILT linux-x64"
+echo "LECA_BUILT linux-x64"
