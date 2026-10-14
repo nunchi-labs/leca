@@ -998,6 +998,7 @@ Future<void> handleAuth(
       return;
     }
     if (request.method == 'POST' && path == '/v1/route') {
+      _bearer(core, request);
       final body = await _readJson(request);
       await _json(response, 200, await core.trafficRoute(body));
       return;

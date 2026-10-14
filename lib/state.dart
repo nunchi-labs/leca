@@ -484,7 +484,9 @@ class LecaState extends ChangeNotifier {
         }, token: session!.token);
         id = '${posted['id'] ?? id}';
         status = '${posted['status'] ?? status}';
-      } catch (_) {}
+      } catch (_) {
+        return;
+      }
     }
     suspendedPartnerIds.add(partner.id);
     final local = driver;

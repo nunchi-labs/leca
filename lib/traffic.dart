@@ -14,11 +14,13 @@ class TrafficMinutes extends StatefulWidget {
     required this.from,
     required this.to,
     required this.label,
+    this.token,
   });
 
   final TripFix from;
   final TripFix to;
   final String Function(int minutes) label;
+  final String? token;
 
   @override
   State<TrafficMinutes> createState() => _TrafficMinutesState();
@@ -34,7 +36,11 @@ class _TrafficMinutesState extends State<TrafficMinutes> {
   }
 
   Future<void> _load() async {
-    final minutes = await trafficMinutes(from: widget.from, to: widget.to);
+    final minutes = await trafficMinutes(
+      from: widget.from,
+      to: widget.to,
+      token: widget.token,
+    );
     if (!mounted || minutes == null) return;
     setState(() => _minutes = minutes);
   }
@@ -60,13 +66,18 @@ class RoadRoute {
 Future<RoadRoute?> roadRoute({
   required TripFix from,
   required TripFix to,
+  String? token,
 }) async {
   if (!AuthConfig.apiLive) return null;
   try {
     final response = await http
         .post(
           Uri.parse('${AuthConfig.apiBase}/v1/route'),
-          headers: {'content-type': 'application/json'},
+          headers: {
+            'content-type': 'application/json',
+            if (token != null && token.isNotEmpty)
+              'authorization': 'Bearer $token',
+          },
           body: jsonEncode({
             'originLat': from.latitude,
             'originLng': from.longitude,
@@ -94,7 +105,8 @@ Future<RoadRoute?> roadRoute({
 Future<int?> trafficMinutes({
   required TripFix from,
   required TripFix to,
-}) async => (await roadRoute(from: from, to: to))?.minutes;
+  String? token,
+}) async => (await roadRoute(from: from, to: to, token: token))?.minutes;
 
 /// The rate card the server is pricing on today, or null offline.
 Future<RateCard?> fetchRateCard() async {

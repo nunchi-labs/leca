@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'leca_auth.dart';
+import 'password.dart';
 
 /// Driver files waiting for a human, and reports a partner can contest.
 ///
@@ -33,7 +34,9 @@ class TrustStore {
 
   void requireAdmin(String? key) {
     if (!adminReady) throw AuthFailure('admin_unconfigured', 503);
-    if (key == null || key != adminKey) throw AuthFailure('forbidden', 403);
+    if (key == null || !sameHash(key, adminKey)) {
+      throw AuthFailure('forbidden', 403);
+    }
   }
 
   /// A driver sends the whole file. Resubmitting replaces a rejected or
@@ -139,6 +142,8 @@ class TrustStore {
     if (!categories.contains(category) || subjectId.isEmpty) {
       throw AuthFailure('report_invalid');
     }
+    final known = _files.values.any((file) => file.staffId == subjectId);
+    if (!known) throw AuthFailure('report_unknown', 404);
     final id = 'r_${_reports.length + 1}_${now().millisecondsSinceEpoch}';
     final report = Report(
       id: id,

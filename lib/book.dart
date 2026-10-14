@@ -186,6 +186,7 @@ Future<RoadRoute?> _roadTo(LecaState state, String dropoff) {
   return roadRoute(
     from: state.origin,
     to: TripFix(latitude: city.latitude, longitude: city.longitude),
+    token: state.session?.token,
   );
 }
 

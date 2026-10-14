@@ -58,6 +58,13 @@ void main() {
     expect(store.openReports().single['status'], 'appealed');
     store.resolveReport({'id': report['id'], 'decision': 'cleared'});
     expect(store.isSuspended('LECA-KH-22'), isFalse);
+    expect(
+      () => store.fileReport(rider, {
+        'category': 'violence',
+        'subjectId': 'LECA-KH-999999',
+      }),
+      throwsA(predicate<AuthFailure>((e) => e.code == 'report_unknown')),
+    );
 
     store = TrustStore(path: path, adminKey: 'k');
     expect(store.status(driver)['review'], 'approved');

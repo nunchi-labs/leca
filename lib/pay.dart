@@ -352,6 +352,7 @@ class _Details extends StatelessWidget {
                 ),
                 to: state.origin,
                 label: l10n.deliveryMinutes,
+                token: state.session?.token,
               ),
           ] else if (state.booking != null) ...[
             Text(state.booking!.title),
@@ -497,6 +498,7 @@ class _PartnerCard extends StatelessWidget {
                       TrafficMinutes(
                         from: northOf(state.origin, 2.4),
                         to: state.origin,
+                        token: state.session?.token,
                         label: (minutes) => l10n.driverMinutes(
                           partner.nameFor(state.locale.languageCode),
                           minutes,

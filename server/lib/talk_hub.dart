@@ -21,6 +21,9 @@ class TalkHub {
   final Map<String, List<_Line>> _rooms = {};
   final Map<String, List<_Seat>> _seats = {};
 
+  static const maxLines = 500;
+  static const maxRooms = 4000;
+
   static final _priceLine = RegExp(
     r'^(ask|allow|end) (\d{1,6}\.\d{2}) (driver|customer)$',
   );
@@ -97,8 +100,14 @@ class TalkHub {
     } catch (_) {}
   }
 
-  _Seat _join(WebSocket socket, Map<String, Object?> message) {
+  _Seat? _join(WebSocket socket, Map<String, Object?> message) {
     final room = _clip('${message['room'] ?? ''}', 80, 'lobby');
+    final known =
+        _rooms.containsKey(room) || (_file(room)?.existsSync() ?? false);
+    if (!known && _rooms.length >= maxRooms) {
+      socket.close();
+      return null;
+    }
     var name = _clip('${message['name'] ?? ''}', 24, 'Guest');
     var who = '';
     final token = '${message['token'] ?? ''}';
@@ -141,6 +150,7 @@ class TalkHub {
           if (seat.who.isEmpty || !_priceLine.hasMatch(text)) return;
         }
         final prior = _log(seat.room);
+        if (prior.length >= maxLines) return;
         final line = _append(
           prior: prior,
           room: seat.room,
