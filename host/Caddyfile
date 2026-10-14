@@ -41,6 +41,7 @@
 
 	handle_path /app/* {
 		root * /var/www/leca/web
+		header Cache-Control "no-cache"
 		try_files {path} /index.html
 		file_server
 	}
