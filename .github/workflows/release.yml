@@ -24,13 +24,14 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - run: dart pub get
+        working-directory: server
       - run: flutter gen-l10n
       - run: flutter analyze
       - run: flutter test
       - name: Server tests
         working-directory: server
         run: |
-          dart pub get
           dart analyze
           dart test
 
