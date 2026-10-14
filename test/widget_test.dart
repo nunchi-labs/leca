@@ -17,6 +17,7 @@ Future<void> _signInGoogle(WidgetTester tester) async {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   await tester.pumpWidget(const ChowApp());
+  await tester.pump();
   expect(find.byKey(const Key('sign_in_google')), findsOneWidget);
   await tester.tap(find.byKey(const Key('sign_in_google')));
   await tester.pump();
@@ -104,6 +105,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       await tester.pumpWidget(const ChowApp());
+      await tester.pump();
       await tester.enterText(
         find.byKey(const Key('sign_in_phone_number')),
         '123',

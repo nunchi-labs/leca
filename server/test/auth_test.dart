@@ -44,7 +44,8 @@ void main() {
     expect((created['user'] as Map)['id'], 'email:sokha@chow.app');
     expect((created['user'] as Map)['displayName'], 'Sokha');
     expect(
-      () => core.emailRegister(email: 'sokha@chow.app', password: 'another-one'),
+      () =>
+          core.emailRegister(email: 'sokha@chow.app', password: 'another-one'),
       throwsA(predicate<AuthFailure>((e) => e.code == 'email_taken')),
     );
     expect(
@@ -61,11 +62,13 @@ void main() {
     );
     expect((signed['user'] as Map)['method'], 'email');
     expect(
-      () => core.emailLogin(email: 'sokha@chow.app', password: 'wrong-password'),
+      () =>
+          core.emailLogin(email: 'sokha@chow.app', password: 'wrong-password'),
       throwsA(predicate<AuthFailure>((e) => e.code == 'credentials_invalid')),
     );
     expect(
-      () => core.emailLogin(email: 'missing@chow.app', password: 'correct-horse'),
+      () =>
+          core.emailLogin(email: 'missing@chow.app', password: 'correct-horse'),
       throwsA(predicate<AuthFailure>((e) => e.code == 'credentials_invalid')),
     );
   });
@@ -80,7 +83,10 @@ void main() {
     expect(user['method'], 'phone');
     expect(user['id'], 'phone:012345678');
     expect(core.userForToken(session['token'] as String)?.handle, '012345678');
-    expect(() => core.phoneVerify('012345678', code), throwsA(isA<AuthFailure>()));
+    expect(
+      () => core.phoneVerify('012345678', code),
+      throwsA(isA<AuthFailure>()),
+    );
   });
 
   test('a short phone and a wrong code are rejected', () async {
@@ -97,9 +103,7 @@ void main() {
     final core = AuthCore(config: const AuthConfig());
     expect(
       () => core.phoneStart('012345678'),
-      throwsA(
-        predicate<AuthFailure>((e) => e.code == 'sms_unconfigured'),
-      ),
+      throwsA(predicate<AuthFailure>((e) => e.code == 'sms_unconfigured')),
     );
   });
 
@@ -141,7 +145,10 @@ void main() {
     );
     for (final provider in ['google', 'facebook', 'wechat']) {
       final start = await core.providerStart(provider);
-      expect(start['url'], contains(provider == 'wechat' ? 'weixin' : provider));
+      expect(
+        start['url'],
+        contains(provider == 'wechat' ? 'weixin' : provider),
+      );
       final html = await core.providerCallback(
         provider,
         'auth-code',
@@ -158,33 +165,34 @@ void main() {
     final core = AuthCore(config: const AuthConfig());
     expect(
       () => core.providerStart('wechat'),
-      throwsA(
-        predicate<AuthFailure>((e) => e.code == 'provider_unconfigured'),
-      ),
+      throwsA(predicate<AuthFailure>((e) => e.code == 'provider_unconfigured')),
     );
   });
 
-  test('dev mode signs in Google, Facebook, and WeChat without those consoles', () async {
-    final core = AuthCore(
-      config: const AuthConfig(
-        devOtp: true,
-        publicUrl: 'http://65.21.232.29:8088',
-      ),
-    );
-    for (final provider in ['google', 'facebook', 'wechat']) {
-      final start = await core.providerStart(provider);
-      expect(start['mode'], 'test');
-      expect(start['url'], contains('/v1/auth/dev/$provider'));
-      final html = await core.providerCallback(
-        provider,
-        'dev',
-        start['pending'] as String,
+  test(
+    'dev mode signs in Google, Facebook, and WeChat without those consoles',
+    () async {
+      final core = AuthCore(
+        config: const AuthConfig(
+          devOtp: true,
+          publicUrl: 'http://65.21.232.29:8088',
+        ),
       );
-      expect(html, contains('Signed in'));
-      final ready = core.pending(start['pending'] as String);
-      expect((ready['user'] as Map)['method'], provider);
-    }
-  });
+      for (final provider in ['google', 'facebook', 'wechat']) {
+        final start = await core.providerStart(provider);
+        expect(start['mode'], 'test');
+        expect(start['url'], contains('/v1/auth/dev/$provider'));
+        final html = await core.providerCallback(
+          provider,
+          'dev',
+          start['pending'] as String,
+        );
+        expect(html, contains('Signed in'));
+        final ready = core.pending(start['pending'] as String);
+        expect((ready['user'] as Map)['method'], provider);
+      }
+    },
+  );
 
   test('the http server completes a dev phone login', () async {
     final core = AuthCore(config: const AuthConfig(devOtp: true));
@@ -203,9 +211,8 @@ void main() {
     );
     start.headers.contentType = ContentType.json;
     start.write(jsonEncode({'phone': '012345678'}));
-    final startBody = jsonDecode(
-      await utf8.decoder.bind(await start.close()).join(),
-    ) as Map;
+    final startBody =
+        jsonDecode(await utf8.decoder.bind(await start.close()).join()) as Map;
     final verify = await client.postUrl(
       Uri.parse('http://127.0.0.1:$port/v1/auth/phone/verify'),
     );

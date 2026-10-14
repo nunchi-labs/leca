@@ -7,12 +7,7 @@ import 'package:crypto/crypto.dart';
 const passwordIterations = 120000;
 
 String hashPassword(String password, List<int> salt) {
-  final digest = _pbkdf2(
-    utf8.encode(password),
-    salt,
-    passwordIterations,
-    32,
-  );
+  final digest = _pbkdf2(utf8.encode(password), salt, passwordIterations, 32);
   return base64Encode(digest);
 }
 
@@ -30,7 +25,12 @@ bool sameHash(String a, String b) {
   return diff == 0;
 }
 
-Uint8List _pbkdf2(List<int> password, List<int> salt, int iterations, int length) {
+Uint8List _pbkdf2(
+  List<int> password,
+  List<int> salt,
+  int iterations,
+  int length,
+) {
   final out = BytesBuilder();
   var block = 1;
   while (out.length < length) {
@@ -41,7 +41,12 @@ Uint8List _pbkdf2(List<int> password, List<int> salt, int iterations, int length
   return Uint8List.fromList(bytes.sublist(0, length));
 }
 
-List<int> _block(List<int> password, List<int> salt, int iterations, int index) {
+List<int> _block(
+  List<int> password,
+  List<int> salt,
+  int iterations,
+  int index,
+) {
   final hmac = Hmac(sha256, password);
   var u = hmac.convert([...salt, ..._be(index)]).bytes;
   final result = List<int>.from(u);

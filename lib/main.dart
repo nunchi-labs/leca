@@ -6,21 +6,37 @@ import 'l10n/app_localizations.dart';
 import 'market.dart';
 import 'sign_in.dart';
 import 'state.dart';
+import 'vault.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ChowApp());
+  runApp(const ChowApp(vault: PrefsVault()));
 }
 
 class ChowApp extends StatefulWidget {
-  const ChowApp({super.key});
+  const ChowApp({super.key, this.vault});
+
+  /// Where state lives between launches. Null keeps it in memory.
+  final Vault? vault;
 
   @override
   State<ChowApp> createState() => _ChowAppState();
 }
 
 class _ChowAppState extends State<ChowApp> {
-  final ChowState _state = ChowState();
+  late final ChowState _state = ChowState(vault: widget.vault);
+
+  @override
+  void initState() {
+    super.initState();
+    _state.restore();
+  }
+
+  @override
+  void dispose() {
+    _state.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +71,9 @@ class _SessionGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = ChowScope.of(context);
+    if (!state.restored) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (state.session == null) return const SignInScreen();
     return const HomeScreen();
   }

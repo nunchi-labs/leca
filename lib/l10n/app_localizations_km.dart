@@ -864,6 +864,20 @@ class AppLocalizationsKm extends AppLocalizations {
   String get priceInChat => 'តម្លៃចរចានៅទីនេះ។ ម្ខាងស្នើ ម្ខាងទៀតយល់ព្រម។';
 
   @override
+  String get counterFare => 'តថ្លៃវិញ';
+
+  @override
+  String get endFare => 'បញ្ចប់ការតថ្លៃ';
+
+  @override
+  String fareEnded(String price) {
+    return 'ការតថ្លៃបានបញ្ចប់។ អនុវត្ត $price។';
+  }
+
+  @override
+  String get fareYourTurn => 'ការស្នើរបស់ម្ខាងទៀត។ យល់ព្រម តថ្លៃវិញ ឬបញ្ចប់។';
+
+  @override
   String get trainAll => 'ខ្ញុំបានបញ្ចប់ការបណ្តុះបណ្តាលទាំងបួន';
 
   @override

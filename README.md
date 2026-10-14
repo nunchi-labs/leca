@@ -117,11 +117,15 @@ A passenger sees the driver photo, plate, staff ID, and upfront fare, can share 
 
 Every ride, rental, food delivery, and parcel is priced the same way from rate card `leca-kh-1`: road distance (straight line × 1.3), trip minutes from live traffic when it is known, and a base, per-km, and per-minute charge per kind and vehicle. A rental with a driver bills their minutes; a self-drive rental does not. The app and the server (`POST /v1/quote`) share the math, and each quote carries a SHA-256 proof over the published inputs that either side can recompute.
 
-The app price is what gets charged until both sides agree on something else. A driver can ask for more and a customer can offer less, on the booking card or in the chat beside the price. The other side allows it, or it never applies. A changed route resets the bargain.
+The app price is what gets charged until both sides agree on something else. A driver can ask for more and a customer can offer less, on the booking card or in the chat beside the price. Either side can counter as many times as they like; a bid only takes effect when the other side allows it, and either side can end the bargain, which leaves the last agreed price (or the app price) standing. Every bargain in the app lives in one table keyed by fare, so the kitchen chat, the booking card, and checkout always show the same number. A changed route is a new key and a fresh bargain.
 
 ### Chat
 
-Everyone on a trip shares one room: text, voice, video, and price lines. Each line hashes the previous one, so the whole conversation, including every price ask and allow, is one proof. The relay is `/v1/room` on the Leca server; devices also open a direct iroh link with each other, and only names travel in the room.
+Everyone on a trip shares one room: text, voice, video, and price lines. Each line hashes the previous one (`leca-talk/2`), so the whole conversation, including every price ask, allow, and end, is one proof. A line is bound to its author by `who`, a 16-hex hash of the account id that the server derives from the session token on join; names are shown, ids never leave the server, and two people with the same name cannot act for each other. Only signed-in accounts can place price lines. The relay is `/v1/room` on the Leca server; devices also open a direct iroh link with each other.
+
+### Nothing is lost on restart
+
+The app saves its state (session, cart, booking, chat chains, bargains, driver file, listed vehicles, reports) to local storage a moment after every change and restores it on launch. The server appends every room line to `$CHOW_TALK_DIR/<room>.jsonl` (default `/var/lib/chow-auth/rooms`) as it happens and re-reads the chain, verifying each proof, the first time a room is opened after a restart.
 
 ### Signing up
 

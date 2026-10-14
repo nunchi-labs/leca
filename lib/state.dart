@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -14,12 +16,20 @@ import 'location.dart';
 import 'market.dart';
 import 'rate.dart';
 import 'records.dart';
+import 'vault.dart';
 
 class ChowState extends ChangeNotifier {
-  ChowState()
-    : locale = MarketConfig.active.defaultLocale,
+  ChowState({Vault? vault})
+    : vault = vault ?? MemoryVault(),
+      locale = MarketConfig.active.defaultLocale,
       cityId = MarketConfig.active.defaultCityId,
       railId = MarketConfig.active.defaultRailId;
+
+  /// Everything below that matters survives a restart through here.
+  final Vault vault;
+  Timer? _saveTimer;
+  bool _restoring = false;
+  bool restored = false;
 
   Locale locale;
   String cityId;
@@ -52,7 +62,10 @@ class ChowState extends ChangeNotifier {
   final List<ListedVehicle> vehicles = <ListedVehicle>[];
   DriverProfile? driver;
   String? driverError;
-  FareAsk? fareAsk;
+
+  /// Every bargain in the app, by fare key. One place, so a kitchen chat,
+  /// a booking card, and checkout all see the same price.
+  final Map<String, FareAsk> fareAsks = <String, FareAsk>{};
   RidePartner? rideMatch;
   final Set<String> suspendedPartnerIds = <String>{};
   final List<TripShare> shares = <TripShare>[];
@@ -68,6 +81,148 @@ class ChowState extends ChangeNotifier {
 
   LocaleCode get lang =>
       locale.languageCode == 'km' ? LocaleCode.km : LocaleCode.en;
+
+  /// Saves shortly after every change. Writes are coalesced so a burst of
+  /// taps costs one write.
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    if (_restoring) return;
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(milliseconds: 300), save);
+  }
+
+  @override
+  void dispose() {
+    _saveTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> save() async {
+    _saveTimer?.cancel();
+    _saveTimer = null;
+    try {
+      await vault.write(jsonEncode(toJson()));
+    } catch (_) {}
+  }
+
+  /// Loads the last saved state. Safe to call on an empty or damaged vault.
+  Future<void> restore() async {
+    String? raw;
+    try {
+      raw = await vault.read();
+    } catch (_) {}
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) {
+          _restoring = true;
+          try {
+            _apply(decoded);
+          } finally {
+            _restoring = false;
+          }
+        }
+      } catch (_) {}
+    }
+    restored = true;
+    super.notifyListeners();
+  }
+
+  Map<String, Object?> toJson() => {
+    'v': 1,
+    'locale': locale.languageCode,
+    'cityId': cityId,
+    'railId': railId,
+    'radiusKm': radiusKm,
+    'note': note,
+    'booking': booking?.toJson(),
+    'qty': qty,
+    'session': session?.toJson(),
+    'businesses': [for (final b in businesses) b.toJson()],
+    'items': [for (final i in items) i.toJson()],
+    'messages': [for (final m in messages) m.toJson()],
+    'replySamples': replySamples,
+    'vehicles': [for (final v in vehicles) v.toJson()],
+    'driver': driver?.toJson(),
+    'fareAsks': {
+      for (final entry in fareAsks.entries) entry.key: entry.value.toJson(),
+    },
+    'suspendedPartnerIds': suspendedPartnerIds.toList(),
+    'reports': [for (final r in reports) r.toJson()],
+    'driving': driving,
+    'driveNote': driveNote,
+  };
+
+  void _apply(Map<dynamic, dynamic> raw) {
+    final lang = '${raw['locale'] ?? ''}';
+    if (lang == 'km' || lang == 'en') locale = Locale(lang);
+    final market = MarketConfig.active;
+    final city = '${raw['cityId'] ?? ''}';
+    if (market.cities.any((c) => c.id == city)) cityId = city;
+    final rail = '${raw['railId'] ?? ''}';
+    if (market.rails.any((r) => r.id == rail)) railId = rail;
+    final radius = raw['radiusKm'];
+    if (radius is num) radiusKm = radius.toDouble().clamp(1, countryWide);
+    note = '${raw['note'] ?? ''}';
+    booking = Booking.fromJson(raw['booking']);
+    final rawQty = raw['qty'];
+    if (rawQty is Map) {
+      qty
+        ..clear()
+        ..addAll({
+          for (final entry in rawQty.entries)
+            if (entry.value is num && (entry.value as num) > 0)
+              '${entry.key}': (entry.value as num).toInt(),
+        });
+    }
+    session = Session.fromJson(raw['session']);
+    _fill(raw['businesses'], businesses, BusinessListing.fromJson);
+    _fill(raw['items'], items, ShopItem.fromJson);
+    _fill(raw['messages'], messages, ChatMessage.fromJson);
+    final samples = raw['replySamples'];
+    if (samples is Map) {
+      replySamples
+        ..clear()
+        ..addAll({
+          for (final entry in samples.entries)
+            if (entry.value is List)
+              '${entry.key}': [
+                for (final n in entry.value as List)
+                  if (n is num) n.toInt(),
+              ],
+        });
+    }
+    _fill(raw['vehicles'], vehicles, ListedVehicle.fromJson);
+    driver = DriverProfile.fromJson(raw['driver']);
+    final asks = raw['fareAsks'];
+    if (asks is Map) {
+      fareAsks.clear();
+      for (final entry in asks.entries) {
+        final ask = FareAsk.fromJson(entry.value);
+        if (ask != null) fareAsks['${entry.key}'] = ask;
+      }
+    }
+    final suspended = raw['suspendedPartnerIds'];
+    if (suspended is List) {
+      suspendedPartnerIds
+        ..clear()
+        ..addAll([for (final id in suspended) '$id']);
+    }
+    _fill(raw['reports'], reports, PlatformReport.fromJson);
+    driving = raw['driving'] == true;
+    driveNote = '${raw['driveNote'] ?? ''}';
+    syncRideMatch(notify: false);
+  }
+
+  static void _fill<T>(Object? raw, List<T> into, T? Function(Object?) parse) {
+    if (raw is! List) return;
+    into.clear();
+    for (final item in raw) {
+      final parsed = parse(item);
+      if (parsed != null) into.add(parsed);
+    }
+  }
 
   City get city => MarketConfig.active.city(cityId);
 
@@ -541,7 +696,7 @@ class ChowState extends ChangeNotifier {
     vehicles.clear();
     driver = null;
     driverError = null;
-    fareAsk = null;
+    fareAsks.clear();
     rideMatch = null;
     suspendedPartnerIds.clear();
     shares.clear();
@@ -969,25 +1124,12 @@ class ChowState extends ChangeNotifier {
         }
       }
     }
-    final prior = [
-      for (final message in thread(placeId))
-        if (message.proof.isNotEmpty)
-          TalkLine(
-            seq: message.seq,
-            room: placeId,
-            kind: message.kind,
-            name: message.name,
-            at: message.stamp,
-            text: message.text,
-            prev: message.prev,
-            proof: message.proof,
-          ),
-    ];
     final line = talkAppend(
-      prior: prior,
+      prior: _chain(placeId),
       room: placeId,
       kind: kind,
       name: name ?? (asBusiness ? 'Shop' : session?.displayName ?? 'Guest'),
+      who: name == null && !asBusiness ? who : '',
       at: now,
       text: body,
     );
@@ -1001,6 +1143,7 @@ class ChowState extends ChangeNotifier {
         at: now,
         kind: line.kind,
         name: line.name,
+        who: line.who,
         seq: line.seq,
         prev: line.prev,
         proof: line.proof,
@@ -1010,28 +1153,30 @@ class ChowState extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool talkOk(String placeId) {
-    final lines = [
-      for (final message in thread(placeId))
-        if (message.proof.isNotEmpty)
-          TalkLine(
-            seq: message.seq,
-            room: placeId,
-            kind: message.kind,
-            name: message.name,
-            at: message.stamp,
-            text: message.text,
-            prev: message.prev,
-            proof: message.proof,
-          ),
-    ];
-    return talkChecks(lines);
-  }
+  /// This account's handle inside a room. Empty before sign-in.
+  String get who => talkWho(session?.id ?? '');
+
+  List<TalkLine> _chain(String placeId) => [
+    for (final message in thread(placeId))
+      if (message.proof.isNotEmpty)
+        TalkLine(
+          seq: message.seq,
+          room: placeId,
+          kind: message.kind,
+          name: message.name,
+          who: message.who,
+          at: message.stamp,
+          text: message.text,
+          prev: message.prev,
+          proof: message.proof,
+        ),
+  ];
+
+  bool talkOk(String placeId) => talkChecks(_chain(placeId));
 
   void appendTalk(TalkLine line) {
     if (!line.checksOut) return;
-    final prior = thread(line.room)
-        .where((message) => message.proof.isNotEmpty);
+    final prior = _chain(line.room);
     if (prior.any((message) => message.seq == line.seq)) return;
     final prev = prior.isEmpty ? '' : prior.last.proof;
     if (line.prev != prev || line.seq != prior.length + 1) return;
@@ -1044,6 +1189,7 @@ class ChowState extends ChangeNotifier {
         at: DateTime.tryParse(line.at)?.toLocal() ?? DateTime.now(),
         kind: line.kind,
         name: line.name,
+        who: line.who,
         seq: line.seq,
         prev: line.prev,
         proof: line.proof,
@@ -1066,41 +1212,46 @@ class ChowState extends ChangeNotifier {
     return customer;
   }
 
-  /// Either side may ask for a different price. The app price stays in
-  /// force until the other side allows the ask.
+  /// The bargain over one fare, if anyone has bid on it.
+  FareAsk? askFor(String key) => fareAsks[key];
+
+  /// Either side may name a price, as often as they like. The price in
+  /// force does not move until the other side allows a bid.
   void proposeFare(
     String key,
     double appUsd,
     double askUsd, {
     String proposer = 'driver',
   }) {
-    if (askUsd <= 0 || (askUsd - appUsd).abs() < 0.009) {
-      fareAsk = null;
-    } else {
-      fareAsk = FareAsk(
-        key: key,
-        appUsd: appUsd,
-        askUsd: (askUsd * 100).round() / 100,
-        proposer: proposer == 'customer' ? 'customer' : 'driver',
-      );
-    }
+    if (askUsd <= 0) return;
+    final usd = (askUsd * 100).round() / 100;
+    final side = proposer == 'customer' ? 'customer' : 'driver';
+    final current = fareAsks[key] ?? FareAsk(key: key, appUsd: appUsd);
+    fareAsks[key] = current.bid(usd, side);
     notifyListeners();
   }
 
   /// Who this device speaks for when it proposes a price.
   String get fareSide => driving ? 'driver' : 'customer';
 
-  void allowFare() {
-    final ask = fareAsk;
+  void allowFare(String key) {
+    final ask = fareAsks[key];
+    if (ask == null || !ask.open) return;
+    fareAsks[key] = ask.allow();
+    notifyListeners();
+  }
+
+  /// Closes the bargain. The agreed price, or the app price, stands.
+  void endFare(String key) {
+    final ask = fareAsks[key];
     if (ask == null) return;
-    fareAsk = ask.allow();
+    fareAsks[key] = ask.end();
     notifyListeners();
   }
 
   double payable(String key, double appUsd) {
-    final ask = fareAsk;
-    if (ask != null && ask.key == key && ask.allowed) return ask.askUsd;
-    return appUsd;
+    final ask = fareAsks[key];
+    return ask?.agreedUsd ?? appUsd;
   }
 
   double listedPrice(ListedVehicle vehicle, {required bool sale}) {

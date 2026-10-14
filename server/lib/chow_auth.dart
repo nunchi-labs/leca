@@ -226,10 +226,7 @@ class AuthCore {
     if (config.twilioReady) {
       await _sendSms(phone, code);
     }
-    return {
-      'ok': true,
-      if (config.devOtp) 'devCode': code,
-    };
+    return {'ok': true, if (config.devOtp) 'devCode': code};
   }
 
   Future<Map<String, Object?>> phoneVerify(String rawPhone, String code) {
@@ -263,7 +260,9 @@ class AuthCore {
     if (password.length < 8) throw AuthFailure('password_short');
     if (_emails.containsKey(address)) throw AuthFailure('email_taken');
     final salt = base64Encode(newSalt(_random));
-    final display = name.trim().isEmpty ? address.split('@').first : name.trim();
+    final display = name.trim().isEmpty
+        ? address.split('@').first
+        : name.trim();
     _emails[address] = _EmailAccount(
       salt: salt,
       hash: hashPassword(password, base64Decode(salt)),
@@ -288,8 +287,11 @@ class AuthCore {
   }) {
     final address = _email(email);
     final account = _emails[address];
-    final salt = account == null ? base64Encode(List<int>.filled(16, 0)) : account.salt;
-    final actual = account?.hash ?? hashPassword('missing-account', base64Decode(salt));
+    final salt = account == null
+        ? base64Encode(List<int>.filled(16, 0))
+        : account.salt;
+    final actual =
+        account?.hash ?? hashPassword('missing-account', base64Decode(salt));
     final offered = hashPassword(password, base64Decode(salt));
     if (account == null || !sameHash(actual, offered)) {
       throw AuthFailure('credentials_invalid');
@@ -400,11 +402,7 @@ class AuthCore {
     }
     if (item.status == 'ready' && item.token != null) {
       final user = _sessions[item.token!];
-      return {
-        'status': 'ready',
-        'token': item.token,
-        'user': user?.toJson(),
-      };
+      return {'status': 'ready', 'token': item.token, 'user': user?.toJson()};
     }
     if (item.status == 'error') {
       return {'status': 'error', 'error': item.error ?? 'failed'};
@@ -599,9 +597,7 @@ class AuthCore {
 
   Future<void> _sendSms(String phone, String code) async {
     final sid = config.twilioAccountSid;
-    final basic = base64Encode(
-      utf8.encode('$sid:${config.twilioAuthToken}'),
-    );
+    final basic = base64Encode(utf8.encode('$sid:${config.twilioAuthToken}'));
     final response = await net.postForm(
       Uri.parse(
         'https://api.twilio.com/2010-04-01/Accounts/$sid/Messages.json',
@@ -643,13 +639,7 @@ class AuthCore {
           'scope': 'email,public_profile',
         }).toString();
       case 'wechat':
-        return '${Uri.https('open.weixin.qq.com', '/connect/qrconnect', {
-          'appid': config.wechatAppId,
-          'redirect_uri': redirect,
-          'response_type': 'code',
-          'scope': 'snsapi_login',
-          'state': state,
-        })}#wechat_redirect';
+        return '${Uri.https('open.weixin.qq.com', '/connect/qrconnect', {'appid': config.wechatAppId, 'redirect_uri': redirect, 'response_type': 'code', 'scope': 'snsapi_login', 'state': state})}#wechat_redirect';
       default:
         throw AuthFailure('provider_invalid');
     }
@@ -744,9 +734,7 @@ class AuthCore {
     if (routes is! List || routes.isEmpty || routes.first is! Map) {
       throw AuthFailure('route_unavailable', 502);
     }
-    final route = (routes.first as Map).map(
-      (k, v) => MapEntry('$k', v),
-    );
+    final route = (routes.first as Map).map((k, v) => MapEntry('$k', v));
     final seconds = _googleSeconds(route['duration']);
     if (seconds == null) throw AuthFailure('route_failed', 502);
     final minutes = (seconds / 60).ceil().clamp(1, 24 * 60);
@@ -860,7 +848,8 @@ document.getElementById("wechat").onclick = function () { provider("wechat"); };
 ''';
   }
 
-  String _page(String title, String body) => '''
+  String _page(String title, String body) =>
+      '''
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>$title</title></head>
 <body style="font-family: sans-serif; padding: 2rem;">

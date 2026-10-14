@@ -41,6 +41,26 @@ class Session {
   final String displayName;
   final String handle;
   final String? token;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'method': method,
+    'displayName': displayName,
+    'handle': handle,
+    'token': ?token,
+  };
+
+  static Session? fromJson(Object? raw) {
+    if (raw is! Map || raw['id'] == null) return null;
+    final token = raw['token'];
+    return Session(
+      id: '${raw['id']}',
+      method: '${raw['method']}',
+      displayName: '${raw['displayName']}',
+      handle: '${raw['handle']}',
+      token: token == null ? null : '$token',
+    );
+  }
 }
 
 /// Opaque [kind] — restaurant, pharmacy, or any lawful string. Not an enum.
@@ -72,7 +92,45 @@ class BusinessListing {
   final String sellerId;
   final double latitude;
   final double longitude;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'kind': kind,
+    'name': name,
+    'cityId': cityId,
+    'note': note,
+    'openHour': openHour,
+    'closeHour': closeHour,
+    'sellerName': sellerName,
+    'sellerPhone': sellerPhone,
+    'sellerId': sellerId,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
+
+  static BusinessListing? fromJson(Object? raw) {
+    if (raw is! Map || raw['id'] == null) return null;
+    return BusinessListing(
+      id: '${raw['id']}',
+      kind: '${raw['kind']}',
+      name: '${raw['name']}',
+      cityId: '${raw['cityId']}',
+      note: '${raw['note'] ?? ''}',
+      openHour: _int(raw['openHour'], 8),
+      closeHour: _int(raw['closeHour'], 21),
+      sellerName: '${raw['sellerName'] ?? ''}',
+      sellerPhone: '${raw['sellerPhone'] ?? ''}',
+      sellerId: '${raw['sellerId'] ?? ''}',
+      latitude: _double(raw['latitude'], 11.5564),
+      longitude: _double(raw['longitude'], 104.9282),
+    );
+  }
 }
+
+int _int(Object? raw, int fallback) => raw is num ? raw.toInt() : fallback;
+
+double _double(Object? raw, double fallback) =>
+    raw is num ? raw.toDouble() : fallback;
 
 /// Opaque [kind] — same rule as customer rentals.
 class ListedVehicle {
@@ -95,6 +153,31 @@ class ListedVehicle {
   final bool owner;
   final double latitude;
   final double longitude;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'kind': kind,
+    'withDriver': withDriver,
+    'autonomous': autonomous,
+    'note': note,
+    'owner': owner,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
+
+  static ListedVehicle? fromJson(Object? raw) {
+    if (raw is! Map || raw['id'] == null) return null;
+    return ListedVehicle(
+      id: '${raw['id']}',
+      kind: '${raw['kind']}',
+      withDriver: raw['withDriver'] == true,
+      autonomous: raw['autonomous'] == true,
+      note: '${raw['note'] ?? ''}',
+      owner: raw['owner'] == true,
+      latitude: _double(raw['latitude'], 11.5564),
+      longitude: _double(raw['longitude'], 104.9282),
+    );
+  }
 }
 
 /// Opaque [kind] — food, ride, send, or any lawful job string.

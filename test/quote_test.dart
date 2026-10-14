@@ -3,6 +3,7 @@ import 'package:chow/quote.dart';
 import 'package:chow/records.dart';
 import 'package:chow/state.dart';
 import 'package:chow/talk.dart';
+import 'package:chow/vault.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -93,15 +94,18 @@ void main() {
       );
       expect(state.deliveryUsd, automatic.usd);
       expect(state.totalUsd, before);
-      state.allowFare();
+      state.allowFare(state.deliveryFareKey(kitchen));
       expect(state.deliveryUsd, closeTo(automatic.usd + 0.5, 0.001));
       expect(state.totalUsd, greaterThan(before));
       expect(state.deliveryQuoteOf(kitchen).proof, automatic.proof);
 
+      // A second bargain elsewhere leaves the first one untouched.
       state.proposeFare('ride:tuktuk', 1.80, 2.40);
       expect(state.payable('ride:tuktuk', 1.80), 1.80);
-      state.allowFare();
+      expect(state.deliveryUsd, closeTo(automatic.usd + 0.5, 0.001));
+      state.allowFare('ride:tuktuk');
       expect(state.payable('ride:tuktuk', 1.80), 2.40);
+      expect(state.deliveryUsd, closeTo(automatic.usd + 0.5, 0.001));
     },
   );
 
@@ -140,22 +144,116 @@ void main() {
     );
   });
 
-  test('either side may propose, and the price moves only on allow', () {
+  test('bargaining goes back and forth until one side ends it', () {
     final state = ChowState();
     const key = 'rent:car:driver:1000:5';
     state.proposeFare(key, 10, 8, proposer: 'customer');
-    expect(state.fareAsk?.proposer, 'customer');
+    expect(state.askFor(key)?.pending?.side, 'customer');
     expect(state.payable(key, 10), 10);
-    state.allowFare();
-    expect(state.payable(key, 10), 8);
 
+    // The driver counters instead of allowing. Still the app price.
     state.proposeFare(key, 10, 12.5, proposer: 'driver');
-    expect(state.fareAsk?.proposer, 'driver');
-    expect(state.fareAsk?.allowed, isFalse);
+    expect(state.askFor(key)?.pending?.side, 'driver');
+    expect(state.askFor(key)?.bids.length, 2);
     expect(state.payable(key, 10), 10);
-    state.allowFare();
-    expect(state.payable(key, 10), 12.5);
+
+    // The customer counters again, the driver allows that one.
+    state.proposeFare(key, 10, 9, proposer: 'customer');
+    state.allowFare(key);
+    expect(state.payable(key, 10), 9);
+    expect(state.askFor(key)?.open, isFalse);
+
+    // Another ask after agreement keeps the agreed price until answered.
+    state.proposeFare(key, 10, 11, proposer: 'driver');
+    expect(state.payable(key, 10), 9);
+    state.endFare(key);
+    expect(state.askFor(key)?.ended, isTrue);
+    expect(state.askFor(key)?.pending, isNull);
+    expect(state.payable(key, 10), 9);
+
+    // allow after end does nothing; a new bid reopens.
+    state.allowFare(key);
+    expect(state.payable(key, 10), 9);
+    state.proposeFare(key, 10, 9.5, proposer: 'driver');
+    expect(state.askFor(key)?.ended, isFalse);
+    expect(state.askFor(key)?.bids.length, 5);
+
     expect(state.payable('rent:car:self:1000:5', 7), 7);
+  });
+
+  test('state survives a restart: chat chain, bargain, cart, driver', () async {
+    final vault = MemoryVault();
+    final first = ChowState(vault: vault);
+    await first.restore();
+    final kitchen = Catalog.kitchens.first;
+    first.addDish(kitchen.menu.first, kitchen);
+    final at = DateTime.utc(2026, 10, 14, 3);
+    first.sendMessage(
+      placeId: kitchen.id,
+      text: 'hi',
+      asBusiness: false,
+      at: at,
+    );
+    first.sendMessage(
+      placeId: kitchen.id,
+      text: 'ask 2.40 driver',
+      asBusiness: false,
+      at: at,
+      kind: 'price',
+      name: 'Dara',
+    );
+    final key = first.deliveryFareKey(kitchen);
+    first.proposeFare(key, 2.0, 2.4, proposer: 'driver');
+    first.allowFare(key);
+    first.setRadius(25);
+    await first.save();
+    expect(vault.json, isNotNull);
+
+    final second = ChowState(vault: vault);
+    await second.restore();
+    expect(second.restored, isTrue);
+    expect(second.itemCount, 1);
+    expect(second.cartKitchen?.id, kitchen.id);
+    expect(second.thread(kitchen.id).length, 2);
+    expect(second.talkOk(kitchen.id), isTrue);
+    expect(second.thread(kitchen.id).last.kind, 'price');
+    expect(second.payable(key, 2.0), 2.4);
+    expect(second.askFor(key)?.bids.length, 1);
+    expect(second.radiusKm, 25);
+    expect(second.deliveryUsd, 2.4);
+
+    final blank = ChowState(vault: MemoryVault('not json'));
+    await blank.restore();
+    expect(blank.restored, isTrue);
+    expect(blank.itemCount, 0);
+  });
+
+  test('a price line is bound to an account handle, not a name', () {
+    final a = talkAppend(
+      prior: const [],
+      room: 'r',
+      kind: 'price',
+      name: 'Sokha',
+      who: talkWho('phone:85512000001'),
+      at: DateTime.utc(2026, 10, 14, 3),
+      text: 'ask 2.40 driver',
+    );
+    final b = talkAppend(
+      prior: const [],
+      room: 'r',
+      kind: 'price',
+      name: 'Sokha',
+      who: talkWho('phone:85512000002'),
+      at: DateTime.utc(2026, 10, 14, 3),
+      text: 'ask 2.40 driver',
+    );
+    expect(a.proof, isNot(b.proof));
+    expect(a.who, hasLength(16));
+    expect(a.who, isNot(contains('85512')));
+    expect(talkBody(a), contains('leca-talk/2'));
+    expect(PriceLine.parse('end 0.00 customer')?.verb, 'end');
+    expect(PriceLine.parse('ask 0.00 driver'), isNull);
+    expect(PriceLine.parse('steal 2.00 driver'), isNull);
   });
 
   test('a price line sits in the same chain as the words', () {

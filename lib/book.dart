@@ -528,8 +528,7 @@ class _OfferTileState extends State<_OfferTile> {
         : quote == null
         ? base
         : '$base:${_withDriver ? 'driver' : 'self'}:${quote.meters}:${quote.minutes}';
-    final ask = state.fareAsk;
-    final agreed = key != null && ask != null && ask.key == key && ask.allowed;
+    final agreed = key != null && state.askFor(key)?.agreedUsd != null;
     final amount = key == null ? appUsd : state.payable(key, appUsd);
     final mode = _withDriver ? l10n.withDriver : l10n.selfDrive;
     return Padding(

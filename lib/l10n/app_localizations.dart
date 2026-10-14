@@ -1676,6 +1676,30 @@ abstract class AppLocalizations {
   /// **'តម្លៃចរចានៅទីនេះ។ ម្ខាងស្នើ ម្ខាងទៀតយល់ព្រម។'**
   String get priceInChat;
 
+  /// No description provided for @counterFare.
+  ///
+  /// In km, this message translates to:
+  /// **'តថ្លៃវិញ'**
+  String get counterFare;
+
+  /// No description provided for @endFare.
+  ///
+  /// In km, this message translates to:
+  /// **'បញ្ចប់ការតថ្លៃ'**
+  String get endFare;
+
+  /// No description provided for @fareEnded.
+  ///
+  /// In km, this message translates to:
+  /// **'ការតថ្លៃបានបញ្ចប់។ អនុវត្ត {price}។'**
+  String fareEnded(String price);
+
+  /// No description provided for @fareYourTurn.
+  ///
+  /// In km, this message translates to:
+  /// **'ការស្នើរបស់ម្ខាងទៀត។ យល់ព្រម តថ្លៃវិញ ឬបញ្ចប់។'**
+  String get fareYourTurn;
+
   /// No description provided for @trainAll.
   ///
   /// In km, this message translates to:

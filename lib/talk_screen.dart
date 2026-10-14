@@ -38,28 +38,6 @@ class TalkScreen extends StatefulWidget {
   State<TalkScreen> createState() => _TalkScreenState();
 }
 
-/// `ask 2.40 driver` or `allow 2.40 customer`. Cents only, no hidden fields.
-class _PriceLine {
-  const _PriceLine(this.verb, this.usd, this.side);
-
-  final String verb;
-  final double usd;
-  final String side;
-
-  String encode() =>
-      '$verb ${usd.toStringAsFixed(2)} ${side == 'driver' ? 'driver' : 'customer'}';
-
-  static _PriceLine? parse(String text) {
-    final parts = text.trim().split(' ');
-    if (parts.length != 3) return null;
-    if (parts[0] != 'ask' && parts[0] != 'allow') return null;
-    final usd = double.tryParse(parts[1]);
-    if (usd == null || usd <= 0) return null;
-    if (parts[2] != 'driver' && parts[2] != 'customer') return null;
-    return _PriceLine(parts[0], usd, parts[2]);
-  }
-}
-
 class _TalkScreenState extends State<TalkScreen> {
   final _text = TextEditingController();
   final _seat = openIroh();
@@ -92,7 +70,8 @@ class _TalkScreenState extends State<TalkScreen> {
       scheme: base.scheme == 'https' ? 'wss' : 'ws',
       path: '/v1/room',
     );
-    final name = ChowScope.of(context).session?.displayName ?? 'Guest';
+    final session = ChowScope.of(context).session;
+    final name = session?.displayName ?? 'Guest';
     final channel = WebSocketChannel.connect(uri);
     _channel = channel;
     _sub = channel.stream.listen(_onData, onError: (_) {}, onDone: () {});
@@ -104,7 +83,12 @@ class _TalkScreenState extends State<TalkScreen> {
     if (!mounted) return;
     setState(() => _live = true);
     channel.sink.add(
-      jsonEncode({'type': 'join', 'room': widget.room, 'name': name}),
+      jsonEncode({
+        'type': 'join',
+        'room': widget.room,
+        'name': name,
+        'token': ?session?.token,
+      }),
     );
     await _seat.start(
       publish: (endpoint, addr) {
@@ -125,7 +109,12 @@ class _TalkScreenState extends State<TalkScreen> {
         if (log is List) {
           for (final item in log) {
             final line = TalkLine.fromJson(item);
-            if (line != null) state.appendTalk(line);
+            if (line == null) continue;
+            final fresh = !state
+                .thread(widget.room)
+                .any((m) => m.seq == line.seq && m.proof == line.proof);
+            state.appendTalk(line);
+            if (fresh) _applyPrice(state, line);
           }
         }
         _seat.notePeers(decoded['peers']);
@@ -148,28 +137,32 @@ class _TalkScreenState extends State<TalkScreen> {
     return [for (final item in raw) '$item'];
   }
 
-  /// A price line from the other side moves the ask on this device too.
+  /// A price line from another account moves the bargain on this device
+  /// too. Lines are matched by account handle, never by display name.
   void _applyPrice(ChowState state, TalkLine line) {
     final key = widget.fareKey;
     if (key == null || line.kind != 'price') return;
-    final me = state.session?.displayName ?? 'Guest';
-    if (line.name == me) return;
-    final offer = _PriceLine.parse(line.text);
+    if (line.who.isNotEmpty && line.who == state.who) return;
+    if (line.who.isEmpty && line.name == (state.session?.displayName ?? '')) {
+      return;
+    }
+    final offer = PriceLine.parse(line.text);
     if (offer == null) return;
-    if (offer.verb == 'ask') {
-      state.proposeFare(key, widget.appUsd, offer.usd, proposer: offer.side);
-    } else if (offer.verb == 'allow') {
-      final ask = state.fareAsk;
-      if (ask != null &&
-          ask.key == key &&
-          (ask.askUsd - offer.usd).abs() < 0.009) {
-        state.allowFare();
-      }
+    switch (offer.verb) {
+      case 'ask':
+        state.proposeFare(key, widget.appUsd, offer.usd, proposer: offer.side);
+      case 'allow':
+        final pending = state.askFor(key)?.pending;
+        if (pending != null && (pending.usd - offer.usd).abs() < 0.009) {
+          state.allowFare(key);
+        }
+      case 'end':
+        state.endFare(key);
     }
   }
 
   void _price(ChowState state, String verb, double usd, String side) {
-    final text = _PriceLine(verb, usd, side).encode();
+    final text = PriceLine(verb, usd, side).encode();
     if (_live) {
       _channel?.sink.add(
         jsonEncode({'type': 'say', 'kind': 'price', 'text': text}),
@@ -222,13 +215,15 @@ class _TalkScreenState extends State<TalkScreen> {
       case 'text':
         return '${message.name}: ${message.text}';
       case 'price':
-        final offer = _PriceLine.parse(message.text);
+        final offer = PriceLine.parse(message.text);
         if (offer == null) return '${message.name}: ${message.text}';
         final who = offer.side == 'driver' ? l10n.whoDriver : l10n.whoCustomer;
         final money = moneyUsd(offer.usd);
-        return offer.verb == 'allow'
-            ? '${message.name}: ${l10n.priceAllowed(money)}'
-            : '${message.name}: ${l10n.proposedBy(who, money)}';
+        return switch (offer.verb) {
+          'allow' => '${message.name}: ${l10n.priceAllowed(money)}',
+          'end' => '${message.name}: ${l10n.endFare}',
+          _ => '${message.name}: ${l10n.proposedBy(who, money)}',
+        };
       default:
         return '${message.name}: ${message.kind}';
     }
@@ -263,7 +258,7 @@ class _TalkScreenState extends State<TalkScreen> {
                       if (widget.header != null) widget.header!,
                       if (widget.fareKey != null) ...[
                         Text(
-                          '${state.fareAsk?.key == widget.fareKey && state.fareAsk!.allowed ? l10n.agreedPrice : l10n.appPrice}  ${moneyUsd(state.payable(widget.fareKey!, widget.appUsd))}',
+                          '${fareLabel(l10n, state.askFor(widget.fareKey!))}  ${moneyUsd(state.payable(widget.fareKey!, widget.appUsd))}',
                           key: const Key('talk_price'),
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
@@ -275,6 +270,8 @@ class _TalkScreenState extends State<TalkScreen> {
                               _price(state, 'ask', usd, side),
                           onAllowed: (usd) =>
                               _price(state, 'allow', usd, state.fareSide),
+                          onEnded: () =>
+                              _price(state, 'end', 0, state.fareSide),
                         ),
                         const SizedBox(height: 8),
                       ],

@@ -872,6 +872,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Price is negotiated here. Either side can propose; the other allows.';
 
   @override
+  String get counterFare => 'Counter';
+
+  @override
+  String get endFare => 'End bargaining';
+
+  @override
+  String fareEnded(String price) {
+    return 'Bargaining ended. $price applies.';
+  }
+
+  @override
+  String get fareYourTurn =>
+      'Their offer. Allow it, counter, or end the bargain.';
+
+  @override
   String get trainAll => 'I completed all four training topics';
 
   @override

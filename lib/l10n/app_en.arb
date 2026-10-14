@@ -357,6 +357,15 @@
     }
   },
   "priceInChat": "Price is negotiated here. Either side can propose; the other allows.",
+  "counterFare": "Counter",
+  "endFare": "End bargaining",
+  "fareEnded": "Bargaining ended. {price} applies.",
+  "@fareEnded": {
+    "placeholders": {
+      "price": {"type": "String"}
+    }
+  },
+  "fareYourTurn": "Their offer. Allow it, counter, or end the bargain.",
   "trainAll": "I completed all four training topics",
   "signupReady": "Everything is here. Save to get your staff ID.",
   "signupNext": "Next: {step}",

@@ -214,7 +214,7 @@ void main() {
 
       state.proposeFare('ride:tuktuk', 1.80, 2.40);
       expect(state.payable('ride:tuktuk', 1.80), 1.80);
-      state.allowFare();
+      state.allowFare('ride:tuktuk');
       expect(state.payable('ride:tuktuk', 1.80), 2.40);
 
       expect(state.replySecondsFor('pork_rice'), 900);

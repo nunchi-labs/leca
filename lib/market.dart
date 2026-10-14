@@ -469,6 +469,33 @@ class Booking {
   final int meters;
   final int minutes;
   final String proof;
+
+  Map<String, Object?> toJson() => {
+    'kind': kind.name,
+    'title': title,
+    'amountUsd': amountUsd,
+    'detail': detail,
+    'vehicleId': vehicleId,
+    'meters': meters,
+    'minutes': minutes,
+    'proof': proof,
+  };
+
+  static Booking? fromJson(Object? raw) {
+    if (raw is! Map || raw['amountUsd'] is! num) return null;
+    final kind = BookKind.values.where((k) => k.name == raw['kind']);
+    if (kind.isEmpty) return null;
+    return Booking(
+      kind: kind.first,
+      title: '${raw['title']}',
+      amountUsd: (raw['amountUsd'] as num).toDouble(),
+      detail: '${raw['detail'] ?? ''}',
+      vehicleId: '${raw['vehicleId'] ?? ''}',
+      meters: raw['meters'] is num ? (raw['meters'] as num).toInt() : 0,
+      minutes: raw['minutes'] is num ? (raw['minutes'] as num).toInt() : 0,
+      proof: '${raw['proof'] ?? ''}',
+    );
+  }
 }
 
 /// Leca's fee on every sale: food, delivery, rides, rentals, and shop goods.
