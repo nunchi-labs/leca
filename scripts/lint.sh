@@ -43,7 +43,14 @@ echo "caddy"
 caddy fmt --diff host/Caddyfile >/dev/null
 
 echo "systemd"
-systemd-analyze verify host/leca-auth.service
+# The unit's dart binary is installed on the server, not on the CI runner.
+if ! systemd_out="$(systemd-analyze verify host/leca-auth.service 2>&1)"; then
+  filtered="$(printf '%s\n' "$systemd_out" | grep -v 'is not executable: No such file or directory' || true)"
+  if [[ -n $filtered ]]; then
+    printf '%s\n' "$systemd_out"
+    exit 1
+  fi
+fi
 
 echo "cppcheck"
 cppcheck --enable=all --error-exitcode=1 --inline-suppr \
