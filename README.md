@@ -53,7 +53,7 @@ Without a key, Stripe still shows a Checkout-style QR (`cs_test_leca_…`). ABA 
 - Android SDK 36 to produce a release APK
 - Linux desktop: `ninja-build`, `libgtk-3-dev` (GTK 3)
 
-Compatibility floors: Flutter defaults (**Android 24+**, **iOS 15+**), plus macOS, Windows, Linux, and web.
+Compatibility floors: Flutter defaults (**Android 24+**, **iOS 15+**), plus **macOS 13.5+** (passkeys), Windows, Linux, and web.
 
 ## Run
 
