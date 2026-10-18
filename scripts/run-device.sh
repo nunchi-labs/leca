@@ -72,7 +72,7 @@ resolve() {
     17) echo "iPhone 17" ;;
     air | iphone-air) echo "iPhone Air" ;;
     android | pixel | chow) echo "android" ;;
-    android-17 | 17) echo "android-17" ;;
+    android-17) echo "android-17" ;;
     -h | help) echo "help" ;;
     *) die "unknown device '$1' (try: duo, 18-pro-max, android)" ;;
   esac
