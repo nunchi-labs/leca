@@ -7,7 +7,8 @@
 #
 #   macos, ios                         the Mac in scripts/mac.host
 #   android, linux-x64, windows-x64    the Hetzner machine in scripts/hetzner.host
-#   linux-arm64, windows-arm64         GitHub ARM runners
+#   linux-arm64                        Depot CI (depot-ubuntu-24.04-arm-8)
+#   windows-arm64                      a Windows ARM machine (Depot has none)
 #
 # Windows x64 on Hetzner is a KVM guest (scripts/win-x64.sh).
 # The Mac key is qemu/.cache/mac/id_ed25519.
@@ -346,7 +347,8 @@ Usage: ./build.sh [target ...]
   macos  ios                     the Mac (this machine, or scripts/mac.host)
   android  linux-x64  windows-x64   the Hetzner machine (scripts/hetzner.host)
   web                             this machine
-  linux-arm64  windows-arm64     a GitHub ARM runner
+  linux-arm64                     Depot CI (an ARM Linux sandbox)
+  windows-arm64                   a Windows ARM machine
 
 No arguments builds every target these two machines can produce.
 Packages land in dist/.
@@ -369,8 +371,12 @@ dispatch_remote() {
   case "$target" in
     macos | ios) build_on_mac "$target" ;;
     android | linux-x64 | windows-x64) build_on_hetzner "$target" ;;
-    linux-arm64 | windows-arm64)
-      echo "build: $target is built on a GitHub ARM runner" >&2
+    linux-arm64)
+      echo "build: $target is built on Depot CI (depot-ubuntu-24.04-arm-8)" >&2
+      return 1
+      ;;
+    windows-arm64)
+      echo "build: $target needs a Windows ARM machine. Depot CI has no Windows sandbox." >&2
       return 1
       ;;
     *) die "no builder for $target" ;;

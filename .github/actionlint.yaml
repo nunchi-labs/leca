@@ -1,0 +1,12 @@
+# Depot CI labels. A GitHub label such as ubuntu-latest is rewritten to
+# depot-ubuntu-latest and loses the size this pipeline asks for.
+self-hosted-runner:
+  labels:
+    - depot-ubuntu-24.04
+    - depot-ubuntu-24.04-4
+    - depot-ubuntu-24.04-8
+    - depot-ubuntu-24.04-16
+    - depot-ubuntu-24.04-arm
+    - depot-ubuntu-24.04-arm-4
+    - depot-ubuntu-24.04-arm-8
+    - depot-ubuntu-24.04-arm-16

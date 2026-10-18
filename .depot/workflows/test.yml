@@ -1,0 +1,90 @@
+name: Test
+
+# Pull-request gate. Times below are GitHub Actions run 39159848342
+# (main 31874c2, https://github.com/nunchi-labs/leca/actions/runs/39159848342).
+#
+#   server   29s   of which dart setup 7s, dart test 13s
+#   app    2m 20s  of which flutter-action 25s, flutter test 1m 34s
+#   lint     44s   of which tool install 30s, scripts/lint.sh 9s
+#   swift     9s   SwiftLint on macos-latest
+#
+# Depot CI starts a sandbox in about 2–3 seconds. The app job asks for
+# 8 CPUs because that 1m 34s test is the gate. Server and lint stay on
+# 2 CPUs: their work does not fill more.
+#
+# SwiftLint is not in this workflow. Depot CI has no macOS sandbox, and a
+# macos-latest label is silently run as Ubuntu, so the lint would not run.
+# On a Mac: swiftlint lint --strict --quiet
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+  DART_VERSION: "3.13.4"
+
+jobs:
+  server:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      # Same disk for every job. Each job writes its own subdirectory.
+      - uses: depot/cache-mount@v1
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Dart SDK
+        run: bash ../scripts/ci/ensure-dart.sh
+      - run: dart pub get
+        env:
+          PUB_CACHE: /mnt/cache/pub/server
+      - run: dart analyze --fatal-infos
+        env:
+          PUB_CACHE: /mnt/cache/pub/server
+      - run: dart test
+        env:
+          PUB_CACHE: /mnt/cache/pub/server
+
+  app:
+    runs-on: depot-ubuntu-24.04-8
+    timeout-minutes: 12
+    env:
+      PUB_CACHE: /mnt/cache/pub/app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh app host
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter analyze --fatal-infos
+      - run: flutter test --reporter compact
+
+  lint:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Linters
+        run: bash scripts/ci/ensure-lint.sh
+      - run: bash scripts/lint.sh

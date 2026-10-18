@@ -98,7 +98,8 @@ Output: `build/app/outputs/flutter-apk/app-release.apk`.
 | macos, ios | the Mac in `scripts/mac.host` |
 | android, linux-x64 | the Hetzner machine in `scripts/hetzner.host` |
 | windows-x64 | a KVM Windows guest on that Hetzner machine (`scripts/win-x64.sh`, `LECA_WIN_MEM` default `32G`) |
-| linux-arm64, windows-arm64 | GitHub ARM runners |
+| linux-arm64 | Depot CI (`depot-ubuntu-24.04-arm-8`) |
+| windows-arm64 | a Windows ARM machine. Depot CI has no Windows sandbox |
 
 ```bash
 ./build.sh
@@ -106,7 +107,7 @@ Output: `build/app/outputs/flutter-apk/app-release.apk`.
 ./build.sh android linux-x64 windows-x64
 ```
 
-`linux-arm64` and `windows-arm64` stay on the GitHub ARM runners. `./qemu/build.sh` can still boot those ARM VMs on the Apple Silicon Mac, outside `./build.sh`.
+`linux-arm64` is built by Depot CI. `windows-arm64` needs a Windows ARM machine. `./qemu/build.sh` can still boot those ARM VMs on the Apple Silicon Mac, outside `./build.sh`.
 
 ## Driver, shops, rides
 
@@ -150,4 +151,8 @@ flutter test
 
 ## Origin
 
-Origin is the source of truth. This tree also lives as a local git repo at `~/ciao`.
+Origin is the source of truth. The git remote named `origin` is the Cursor repository, and CI is `.depot/workflows/`. Depot runs those workflows when the Depot app is connected on the repository's Apps tab. A GitHub mirror does not start them.
+
+Pull requests run the server tests, the Flutter tests, and `scripts/lint.sh`. A push to main also packages Android, Linux (x64 and arm64), and web. macOS, iOS, and Windows stay on `./build.sh`, because Depot CI sandboxes are Linux only. SwiftLint stays on a Mac (`swiftlint lint --strict`).
+
+The GitHub remotes are still `github` (faddat/leca) and `nunchi` (nunchi-labs/leca). This tree also lives as a local git repo at `~/ciao`.

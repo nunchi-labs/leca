@@ -1,0 +1,103 @@
+name: Package
+
+# Packages Depot CI can compile. GitHub run 39159848342 spent this long
+# in ./build.sh, after setup, on ubuntu-latest (2 CPUs) unless noted:
+#
+#   android       13m 05s   this job asks for 16 CPUs
+#   linux-x64      1m 50s   this job asks for 8 CPUs
+#   linux-arm64    2m 00s   plus 39s of apt and 39s cloning Flutter
+#   web              35s    this job asks for 4 CPUs
+#   macos         12m 25s   not here: no macOS sandbox
+#   ios            6m 32s   not here
+#   windows-x64    7m 10s   not here: no Windows sandbox
+#   windows-arm64  7m 43s   not here, and Flutter's setup action had no
+#                            ARM archive, so that job also spent 2m 08s
+#                            cloning Flutter
+#
+# More CPUs do not divide those times evenly. Downloads and linking stay
+# serial. The cache disk removes the repeat of the Flutter clone, the
+# Cargo registry, and the Gradle cache. macOS, iOS, and Windows stay on
+# ./build.sh (the Mac and the Hetzner Windows guest).
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+  LECA_AUTH_API: https://gno.money
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+
+jobs:
+  package:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: android
+            runner: depot-ubuntu-24.04-16
+            precache: android
+          - target: linux-x64
+            runner: depot-ubuntu-24.04-8
+            precache: linux
+          - target: linux-arm64
+            runner: depot-ubuntu-24.04-arm-8
+            precache: linux
+          - target: web
+            runner: depot-ubuntu-24.04-4
+            precache: web
+    env:
+      # One directory per target so the four jobs can write at once.
+      PUB_CACHE: /mnt/cache/pub/${{ matrix.target }}
+      CARGO_HOME: /mnt/cache/cargo/${{ matrix.target }}
+      RUSTUP_HOME: /mnt/cache/rustup/${{ matrix.target }}
+      GRADLE_USER_HOME: /mnt/cache/gradle/${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - uses: actions/setup-java@v4
+        if: matrix.target == 'android'
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Linux libraries
+        if: matrix.precache == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev zip unzip
+      - name: Zip
+        if: matrix.target == 'web'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip unzip
+      - uses: dtolnay/rust-toolchain@stable
+        if: matrix.target != 'web'
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh "${{ matrix.target }}" "${{ matrix.precache }}"
+      - run: ./build.sh ${{ matrix.target }}
+      # upload-artifact skips paths listed in .gitignore, and dist/ is ignored.
+      - name: Stage packages
+        run: |
+          mkdir -p packages
+          cp -a dist/. packages/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Leca-${{ matrix.target }}-${{ github.ref_name }}
+          path: packages/
+          if-no-files-found: error

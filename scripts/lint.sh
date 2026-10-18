@@ -23,7 +23,10 @@ mapfile -d '' yaml_files < <(tracked '*.yml' '*.yaml')
 yamllint -s "${yaml_files[@]}"
 
 echo "actionlint"
-actionlint -no-color
+mapfile -d '' action_files < <(tracked '.github/workflows/*.yml' '.github/workflows/*.yaml' '.depot/workflows/*.yml' '.depot/workflows/*.yaml')
+if [[ ${#action_files[@]} -gt 0 ]]; then
+  actionlint -no-color "${action_files[@]}"
+fi
 
 echo "json"
 while IFS= read -r -d '' file; do
