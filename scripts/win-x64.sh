@@ -171,7 +171,7 @@ boot() {
   local -a args=(
     qemu-system-x86_64
     -name leca-win-x64
-    -machine pc,accel=kvm
+    -machine "pc,accel=kvm"
     -cpu host
     -smp "$cpus"
     -m "$mem"
@@ -179,22 +179,22 @@ boot() {
     -device qemu-xhci
     -device usb-kbd
     -device usb-tablet
-    -drive if=none,id=system,format=qcow2,file="$cache/disk.qcow2"
-    -device ide-hd,drive=system,bus=ide.0,unit=0
-    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:${port}-:22
-    -device e1000e,netdev=net0
-    -serial file:"$cache/serial.log"
-    -monitor unix:"$cache/monitor.sock",server,nowait
+    -drive "if=none,id=system,format=qcow2,file=$cache/disk.qcow2"
+    -device "ide-hd,drive=system,bus=ide.0,unit=0"
+    -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:${port}-:22"
+    -device "e1000e,netdev=net0"
+    -serial "file:$cache/serial.log"
+    -monitor "unix:$cache/monitor.sock,server,nowait"
     -pidfile "$cache/qemu.pid"
     -daemonize
   )
   if [[ $with_iso == yes ]]; then
     args+=(
       -boot order=d
-      -drive if=none,id=install,media=cdrom,format=raw,readonly=on,file="$cache/windows.iso"
-      -device ide-cd,drive=install,bus=ide.0,unit=1
-      -drive if=none,id=seed,media=cdrom,format=raw,readonly=on,file="$cache/seed.iso"
-      -device ide-cd,drive=seed,bus=ide.1
+      -drive "if=none,id=install,media=cdrom,format=raw,readonly=on,file=$cache/windows.iso"
+      -device "ide-cd,drive=install,bus=ide.0,unit=1"
+      -drive "if=none,id=seed,media=cdrom,format=raw,readonly=on,file=$cache/seed.iso"
+      -device "ide-cd,drive=seed,bus=ide.1"
     )
   else
     args+=(-boot order=c)
@@ -322,6 +322,8 @@ enable_guest_build() {
   # Defender locks .obj files mid-compile and cl.exe reports permission denied.
   guest 'powershell -NoProfile -Command Add-MpPreference -ExclusionPath C:\leca' >/dev/null || true
   guest 'powershell -NoProfile -Command Add-MpPreference -ExclusionPath C:\flutter' >/dev/null || true
+  # $true belongs to PowerShell. Bash must not expand it.
+  # shellcheck disable=SC2016
   guest 'powershell -NoProfile -Command Set-MpPreference -DisableRealtimeMonitoring $true' >/dev/null || true
 }
 

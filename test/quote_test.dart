@@ -1,10 +1,10 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:leca/catalog.dart';
 import 'package:leca/quote.dart';
 import 'package:leca/records.dart';
 import 'package:leca/state.dart';
 import 'package:leca/talk.dart';
 import 'package:leca/vault.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('a delivery fare is the rate card and the proof matches it', () {
@@ -35,29 +35,30 @@ void main() {
   test('chat, voice, and video form one proof, and a changed line fails', () {
     final state = LecaState();
     final at = DateTime.utc(2026, 10, 14, 3);
-    state.sendMessage(
-      placeId: 'shop',
-      text: 'hello',
-      asBusiness: false,
-      at: at,
-      name: 'Ada',
-    );
-    state.sendMessage(
-      placeId: 'shop',
-      text: 'open',
-      asBusiness: false,
-      at: at,
-      kind: 'voice',
-      name: 'Bo',
-    );
-    state.sendMessage(
-      placeId: 'shop',
-      text: 'open',
-      asBusiness: false,
-      at: at,
-      kind: 'video',
-      name: 'Ada',
-    );
+    state
+      ..sendMessage(
+        placeId: 'shop',
+        text: 'hello',
+        asBusiness: false,
+        at: at,
+        name: 'Ada',
+      )
+      ..sendMessage(
+        placeId: 'shop',
+        text: 'open',
+        asBusiness: false,
+        at: at,
+        kind: 'voice',
+        name: 'Bo',
+      )
+      ..sendMessage(
+        placeId: 'shop',
+        text: 'open',
+        asBusiness: false,
+        at: at,
+        kind: 'video',
+        name: 'Ada',
+      );
     expect(state.talkOk('shop'), isTrue);
     expect(state.thread('shop').map((m) => m.kind), ['text', 'voice', 'video']);
     final first = state.messages.first;
@@ -218,8 +219,9 @@ void main() {
     expect(state.payable(key, 10), 10);
 
     // The customer counters again, the driver allows that one.
-    state.proposeFare(key, 10, 9, proposer: 'customer');
-    state.allowFare(key);
+    state
+      ..proposeFare(key, 10, 9, proposer: 'customer')
+      ..allowFare(key);
     expect(state.payable(key, 10), 9);
     expect(state.askFor(key)?.open, isFalse);
 
@@ -248,24 +250,21 @@ void main() {
     final kitchen = Catalog.kitchens.first;
     first.addDish(kitchen.menu.first, kitchen);
     final at = DateTime.utc(2026, 10, 14, 3);
-    first.sendMessage(
-      placeId: kitchen.id,
-      text: 'hi',
-      asBusiness: false,
-      at: at,
-    );
-    first.sendMessage(
-      placeId: kitchen.id,
-      text: 'ask 2.40 driver',
-      asBusiness: false,
-      at: at,
-      kind: 'price',
-      name: 'Dara',
-    );
+    first
+      ..sendMessage(placeId: kitchen.id, text: 'hi', asBusiness: false, at: at)
+      ..sendMessage(
+        placeId: kitchen.id,
+        text: 'ask 2.40 driver',
+        asBusiness: false,
+        at: at,
+        kind: 'price',
+        name: 'Dara',
+      );
     final key = first.deliveryFareKey(kitchen);
-    first.proposeFare(key, 2.0, 2.4, proposer: 'driver');
-    first.allowFare(key);
-    first.setRadius(25);
+    first
+      ..proposeFare(key, 2, 2.4, proposer: 'driver')
+      ..allowFare(key)
+      ..setRadius(25);
     await first.save();
     expect(vault.json, isNotNull);
 
@@ -277,7 +276,7 @@ void main() {
     expect(second.thread(kitchen.id).length, 2);
     expect(second.talkOk(kitchen.id), isTrue);
     expect(second.thread(kitchen.id).last.kind, 'price');
-    expect(second.payable(key, 2.0), 2.4);
+    expect(second.payable(key, 2), 2.4);
     expect(second.askFor(key)?.bids.length, 1);
     expect(second.radiusKm, 25);
     expect(second.deliveryUsd, 2.4);
@@ -319,29 +318,30 @@ void main() {
   test('a price line sits in the same chain as the words', () {
     final state = LecaState();
     final at = DateTime.utc(2026, 10, 14, 3);
-    state.sendMessage(
-      placeId: 'nom_banh_chok',
-      text: 'can you do more?',
-      asBusiness: false,
-      at: at,
-      name: 'Dara',
-    );
-    state.sendMessage(
-      placeId: 'nom_banh_chok',
-      text: 'ask 2.40 driver',
-      asBusiness: false,
-      at: at,
-      kind: 'price',
-      name: 'Dara',
-    );
-    state.sendMessage(
-      placeId: 'nom_banh_chok',
-      text: 'allow 2.40 customer',
-      asBusiness: false,
-      at: at,
-      kind: 'price',
-      name: 'Sokha',
-    );
+    state
+      ..sendMessage(
+        placeId: 'nom_banh_chok',
+        text: 'can you do more?',
+        asBusiness: false,
+        at: at,
+        name: 'Dara',
+      )
+      ..sendMessage(
+        placeId: 'nom_banh_chok',
+        text: 'ask 2.40 driver',
+        asBusiness: false,
+        at: at,
+        kind: 'price',
+        name: 'Dara',
+      )
+      ..sendMessage(
+        placeId: 'nom_banh_chok',
+        text: 'allow 2.40 customer',
+        asBusiness: false,
+        at: at,
+        kind: 'price',
+        name: 'Sokha',
+      );
     expect(state.talkOk('nom_banh_chok'), isTrue);
     expect(state.thread('nom_banh_chok').map((m) => m.kind), [
       'text',

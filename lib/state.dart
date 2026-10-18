@@ -6,19 +6,19 @@ import 'package:flutter/material.dart';
 
 import 'auth.dart';
 import 'auth_api.dart';
-import 'device_key.dart';
-import 'face_gate.dart';
 import 'catalog.dart';
 import 'compliance.dart';
+import 'device_key.dart';
+import 'face_gate.dart';
 import 'geo.dart';
-import 'quote.dart';
-import 'talk.dart';
 import 'identity.dart';
 import 'location.dart';
 import 'market.dart';
 import 'passkey_auth.dart';
+import 'quote.dart';
 import 'rate.dart';
 import 'records.dart';
+import 'talk.dart';
 import 'traffic.dart';
 import 'vault.dart';
 
@@ -119,7 +119,7 @@ class LecaState extends ChangeNotifier {
     _saveTimer = null;
     try {
       await vault.write(jsonEncode(toJson()));
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   /// Loads the last saved state. Safe to call on an empty or damaged vault.
@@ -127,7 +127,7 @@ class LecaState extends ChangeNotifier {
     String? raw;
     try {
       raw = await vault.read();
-    } catch (_) {}
+    } on Object catch (_) {}
     if (raw != null && raw.isNotEmpty) {
       try {
         final decoded = jsonDecode(raw);
@@ -139,11 +139,11 @@ class LecaState extends ChangeNotifier {
             _restoring = false;
           }
         }
-      } catch (_) {}
+      } on Object catch (_) {}
     }
     try {
       await ensureDeviceKey();
-    } catch (_) {}
+    } on Object catch (_) {}
     restored = true;
     notifyListeners();
     unawaited(_refreshRateCard());
@@ -220,7 +220,7 @@ class LecaState extends ChangeNotifier {
           _keySeed = bytes;
           _device = null;
         }
-      } catch (_) {}
+      } on Object catch (_) {}
     }
     keyName = normalizeKeyName('${raw['keyName'] ?? ''}');
     _fill(raw['businesses'], businesses, BusinessListing.fromJson);
@@ -515,7 +515,7 @@ class LecaState extends ChangeNotifier {
         }, token: session!.token);
         id = '${posted['id'] ?? id}';
         status = '${posted['status'] ?? status}';
-      } catch (_) {
+      } on Object catch (_) {
         return;
       }
     }
@@ -556,7 +556,7 @@ class LecaState extends ChangeNotifier {
         }, token: session!.token);
       } on AuthApiException catch (e) {
         return e.code;
-      } catch (_) {
+      } on Object catch (_) {
         return 'failed';
       }
     }
@@ -586,7 +586,7 @@ class LecaState extends ChangeNotifier {
           ..clear()
           ..addAll([for (final id in ids) '$id']);
       }
-    } catch (_) {}
+    } on Object catch (_) {}
     final token = session?.token;
     if (token != null && token.isNotEmpty) {
       try {
@@ -613,7 +613,7 @@ class LecaState extends ChangeNotifier {
             }
           }
         }
-      } catch (_) {}
+      } on Object catch (_) {}
     }
     syncRideMatch(notify: false);
     notifyListeners();
@@ -675,7 +675,7 @@ class LecaState extends ChangeNotifier {
         authError = e.code;
       } on AuthApiException catch (e) {
         authError = e.code;
-      } catch (_) {
+      } on Object catch (_) {
         authError = 'failed';
       }
       authLoading = false;
@@ -747,7 +747,7 @@ class LecaState extends ChangeNotifier {
       phoneCodeSent = false;
     } on AuthException catch (e) {
       authError = e.code;
-    } catch (_) {
+    } on Object catch (_) {
       authError = 'failed';
     }
     authLoading = false;
@@ -1062,7 +1062,7 @@ class LecaState extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    if (CambodiaRules.rejectsPlatformFleet(autonomous)) {
+    if (CambodiaRules.rejectsPlatformFleet(autonomous: autonomous)) {
       supplyError = 'platform_fleet';
       supplyLoading = false;
       notifyListeners();
@@ -1106,7 +1106,7 @@ class LecaState extends ChangeNotifier {
     driveNote = note;
     notifyListeners();
     if (value) {
-      loadJobs();
+      unawaited(loadJobs());
     }
     return null;
   }
@@ -1321,7 +1321,7 @@ class LecaState extends ChangeNotifier {
         }, token: session!.token);
         review = '${posted['review'] ?? 'pending'}';
         reviewNote = '${posted['note'] ?? ''}';
-      } catch (_) {
+      } on Object catch (_) {
         review = 'pending';
       }
     }

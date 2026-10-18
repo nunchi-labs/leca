@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -32,7 +33,7 @@ class _TrafficMinutesState extends State<TrafficMinutes> {
   @override
   void initState() {
     super.initState();
-    _load();
+    unawaited(_load());
   }
 
   Future<void> _load() async {
@@ -97,7 +98,7 @@ Future<RoadRoute?> roadRoute({
       minutes: minutes,
       meters: meters is int && meters > 0 ? meters : 0,
     );
-  } catch (_) {
+  } on Object catch (_) {
     return null;
   }
 }
@@ -117,7 +118,7 @@ Future<RateCard?> fetchRateCard() async {
         .timeout(const Duration(seconds: 8));
     if (response.statusCode != 200) return null;
     return RateCard.fromJson(jsonDecode(response.body));
-  } catch (_) {
+  } on Object catch (_) {
     return null;
   }
 }

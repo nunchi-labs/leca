@@ -65,8 +65,10 @@ class CambodiaRules {
   static bool needsMotorFile(String kind) => !isBicycle(kind);
 
   /// The platform may partner with drivers. It may not operate the vehicle.
-  static bool rejectsPlatformFleet(bool autonomous, [MarketConfig? market]) =>
-      applies(market) && autonomous;
+  static bool rejectsPlatformFleet({
+    required bool autonomous,
+    MarketConfig? market,
+  }) => applies(market) && autonomous;
 
   static bool containsKhmer(String value) =>
       RegExp(r'[\u1780-\u17FF]').hasMatch(value);

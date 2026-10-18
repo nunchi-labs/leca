@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter_test/flutter_test.dart';
 import 'package:leca/identity.dart';
 import 'package:leca/rate.dart';
 import 'package:leca/state.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 final _pngA = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
@@ -216,34 +216,36 @@ void main() {
       expect(state.itemsFor(id).single.description, 'ភួយកប្បាស');
 
       final asked = DateTime(2026, 10, 7, 10);
-      state.sendMessage(
-        placeId: id,
-        text: 'Is this in stock?',
-        asBusiness: false,
-        at: asked,
-      );
-      state.sendMessage(
-        placeId: id,
-        text: 'Yes',
-        asBusiness: true,
-        at: asked.add(const Duration(minutes: 4)),
-      );
+      state
+        ..sendMessage(
+          placeId: id,
+          text: 'Is this in stock?',
+          asBusiness: false,
+          at: asked,
+        )
+        ..sendMessage(
+          placeId: id,
+          text: 'Yes',
+          asBusiness: true,
+          at: asked.add(const Duration(minutes: 4)),
+        );
       expect(state.replySecondsFor(id)! <= 300, isTrue);
       expect(repliesFast(state.replySecondsFor(id)!), isTrue);
 
       final late = DateTime(2026, 10, 7, 22);
-      state.sendMessage(
-        placeId: id,
-        text: 'Tonight?',
-        asBusiness: false,
-        at: late,
-      );
-      state.sendMessage(
-        placeId: id,
-        text: 'Tomorrow',
-        asBusiness: true,
-        at: late.add(const Duration(hours: 1)),
-      );
+      state
+        ..sendMessage(
+          placeId: id,
+          text: 'Tonight?',
+          asBusiness: false,
+          at: late,
+        )
+        ..sendMessage(
+          placeId: id,
+          text: 'Tomorrow',
+          asBusiness: true,
+          at: late.add(const Duration(hours: 1)),
+        );
       expect(state.replySecondsFor(id), 240);
 
       state.proposeFare('ride:tuktuk', 1.80, 2.40);

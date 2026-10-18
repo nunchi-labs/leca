@@ -35,7 +35,7 @@ class PrefsVault extends Vault {
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(key);
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }
@@ -45,6 +45,6 @@ class PrefsVault extends Vault {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(key, json);
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 }

@@ -16,8 +16,8 @@ void main() {
       'toLng': 104.9282,
     });
     expect(quote['cents'], greaterThanOrEqualTo(50));
-    expect(quote['rates'], isA<Map>());
-    expect((quote['rates'] as Map)['id'], 'leca-kh-1');
+    expect(quote['rates'], isA<Map<Object?, Object?>>());
+    expect((quote['rates']! as Map)['id'], 'leca-kh-1');
     expect(quote['hours'], 0);
     expect(quote['routed'], isFalse);
     expect(
@@ -25,9 +25,9 @@ void main() {
         fareBody(
           kind: 'delivery',
           vehicle: '',
-          meters: quote['meters'] as int,
-          minutes: quote['minutes'] as int,
-          cents: quote['cents'] as int,
+          meters: quote['meters']! as int,
+          minutes: quote['minutes']! as int,
+          cents: quote['cents']! as int,
         ),
       ),
       quote['proof'],
@@ -63,7 +63,7 @@ void main() {
       'toLat': 13.36,
       'toLng': 103.85,
     });
-    expect(day['cents'], greaterThan(hop['cents'] as int));
+    expect(day['cents'], greaterThan(hop['cents']! as int));
     expect(
       () => quoteTrip({'kind': 'delivery', 'fromLat': 11}),
       throwsFormatException,
@@ -120,7 +120,7 @@ void main() {
 
       ada.add(jsonEncode({'type': 'say', 'kind': 'text', 'text': 'hello'}));
       final heard = await boIn.nextWhere((m) => m['type'] == 'entry');
-      final entry = (heard['entry'] as Map).map(
+      final entry = (heard['entry']! as Map).map(
         (key, value) => MapEntry('$key', value),
       );
       expect(entry['name'], 'Ada Real');
@@ -131,17 +131,26 @@ void main() {
       bo.add(
         jsonEncode({'type': 'say', 'kind': 'price', 'text': 'ask 2.40 driver'}),
       );
-      ada.add(
-        jsonEncode({'type': 'say', 'kind': 'price', 'text': 'ask 2.4 driver'}),
-      );
-      ada.add(
-        jsonEncode({'type': 'say', 'kind': 'price', 'text': 'ask 2.40 driver'}),
-      );
+      ada
+        ..add(
+          jsonEncode({
+            'type': 'say',
+            'kind': 'price',
+            'text': 'ask 2.4 driver',
+          }),
+        )
+        ..add(
+          jsonEncode({
+            'type': 'say',
+            'kind': 'price',
+            'text': 'ask 2.40 driver',
+          }),
+        );
       final priced = await boIn.nextWhere((m) {
         final line = m['entry'];
         return m['type'] == 'entry' && line is Map && line['kind'] == 'price';
       });
-      final price = (priced['entry'] as Map).map(
+      final price = (priced['entry']! as Map).map(
         (key, value) => MapEntry('$key', value),
       );
       expect(price['seq'], 2);
@@ -158,7 +167,7 @@ void main() {
         jsonEncode({'type': 'join', 'room': 'ride:tuktuk', 'name': 'Cy'}),
       );
       final lateHello = await lateIn.nextWhere((m) => m['type'] == 'welcome');
-      final log = lateHello['log'] as List;
+      final log = lateHello['log']! as List;
       expect(log, hasLength(2));
       expect((log.last as Map)['proof'], price['proof']);
     },

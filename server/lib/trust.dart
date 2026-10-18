@@ -236,7 +236,7 @@ class TrustStore {
           if (parsed != null) _reports['${entry.key}'] = parsed;
         }
       }
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   void _save() {
@@ -244,18 +244,20 @@ class TrustStore {
     if (p == null) return;
     final file = File(p);
     file.parent.createSync(recursive: true);
-    final tmp = File('$p.tmp');
-    tmp.writeAsStringSync(
-      jsonEncode({
-        'files': {
-          for (final e in _files.entries)
-            e.key: e.value.toJson(withPhotos: true),
-        },
-        'reports': {for (final e in _reports.entries) e.key: e.value.toJson()},
-      }),
-      flush: true,
-    );
-    tmp.renameSync(p);
+    File('$p.tmp')
+      ..writeAsStringSync(
+        jsonEncode({
+          'files': {
+            for (final e in _files.entries)
+              e.key: e.value.toJson(withPhotos: true),
+          },
+          'reports': {
+            for (final e in _reports.entries) e.key: e.value.toJson(),
+          },
+        }),
+        flush: true,
+      )
+      ..renameSync(p);
   }
 }
 

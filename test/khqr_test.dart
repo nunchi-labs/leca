@@ -1,6 +1,6 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:leca/khqr.dart';
 import 'package:leca/market.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('KHQR CRC-16/CCITT-FALSE matches a known vector', () {

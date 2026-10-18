@@ -30,8 +30,9 @@ class _FacebookMarkPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 24);
-    canvas.drawPath(_path, Paint()..color = const Color(0xFF0866FF));
+    canvas
+      ..scale(size.width / 24)
+      ..drawPath(_path, Paint()..color = const Color(0xFF0866FF));
   }
 
   @override
@@ -44,13 +45,15 @@ Path facebookLogoPath() => _facebookPath();
 
 Path _facebookPath() {
   return _svgPath(
-    'M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 '
-    '5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325'
-    'a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0'
-    '-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995'
-    '-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245'
-    'C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373'
-    '-12 12c0 5.628 3.874 10.35 9.101 11.647Z',
+    [
+      'M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 ',
+      '5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325',
+      'a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0',
+      '-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995',
+      '-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245',
+      'C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373',
+      '-12 12c0 5.628 3.874 10.35 9.101 11.647Z',
+    ].join(),
   );
 }
 
@@ -189,7 +192,9 @@ void _ellipticalArc(
   double x2,
   double y2,
 ) {
-  if (rx == 0 || ry == 0 || (x1 == x2 && y1 == y2)) {
+  var radiusX = rx;
+  var radiusY = ry;
+  if (radiusX == 0 || radiusY == 0 || (x1 == x2 && y1 == y2)) {
     path.lineTo(x2, y2);
     return;
   }
@@ -199,22 +204,23 @@ void _ellipticalArc(
   final dy = (y1 - y2) / 2;
   final x1p = cosPhi * dx + sinPhi * dy;
   final y1p = -sinPhi * dx + cosPhi * dy;
-  var rxSq = rx * rx;
-  var rySq = ry * ry;
-  final lambda = x1p * x1p / rxSq + y1p * y1p / rySq;
+  var radiusXSq = radiusX * radiusX;
+  var radiusYSq = radiusY * radiusY;
+  final lambda = x1p * x1p / radiusXSq + y1p * y1p / radiusYSq;
   if (lambda > 1) {
     final scale = math.sqrt(lambda);
-    rx *= scale;
-    ry *= scale;
-    rxSq = rx * rx;
-    rySq = ry * ry;
+    radiusX *= scale;
+    radiusY *= scale;
+    radiusXSq = radiusX * radiusX;
+    radiusYSq = radiusY * radiusY;
   }
-  final radical = rxSq * rySq - rxSq * y1p * y1p - rySq * x1p * x1p;
-  final den = rxSq * y1p * y1p + rySq * x1p * x1p;
+  final radical =
+      radiusXSq * radiusYSq - radiusXSq * y1p * y1p - radiusYSq * x1p * x1p;
+  final den = radiusXSq * y1p * y1p + radiusYSq * x1p * x1p;
   var coef = radical <= 0 || den == 0 ? 0.0 : math.sqrt(radical / den);
   if (large == sweep) coef = -coef;
-  final cxp = coef * rx * y1p / ry;
-  final cyp = -coef * ry * x1p / rx;
+  final cxp = coef * radiusX * y1p / radiusY;
+  final cyp = -coef * radiusY * x1p / radiusX;
   final cx = cosPhi * cxp - sinPhi * cyp + (x1 + x2) / 2;
   final cy = sinPhi * cxp + cosPhi * cyp + (y1 + y2) / 2;
 
@@ -225,12 +231,17 @@ void _ellipticalArc(
     return ux * vy - uy * vx < 0 ? -angle : angle;
   }
 
-  final theta1 = vectorAngle(1, 0, (x1p - cxp) / rx, (y1p - cyp) / ry);
+  final theta1 = vectorAngle(
+    1,
+    0,
+    (x1p - cxp) / radiusX,
+    (y1p - cyp) / radiusY,
+  );
   var delta = vectorAngle(
-    (x1p - cxp) / rx,
-    (y1p - cyp) / ry,
-    (-x1p - cxp) / rx,
-    (-y1p - cyp) / ry,
+    (x1p - cxp) / radiusX,
+    (y1p - cyp) / radiusY,
+    (-x1p - cxp) / radiusX,
+    (-y1p - cyp) / radiusY,
   );
   if (!sweep && delta > 0) delta -= 2 * math.pi;
   if (sweep && delta < 0) delta += 2 * math.pi;
@@ -244,8 +255,8 @@ void _ellipticalArc(
       final c = math.cos(a);
       final s = math.sin(a);
       return Offset(
-        cx + rx * (cosPhi * c - sinPhi * s),
-        cy + ry * (sinPhi * c + cosPhi * s),
+        cx + radiusX * (cosPhi * c - sinPhi * s),
+        cy + radiusY * (sinPhi * c + cosPhi * s),
       );
     }
 
@@ -253,8 +264,8 @@ void _ellipticalArc(
       final c = math.cos(a);
       final s = math.sin(a);
       return Offset(
-        -rx * cosPhi * s - ry * sinPhi * c,
-        -rx * sinPhi * s + ry * cosPhi * c,
+        -radiusX * cosPhi * s - radiusY * sinPhi * c,
+        -radiusX * sinPhi * s + radiusY * cosPhi * c,
       );
     }
 

@@ -9,14 +9,16 @@ $ErrorActionPreference = 'Stop'
 if (-not $Targets -or $Targets.Count -eq 0) { $Targets = @('windows-x64') }
 $src = 'C:\leca\src'
 $flutter = Join-Path $env:USERPROFILE 'flutter'
+$flutterRef = $Ref
 $built = @()
 
-function Ensure-Flutter {
+function Install-Flutter {
+  param([Parameter(Mandatory = $true)][string]$FlutterRef)
   if (-not (Test-Path (Join-Path $flutter 'bin\flutter.bat'))) {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
       throw 'git is not installed on this PC'
     }
-    & git clone --depth 1 --branch $Ref https://github.com/flutter/flutter.git $flutter
+    & git clone --depth 1 --branch $FlutterRef https://github.com/flutter/flutter.git $flutter
     if (-not $?) {
       if (Test-Path $flutter) { Remove-Item -Recurse -Force $flutter }
       & git clone --depth 1 --branch stable https://github.com/flutter/flutter.git $flutter
@@ -35,7 +37,7 @@ function Build-WindowsX64 {
   if (-not $cl) {
     throw 'This PC needs Visual Studio 2022 Build Tools with the x64 C++ workload'
   }
-  Ensure-Flutter
+  Install-Flutter -FlutterRef $flutterRef
   Set-Location $src
   & flutter.bat build windows --release --dart-define=AUTH_API=https://gno.money
   if (-not $?) { throw 'flutter build windows failed' }
@@ -47,7 +49,7 @@ function Build-LinuxX64 {
   if (-not $?) {
     throw 'linux-x64 on this PC needs WSL. In an admin PowerShell: wsl --install -d Ubuntu'
   }
-  $cmd = "export LECA_FLUTTER_REF='$Ref'; export LECA_PUBLISH=/mnt/c/leca/src/build/linux; bash /mnt/c/leca/src/scripts/remote.sh"
+  $cmd = "export LECA_FLUTTER_REF='$flutterRef'; export LECA_PUBLISH=/mnt/c/leca/src/build/linux; bash /mnt/c/leca/src/scripts/remote.sh"
   wsl -e bash -lc $cmd
   if (-not $?) { throw 'flutter build linux in WSL failed' }
   $script:built += 'linux-x64'

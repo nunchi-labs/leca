@@ -13,8 +13,7 @@ class Cbor {
   }
 
   static Uint8List encode(Object? value) {
-    final writer = _Writer();
-    writer.write(value);
+    final writer = _Writer()..write(value);
     return writer.bytes;
   }
 }
@@ -23,7 +22,7 @@ class _Reader {
   _Reader(this.bytes);
 
   final List<int> bytes;
-  var index = 0;
+  int index = 0;
 
   bool get done => index >= bytes.length;
 
@@ -96,12 +95,12 @@ class _Writer {
         final raw = utf8.encode(text);
         _head(3, raw.length);
         _builder.add(raw);
-      case final List list:
+      case final List<Object?> list:
         _head(4, list.length);
         for (final item in list) {
           write(item);
         }
-      case final Map map:
+      case final Map<Object?, Object?> map:
         _head(5, map.length);
         for (final entry in map.entries) {
           write(entry.key);
@@ -117,18 +116,21 @@ class _Writer {
     if (length < 24) {
       _builder.addByte(prefix | length);
     } else if (length < 256) {
-      _builder.addByte(prefix | 24);
-      _builder.addByte(length);
+      _builder
+        ..addByte(prefix | 24)
+        ..addByte(length);
     } else if (length < 65536) {
-      _builder.addByte(prefix | 25);
-      _builder.addByte(length >> 8);
-      _builder.addByte(length & 0xff);
+      _builder
+        ..addByte(prefix | 25)
+        ..addByte(length >> 8)
+        ..addByte(length & 0xff);
     } else {
-      _builder.addByte(prefix | 26);
-      _builder.addByte((length >> 24) & 0xff);
-      _builder.addByte((length >> 16) & 0xff);
-      _builder.addByte((length >> 8) & 0xff);
-      _builder.addByte(length & 0xff);
+      _builder
+        ..addByte(prefix | 26)
+        ..addByte((length >> 24) & 0xff)
+        ..addByte((length >> 16) & 0xff)
+        ..addByte((length >> 8) & 0xff)
+        ..addByte(length & 0xff);
     }
   }
 }

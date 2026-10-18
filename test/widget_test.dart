@@ -1,7 +1,7 @@
-import 'package:leca/main.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:leca/main.dart';
 
 Future<void> _run(TargetPlatform platform, Future<void> Function() body) async {
   debugDefaultTargetPlatformOverride = platform;

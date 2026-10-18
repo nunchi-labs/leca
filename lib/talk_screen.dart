@@ -57,9 +57,9 @@ class _TalkScreenState extends State<TalkScreen> {
 
   @override
   void dispose() {
-    _sub?.cancel();
-    _channel?.sink.close();
-    _seat.close();
+    unawaited(_sub?.cancel() ?? Future<void>.value());
+    unawaited(_channel?.sink.close() ?? Future<void>.value());
+    unawaited(_seat.close());
     _text.dispose();
     super.dispose();
   }
@@ -78,7 +78,7 @@ class _TalkScreenState extends State<TalkScreen> {
     _sub = channel.stream.listen(_onData, onError: (_) {}, onDone: () {});
     try {
       await channel.ready;
-    } catch (_) {
+    } on Object catch (_) {
       return;
     }
     if (!mounted) return;
@@ -94,7 +94,7 @@ class _TalkScreenState extends State<TalkScreen> {
     List<int>? secret;
     try {
       secret = (await LecaScope.of(context).ensureDeviceKey()).seed;
-    } catch (_) {}
+    } on Object catch (_) {}
     if (!mounted) return;
     await _seat.start(
       secret: secret,

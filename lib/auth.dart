@@ -231,9 +231,9 @@ class OperatorJob {
 
   String get talkRoom => room.isEmpty ? 'job:$id' : room;
 
-  String titleFor(bool km) => km ? titleKm : titleEn;
+  String titleFor({required bool km}) => km ? titleKm : titleEn;
 
-  String detailFor(bool km) => km ? detailKm : detailEn;
+  String detailFor({required bool km}) => km ? detailKm : detailEn;
 
   OperatorJob copyWith({String? status}) {
     return OperatorJob(

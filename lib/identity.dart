@@ -57,7 +57,7 @@ class Identity {
       final ok = frame.image.width >= 1 && frame.image.height >= 1;
       frame.image.dispose();
       return ok;
-    } catch (_) {
+    } on Object catch (_) {
       return false;
     }
   }

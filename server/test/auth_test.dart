@@ -59,8 +59,8 @@ void main() {
       password: 'correct-horse',
       name: 'Sokha',
     );
-    expect((created['user'] as Map)['id'], 'email:sokha@leca.app');
-    expect((created['user'] as Map)['displayName'], 'Sokha');
+    expect((created['user']! as Map)['id'], 'email:sokha@leca.app');
+    expect((created['user']! as Map)['displayName'], 'Sokha');
     expect(
       () =>
           core.emailRegister(email: 'sokha@leca.app', password: 'another-one'),
@@ -78,7 +78,7 @@ void main() {
       email: 'sokha@leca.app',
       password: 'correct-horse',
     );
-    expect((signed['user'] as Map)['method'], 'email');
+    expect((signed['user']! as Map)['method'], 'email');
     expect(
       () =>
           core.emailLogin(email: 'sokha@leca.app', password: 'wrong-password'),
@@ -101,7 +101,7 @@ void main() {
       password: 'correct-horse',
       name: 'Sokha',
     );
-    final token = created['token'] as String;
+    final token = created['token']! as String;
     final second = AuthCore(config: const AuthConfig(), accountPath: path);
     expect(second.userForToken(token)?.displayName, 'Sokha');
     final again = await second.emailLogin(
@@ -114,13 +114,13 @@ void main() {
   test('phone dev code signs the same number in', () async {
     final core = AuthCore(config: const AuthConfig(devOtp: true));
     final started = await core.whatsappStart('012 345 678');
-    final code = started['devCode'] as String;
+    final code = started['devCode']! as String;
     expect(code, hasLength(4));
     final session = await core.whatsappVerify('012345678', code);
-    final user = session['user'] as Map;
+    final user = session['user']! as Map;
     expect(user['method'], 'whatsapp');
     expect(user['id'], 'whatsapp:012345678');
-    expect(core.userForToken(session['token'] as String)?.handle, '012345678');
+    expect(core.userForToken(session['token']! as String)?.handle, '012345678');
     expect(
       () => core.whatsappVerify('012345678', code),
       throwsA(isA<AuthFailure>()),
@@ -203,12 +203,12 @@ void main() {
       final html = await core.providerCallback(
         provider,
         'auth-code',
-        start['pending'] as String,
+        start['pending']! as String,
       );
       expect(html, contains('Signed in'));
-      final ready = core.pending(start['pending'] as String);
+      final ready = core.pending(start['pending']! as String);
       expect(ready['status'], 'ready');
-      expect((ready['user'] as Map)['method'], provider);
+      expect((ready['user']! as Map)['method'], provider);
     }
   });
 
@@ -242,11 +242,11 @@ void main() {
         final html = await core.providerCallback(
           provider,
           'dev',
-          start['pending'] as String,
+          start['pending']! as String,
         );
         expect(html, contains('Signed in'));
-        final ready = core.pending(start['pending'] as String);
-        expect((ready['user'] as Map)['method'], provider);
+        final ready = core.pending(start['pending']! as String);
+        expect((ready['user']! as Map)['method'], provider);
       }
     },
   );
@@ -278,7 +278,9 @@ void main() {
       jsonEncode({'phone': '012345678', 'code': startBody['devCode']}),
     );
     final verifyResponse = await verify.close();
-    final session = jsonDecode(await utf8.decoder.bind(verifyResponse).join());
+    final session =
+        jsonDecode(await utf8.decoder.bind(verifyResponse).join())
+            as Map<String, Object?>;
     expect(verifyResponse.statusCode, 200);
     expect(session['token'], isNotEmpty);
   });
@@ -298,7 +300,7 @@ void main() {
 
     Future<Map<String, Object?>> finish(String name) async {
       final started = await core.keyChallenge(pub);
-      final challenge = started['challenge'] as String;
+      final challenge = started['challenge']! as String;
       final signature = await Ed25519().sign(
         utf8.encode(
           keyProofMessage(challenge: challenge, publicKey: pub, name: name),
@@ -315,7 +317,7 @@ void main() {
     }
 
     final created = await finish('');
-    final user = created['user'] as Map;
+    final user = created['user']! as Map;
     expect(user['method'], 'key');
     expect(user['id'], startsWith('key:'));
     expect((user['id'] as String).length, 4 + 64);
@@ -330,8 +332,8 @@ void main() {
       throwsA(predicate<AuthFailure>((e) => e.code == 'challenge_invalid')),
     );
     final named = await finish('Sokha');
-    expect((named['user'] as Map)['displayName'], 'Sokha');
-    expect((named['user'] as Map)['id'], user['id']);
+    expect((named['user']! as Map)['displayName'], 'Sokha');
+    expect((named['user']! as Map)['id'], user['id']);
     final restarted = AuthCore(config: const AuthConfig(), accountPath: path);
     final again = await restarted.keyChallenge(pub);
     expect(again['known'], isTrue);
@@ -341,7 +343,7 @@ void main() {
     expect(
       () => restarted.keyFinish(
         publicKey: pub,
-        challenge: bad['challenge'] as String,
+        challenge: bad['challenge']! as String,
         signature: base64Url.encode(wrong.bytes).replaceAll('=', ''),
         name: 'Sokha',
       ),
@@ -380,10 +382,10 @@ void main() {
   });
 
   test('a passkey registers and signs in', () async {
-    final random = FortunaRandom();
-    random.seed(
-      KeyParameter(Uint8List.fromList(List<int>.generate(32, (i) => i + 1))),
-    );
+    final random = FortunaRandom()
+      ..seed(
+        KeyParameter(Uint8List.fromList(List<int>.generate(32, (i) => i + 1))),
+      );
     final generator = ECKeyGenerator()
       ..init(
         ParametersWithRandom(
@@ -398,7 +400,7 @@ void main() {
     final y = _fixed(point.y!.toBigInteger()!);
     final core = AuthCore(config: const AuthConfig());
     final started = core.passkeyRegisterStart(name: 'Ada');
-    final challenge = started['challenge'] as String;
+    final challenge = started['challenge']! as String;
     final credId = Uint8List.fromList(List<int>.generate(16, (i) => i + 3));
     final cose = Cbor.encode({1: 2, 3: -7, -1: 1, -2: x, -3: y});
     final rpHash = sha256.convert(utf8.encode('127.0.0.1')).bytes;
@@ -426,12 +428,12 @@ void main() {
       clientDataJSON: base64Url.encode(utf8.encode(client)).replaceAll('=', ''),
       attestationObject: base64Url.encode(attestation).replaceAll('=', ''),
     );
-    final user = created['user'] as Map;
+    final user = created['user']! as Map;
     expect(user['method'], 'passkey');
     expect(user['displayName'], 'Ada');
 
     final login = core.passkeyLoginStart();
-    final loginChallenge = login['challenge'] as String;
+    final loginChallenge = login['challenge']! as String;
     final loginAuth = BytesBuilder(copy: false)
       ..add(rpHash)
       ..addByte(0x05)
@@ -446,11 +448,14 @@ void main() {
       ...loginAuth.toBytes(),
       ...sha256.convert(loginClientBytes).bytes,
     ];
-    final signer = ECDSASigner(SHA256Digest());
-    signer.init(
-      true,
-      ParametersWithRandom(PrivateKeyParameter<ECPrivateKey>(private), random),
-    );
+    final signer = ECDSASigner(SHA256Digest())
+      ..init(
+        true,
+        ParametersWithRandom(
+          PrivateKeyParameter<ECPrivateKey>(private),
+          random,
+        ),
+      );
     final signature =
         signer.generateSignature(Uint8List.fromList(message)) as ECSignature;
     final raw = <int>[..._fixed(signature.r), ..._fixed(signature.s)];
@@ -463,7 +468,7 @@ void main() {
           .replaceAll('=', ''),
       signature: base64Url.encode(raw).replaceAll('=', ''),
     );
-    expect((signed['user'] as Map)['id'], user['id']);
+    expect((signed['user']! as Map)['id'], user['id']);
   });
 }
 

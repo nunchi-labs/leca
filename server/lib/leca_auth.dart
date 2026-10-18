@@ -705,7 +705,7 @@ class AuthCore {
           handle: '${value['handle']}',
         );
       }
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   void _saveSessions() {
@@ -713,14 +713,15 @@ class AuthCore {
     if (path == null) return;
     final file = File(path);
     file.parent.createSync(recursive: true);
-    final tmp = File('$path.tmp');
-    tmp.writeAsStringSync(
-      jsonEncode({
-        for (final entry in _sessions.entries) entry.key: entry.value.toJson(),
-      }),
-      flush: true,
-    );
-    tmp.renameSync(path);
+    File('$path.tmp')
+      ..writeAsStringSync(
+        jsonEncode({
+          for (final entry in _sessions.entries)
+            entry.key: entry.value.toJson(),
+        }),
+        flush: true,
+      )
+      ..renameSync(path);
   }
 
   void _remember(String token, AuthUser user) {
@@ -749,7 +750,7 @@ class AuthCore {
           displayName: '${value['displayName'] ?? ''}',
         );
       }
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   void _saveKeys() {
@@ -757,15 +758,15 @@ class AuthCore {
     if (path == null) return;
     final file = File(path);
     file.parent.createSync(recursive: true);
-    final tmp = File('$path.tmp');
-    tmp.writeAsStringSync(
-      jsonEncode({
-        for (final entry in _keys.entries)
-          entry.key: {'displayName': entry.value.displayName},
-      }),
-      flush: true,
-    );
-    tmp.renameSync(path);
+    File('$path.tmp')
+      ..writeAsStringSync(
+        jsonEncode({
+          for (final entry in _keys.entries)
+            entry.key: {'displayName': entry.value.displayName},
+        }),
+        flush: true,
+      )
+      ..renameSync(path);
   }
 
   String? get _passkeyPath {
@@ -794,7 +795,7 @@ class AuthCore {
           signCount: value['signCount'] is int ? value['signCount'] as int : 0,
         );
       }
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   void _savePasskeys() {
@@ -802,22 +803,22 @@ class AuthCore {
     if (path == null) return;
     final file = File(path);
     file.parent.createSync(recursive: true);
-    final tmp = File('$path.tmp');
-    tmp.writeAsStringSync(
-      jsonEncode({
-        for (final entry in _passkeys.entries)
-          entry.key: {
-            'userHandle': entry.value.userHandle,
-            'displayName': entry.value.displayName,
-            'alg': entry.value.alg,
-            'x': entry.value.x,
-            'y': entry.value.y,
-            'signCount': entry.value.signCount,
-          },
-      }),
-      flush: true,
-    );
-    tmp.renameSync(path);
+    File('$path.tmp')
+      ..writeAsStringSync(
+        jsonEncode({
+          for (final entry in _passkeys.entries)
+            entry.key: {
+              'userHandle': entry.value.userHandle,
+              'displayName': entry.value.displayName,
+              'alg': entry.value.alg,
+              'x': entry.value.x,
+              'y': entry.value.y,
+              'signCount': entry.value.signCount,
+            },
+        }),
+        flush: true,
+      )
+      ..renameSync(path);
   }
 
   Uint8List _randomBytes(int length) => Uint8List.fromList(
@@ -915,8 +916,9 @@ class AuthCore {
       return _page('Sign-in failed', 'That login attempt is unknown.');
     }
     if (code == null || code.isEmpty) {
-      item.status = 'error';
-      item.error = 'provider_denied';
+      item
+        ..status = 'error'
+        ..error = 'provider_denied';
       return _page('Sign-in cancelled', 'Return to Leca and try again.');
     }
     try {
@@ -1763,7 +1765,7 @@ Future<void> handleAuth(
     throw AuthFailure('not_found', 404);
   } on AuthFailure catch (e) {
     await _json(response, e.status, {'error': e.code});
-  } catch (_) {
+  } on Object catch (_) {
     await _json(response, 500, {'error': 'failed'});
   }
 }
@@ -1857,7 +1859,7 @@ Future<bool> domainPointsHere(String domain) async {
   try {
     final answers = await InternetAddress.lookup(name);
     return answers.any((address) => address.address == '65.21.232.29');
-  } catch (_) {
+  } on Object catch (_) {
     return false;
   }
 }

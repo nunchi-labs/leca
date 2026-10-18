@@ -1,21 +1,21 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:leca/catalog.dart';
 import 'package:leca/market.dart';
 import 'package:leca/state.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('every sale adds a 5 percent fee', () {
     expect(saleFeeUsd(1.80), 0.09);
     expect(saleFeeUsd(0), 0);
-    final state = LecaState();
-    state.setBooking(
-      const Booking(
-        kind: BookKind.ride,
-        title: 'Moto',
-        amountUsd: 1.80,
-        vehicleId: 'moto',
-      ),
-    );
+    final state = LecaState()
+      ..setBooking(
+        const Booking(
+          kind: BookKind.ride,
+          title: 'Moto',
+          amountUsd: 1.80,
+          vehicleId: 'moto',
+        ),
+      );
     expect(state.saleUsd, 1.80);
     expect(state.feeUsd, 0.09);
     expect(state.totalUsd, 1.89);

@@ -37,7 +37,7 @@ class NativeIrohSeat extends IrohSeat {
       final addr = endpoint.addr;
       publish(addr.id.toZ32(), base64Encode(addr.encode()));
       unawaited(_accept(endpoint));
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   Future<void> _accept(Endpoint endpoint) async {
@@ -46,7 +46,7 @@ class NativeIrohSeat extends IrohSeat {
         final conn = await endpoint.accept();
         if (conn == null || _closed) return;
         unawaited(_read(conn));
-      } catch (_) {
+      } on Object catch (_) {
         return;
       }
     }
@@ -70,7 +70,7 @@ class NativeIrohSeat extends IrohSeat {
         }
         if (start > 0) pending.removeRange(0, start);
       }
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   void _deliver(String from, String line) {
@@ -82,7 +82,7 @@ class NativeIrohSeat extends IrohSeat {
       final text = '${decoded['text'] ?? ''}';
       if (kind.isEmpty || text.isEmpty || kind == 'hello') return;
       _onDirect?.call(from, kind, text);
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   @override
@@ -95,7 +95,7 @@ class NativeIrohSeat extends IrohSeat {
       if (endpoint.isEmpty || addr.isEmpty) continue;
       try {
         _peers[endpoint] = EndpointAddr.decode(base64Decode(addr));
-      } catch (_) {}
+      } on Object catch (_) {}
     }
     unawaited(_dial());
   }
@@ -117,7 +117,7 @@ class NativeIrohSeat extends IrohSeat {
         await opened.$1.writeAll(
           utf8.encode('{"kind":"hello","text":"joined"}\n'),
         );
-      } catch (_) {
+      } on Object catch (_) {
         _linked.remove(entry.key);
       }
     }
@@ -138,7 +138,7 @@ class NativeIrohSeat extends IrohSeat {
     _endpoint = null;
     try {
       await endpoint?.close();
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 }
 

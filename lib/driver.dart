@@ -92,8 +92,7 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
     _legal.addListener(_mirrorName);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final state = LecaScope.of(context);
-      state.clearDriverError();
+      final state = LecaScope.of(context)..clearDriverError();
       _prefill(state);
     });
   }

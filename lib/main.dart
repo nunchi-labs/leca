@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -29,7 +31,7 @@ class _LecaAppState extends State<LecaApp> {
   @override
   void initState() {
     super.initState();
-    _state.restore();
+    unawaited(_state.restore());
   }
 
   @override

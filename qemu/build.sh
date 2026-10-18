@@ -392,36 +392,36 @@ boot_windows() {
   fi
   local -a args=(
     -name leca-windows
-    -machine virt,accel=hvf,highmem=on
+    -machine "virt,accel=hvf,highmem=on"
     -cpu host
     -smp "$CPUS"
     -m "$MEM"
-    -drive if=pflash,format=raw,readonly=on,file="$code"
-    -drive if=pflash,format=raw,file="$dir/efi-vars.fd"
+    -drive "if=pflash,format=raw,readonly=on,file=$code"
+    -drive "if=pflash,format=raw,file=$dir/efi-vars.fd"
     -device ramfb
     -display none
-    -device qemu-xhci,id=xhci
+    -device "qemu-xhci,id=xhci"
     -device usb-kbd
     -device usb-tablet
-    -device nvme,drive=system,serial=lecadisk,bootindex=0
-    -drive if=none,id=system,format=qcow2,file="$dir/disk.qcow2"
-    -device usb-storage,drive=seed
-    -drive if=none,id=seed,format=raw,media=cdrom,file="$dir/seed.iso",readonly=on
-    -device usb-storage,drive=virtio
-    -drive if=none,id=virtio,format=raw,media=cdrom,file="$dir/virtio-win.iso",readonly=on
-    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:${WIN_PORT}-:22
-    -device virtio-net-pci,netdev=net0
+    -device "nvme,drive=system,serial=lecadisk,bootindex=0"
+    -drive "if=none,id=system,format=qcow2,file=$dir/disk.qcow2"
+    -device "usb-storage,drive=seed"
+    -drive "if=none,id=seed,format=raw,media=cdrom,file=$dir/seed.iso,readonly=on"
+    -device "usb-storage,drive=virtio"
+    -drive "if=none,id=virtio,format=raw,media=cdrom,file=$dir/virtio-win.iso,readonly=on"
+    -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:${WIN_PORT}-:22"
+    -device "virtio-net-pci,netdev=net0"
     -device virtio-rng-pci
-    -serial file:"$dir/serial.log"
+    -serial "file:$dir/serial.log"
     -pidfile "$dir/qemu.pid"
     -daemonize
   )
   if [[ $with_iso == yes ]]; then
     args+=(
-      -device virtio-blk-pci,drive=esp,bootindex=1
-      -drive if=none,id=esp,format=raw,file="$dir/boot.img"
-      -device usb-storage,drive=install
-      -drive if=none,id=install,format=raw,media=cdrom,file="$dir/windows.iso",readonly=on
+      -device "virtio-blk-pci,drive=esp,bootindex=1"
+      -drive "if=none,id=esp,format=raw,file=$dir/boot.img"
+      -device "usb-storage,drive=install"
+      -drive "if=none,id=install,format=raw,media=cdrom,file=$dir/windows.iso,readonly=on"
     )
   fi
   launch "$dir/qemu.pid" "${args[@]}"

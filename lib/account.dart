@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'auth.dart';
@@ -268,8 +270,7 @@ class _OpenBusinessScreenState extends State<OpenBusinessScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final state = LecaScope.of(context);
-      state.clearSupplyError();
+      final state = LecaScope.of(context)..clearSupplyError();
       if (_sellerName.text.isEmpty && state.keyName.isNotEmpty) {
         _sellerName.text = state.keyName;
       }
@@ -457,9 +458,8 @@ class _DriveScreenState extends State<DriveScreen> {
     _note = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final state = LecaScope.of(context);
-      state.clearDriverError();
-      state.refreshTrust();
+      final state = LecaScope.of(context)..clearDriverError();
+      unawaited(state.refreshTrust());
     });
   }
 
@@ -766,7 +766,7 @@ class JobsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     FilledButton(
-                      onPressed: () => state.loadJobs(),
+                      onPressed: state.loadJobs,
                       child: Text(l10n.retry),
                     ),
                   ],
@@ -794,9 +794,9 @@ class JobsScreen extends StatelessWidget {
                   for (final job in state.acceptedJobs)
                     Card(
                       child: ListTile(
-                        title: Text(job.titleFor(km)),
+                        title: Text(job.titleFor(km: km)),
                         subtitle: Text(
-                          '${job.kind} · ${job.detailFor(km)} · ${l10n.jobAccepted}',
+                          '${job.kind} · ${job.detailFor(km: km)} · ${l10n.jobAccepted}',
                         ),
                         trailing: Text(moneyUsd(job.usd)),
                       ),
@@ -832,10 +832,12 @@ class _JobCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              job.titleFor(km),
+              job.titleFor(km: km),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            Text('${job.kind} · ${job.detailFor(km)} · ${moneyUsd(job.usd)}'),
+            Text(
+              '${job.kind} · ${job.detailFor(km: km)} · ${moneyUsd(job.usd)}',
+            ),
             const SizedBox(height: 8),
             Row(
               children: [

@@ -35,7 +35,7 @@ class TripLocation {
         latitude: position.latitude,
         longitude: position.longitude,
       );
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }

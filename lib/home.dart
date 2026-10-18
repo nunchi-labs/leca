@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'account.dart';
@@ -28,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _future = Catalog.load();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !lecaOnPhone(context)) return;
-      LecaScope.of(context).loadHere();
+      unawaited(LecaScope.of(context).loadHere());
     });
   }
 

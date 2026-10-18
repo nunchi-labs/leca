@@ -3,12 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import 'identity.dart';
-import 'talk_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'market.dart';
 import 'pay.dart';
 import 'rate.dart';
 import 'state.dart';
+import 'talk_screen.dart';
 
 class ReplyMark extends StatelessWidget {
   const ReplyMark({super.key, required this.placeId});

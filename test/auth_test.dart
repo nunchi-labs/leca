@@ -1,12 +1,12 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:leca/auth.dart';
 import 'package:leca/device_key.dart';
 import 'package:leca/face_gate.dart';
 import 'package:leca/state.dart';
 import 'package:leca/vault.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 class _Face extends FaceGate {
-  const _Face(this.answer);
+  const _Face({required this.answer});
 
   final bool? answer;
 
@@ -162,16 +162,16 @@ void main() {
   );
 
   test('face sign-in uses the device key after the face check', () async {
-    final denied = LecaState(faceGate: const _Face(false));
+    final denied = LecaState(faceGate: const _Face(answer: false));
     await denied.signIn(method: 'face', handle: '', name: '');
     expect(denied.authError, 'face_denied');
     expect(denied.session, isNull);
 
-    final missing = LecaState(faceGate: const _Face(null));
+    final missing = LecaState(faceGate: const _Face(answer: null));
     await missing.signIn(method: 'face', handle: '', name: 'Ada');
     expect(missing.authError, 'face_unavailable');
 
-    final state = LecaState(faceGate: const _Face(true));
+    final state = LecaState(faceGate: const _Face(answer: true));
     await state.signIn(method: 'face', handle: '', name: 'Ada');
     expect(state.session?.method, 'face');
     expect(state.session?.displayName, 'Ada');

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -71,7 +72,7 @@ class TalkHub {
           } else {
             break;
           }
-        } catch (_) {
+        } on Object catch (_) {
           break;
         }
       }
@@ -97,7 +98,7 @@ class TalkHub {
         mode: FileMode.append,
         flush: true,
       );
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   _Seat? _join(WebSocket socket, Map<String, Object?> message) {
@@ -105,7 +106,7 @@ class TalkHub {
     final known =
         _rooms.containsKey(room) || (_file(room)?.existsSync() ?? false);
     if (!known && _rooms.length >= maxRooms) {
-      socket.close();
+      unawaited(socket.close());
       return null;
     }
     var name = _clip('${message['name'] ?? ''}', 24, 'Guest');
@@ -175,8 +176,9 @@ class TalkHub {
     final addr = '${message['addr'] ?? ''}';
     if (endpoint.isEmpty || addr.isEmpty) return;
     if (endpoint.length > 80 || addr.length > 4000) return;
-    seat.endpoint = endpoint;
-    seat.addr = addr;
+    seat
+      ..endpoint = endpoint
+      ..addr = addr;
   }
 
   void _presence(String room) {
@@ -208,7 +210,7 @@ class TalkHub {
   void _send(_Seat seat, Map<String, Object?> message) {
     try {
       seat.socket.add(jsonEncode(message));
-    } catch (_) {}
+    } on Object catch (_) {}
   }
 
   Map<String, Object?>? _decode(Object? raw) {
@@ -216,7 +218,7 @@ class TalkHub {
       final decoded = jsonDecode('$raw');
       if (decoded is! Map) return null;
       return decoded.map((key, value) => MapEntry('$key', value));
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }

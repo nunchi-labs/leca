@@ -88,7 +88,7 @@ class _PayScreenState extends State<PayScreen> {
     _orderId = state.newOrderId();
     _note = TextEditingController(text: state.note);
     state.syncRideMatch(notify: false);
-    _rebuild();
+    unawaited(_rebuild());
   }
 
   @override
@@ -138,7 +138,7 @@ class _PayScreenState extends State<PayScreen> {
         _errorCode = e.code;
         _phase = _QrPhase.error;
       });
-    } catch (_) {
+    } on Object catch (_) {
       setState(() {
         _errorCode = 'failed';
         _phase = _QrPhase.error;
@@ -188,7 +188,7 @@ class _PayScreenState extends State<PayScreen> {
       note: _note,
       onRail: (id) {
         state.setRail(id);
-        _rebuild();
+        unawaited(_rebuild());
       },
       onNote: _onNoteChanged,
     );

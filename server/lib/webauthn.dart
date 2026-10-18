@@ -206,8 +206,8 @@ class WebAuthn {
       final curve = ECCurve_secp256r1();
       final point = curve.curve.createPoint(_big(x), _big(y));
       final key = ECPublicKey(point, curve);
-      final verifier = ECDSASigner(SHA256Digest());
-      verifier.init(false, PublicKeyParameter<ECPublicKey>(key));
+      final verifier = ECDSASigner(SHA256Digest())
+        ..init(false, PublicKeyParameter<ECPublicKey>(key));
       return verifier.verifySignature(
         Uint8List.fromList(message),
         ECSignature(_big(parts.$1), _big(parts.$2)),

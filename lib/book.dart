@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'auth.dart';
@@ -220,7 +222,7 @@ class _AutoTripState extends State<_AutoTrip> {
   void initState() {
     super.initState();
     _dropoff = widget.state.cityId;
-    _loadRoad();
+    unawaited(_loadRoad());
   }
 
   Future<void> _loadRoad() async {
@@ -255,7 +257,7 @@ class _AutoTripState extends State<_AutoTrip> {
               _dropoff = id;
               _road = null;
             });
-            _loadRoad();
+            unawaited(_loadRoad());
           },
         ),
         const SizedBox(height: 8),
@@ -268,19 +270,20 @@ class _AutoTripState extends State<_AutoTrip> {
             subtitle: l10n.sendAnythingDetail,
             fareKey: 'send',
             lockWithDriver: true,
-            quoteFor: (_) => _quote(''),
-            onPay: (amount, withDriver, quote) => widget.onPay(
-              Booking(
-                kind: BookKind.send,
-                title: 'Send anything',
-                amountUsd: amount,
-                detail: 'open-delivery',
-                meters: quote?.meters ?? 0,
-                minutes: quote?.minutes ?? 0,
-                proof: quote?.proof ?? '',
-                card: quote?.card ?? 'leca-kh-1',
-              ),
-            ),
+            quoteFor: ({required bool withDriver}) => _quote(''),
+            onPay: (amount, {required bool withDriver, TripQuote? quote}) =>
+                widget.onPay(
+                  Booking(
+                    kind: BookKind.send,
+                    title: 'Send anything',
+                    amountUsd: amount,
+                    detail: 'open-delivery',
+                    meters: quote?.meters ?? 0,
+                    minutes: quote?.minutes ?? 0,
+                    proof: quote?.proof ?? '',
+                    card: quote?.card ?? 'leca-kh-1',
+                  ),
+                ),
             l10n: l10n,
           )
         else
@@ -289,20 +292,21 @@ class _AutoTripState extends State<_AutoTrip> {
               title: offer.nameFor(state.locale),
               fareKey: 'ride:${offer.id}',
               lockWithDriver: true,
-              quoteFor: (_) => _quote(offer.id),
-              onPay: (amount, withDriver, quote) => widget.onPay(
-                Booking(
-                  kind: BookKind.ride,
-                  title: offer.nameEn,
-                  amountUsd: amount,
-                  detail: withDriver ? 'with-driver' : 'self-drive',
-                  vehicleId: offer.id,
-                  meters: quote?.meters ?? 0,
-                  minutes: quote?.minutes ?? 0,
-                  proof: quote?.proof ?? '',
-                  card: quote?.card ?? 'leca-kh-1',
-                ),
-              ),
+              quoteFor: ({required bool withDriver}) => _quote(offer.id),
+              onPay: (amount, {required bool withDriver, TripQuote? quote}) =>
+                  widget.onPay(
+                    Booking(
+                      kind: BookKind.ride,
+                      title: offer.nameEn,
+                      amountUsd: amount,
+                      detail: withDriver ? 'with-driver' : 'self-drive',
+                      vehicleId: offer.id,
+                      meters: quote?.meters ?? 0,
+                      minutes: quote?.minutes ?? 0,
+                      proof: quote?.proof ?? '',
+                      card: quote?.card ?? 'leca-kh-1',
+                    ),
+                  ),
               l10n: l10n,
             ),
       ],
@@ -337,7 +341,7 @@ class _TradeBoardState extends State<_TradeBoard> {
   void initState() {
     super.initState();
     _dropoff = widget.state.cityId;
-    _loadRoad();
+    unawaited(_loadRoad());
   }
 
   Future<void> _loadRoad() async {
@@ -437,7 +441,7 @@ class _TradeBoardState extends State<_TradeBoard> {
                 _dropoff = id;
                 _road = null;
               });
-              _loadRoad();
+              unawaited(_loadRoad());
             },
           ),
           const SizedBox(height: 8),
@@ -469,16 +473,18 @@ class _TradeBoardState extends State<_TradeBoard> {
             initialWithDriver: v.withDriver,
             quoteFor: _sale
                 ? null
-                : (withDriver) => _rentQuote(v.id, withDriver: withDriver),
-            onPay: (amount, withDriver, quote) => widget.onPay(
-              _booking(
-                title: v.nameEn,
-                vehicleId: v.id,
-                amount: amount,
-                withDriver: withDriver,
-                quote: quote,
-              ),
-            ),
+                : ({required bool withDriver}) =>
+                      _rentQuote(v.id, withDriver: withDriver),
+            onPay: (amount, {required bool withDriver, TripQuote? quote}) =>
+                widget.onPay(
+                  _booking(
+                    title: v.nameEn,
+                    vehicleId: v.id,
+                    amount: amount,
+                    withDriver: withDriver,
+                    quote: quote,
+                  ),
+                ),
             l10n: l10n,
           ),
         if (mine.isNotEmpty) ...[
@@ -496,17 +502,18 @@ class _TradeBoardState extends State<_TradeBoard> {
               initialWithDriver: v.withDriver,
               quoteFor: _sale
                   ? null
-                  : (withDriver) =>
+                  : ({required bool withDriver}) =>
                         _rentQuote(_offerId(v), withDriver: withDriver),
-              onPay: (amount, withDriver, quote) => widget.onPay(
-                _booking(
-                  title: v.kind,
-                  vehicleId: _offerId(v),
-                  amount: amount,
-                  withDriver: withDriver,
-                  quote: quote,
-                ),
-              ),
+              onPay: (amount, {required bool withDriver, TripQuote? quote}) =>
+                  widget.onPay(
+                    _booking(
+                      title: v.kind,
+                      vehicleId: _offerId(v),
+                      amount: amount,
+                      withDriver: withDriver,
+                      quote: quote,
+                    ),
+                  ),
               l10n: l10n,
             ),
         ],
@@ -535,12 +542,17 @@ class _OfferTile extends StatefulWidget {
   final String title;
   final String subtitle;
   final double usd;
-  final void Function(double amount, bool withDriver, TripQuote? quote) onPay;
+  final void Function(
+    double amount, {
+    required bool withDriver,
+    TripQuote? quote,
+  })
+  onPay;
   final AppLocalizations l10n;
   final String? fareKey;
   final bool initialWithDriver;
   final bool lockWithDriver;
-  final TripQuote Function(bool withDriver)? quoteFor;
+  final TripQuote Function({required bool withDriver})? quoteFor;
 
   @override
   State<_OfferTile> createState() => _OfferTileState();
@@ -559,7 +571,7 @@ class _OfferTileState extends State<_OfferTile> {
   Widget build(BuildContext context) {
     final l10n = widget.l10n;
     final state = LecaScope.of(context);
-    final quote = widget.quoteFor?.call(_withDriver);
+    final quote = widget.quoteFor?.call(withDriver: _withDriver);
     final appUsd = quote?.usd ?? widget.usd;
     final base = widget.fareKey;
     final key = base == null
@@ -622,7 +634,11 @@ class _OfferTileState extends State<_OfferTile> {
               Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton(
-                  onPressed: () => widget.onPay(amount, _withDriver, quote),
+                  onPressed: () => widget.onPay(
+                    amount,
+                    withDriver: _withDriver,
+                    quote: quote,
+                  ),
                   child: Text(l10n.checkout),
                 ),
               ),

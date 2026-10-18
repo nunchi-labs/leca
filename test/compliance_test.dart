@@ -1,8 +1,8 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:leca/compliance.dart';
 import 'package:leca/location.dart';
 import 'package:leca/market.dart';
 import 'package:leca/state.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const trained = (
@@ -76,16 +76,16 @@ void main() {
   test(
     'a safety report suspends the partner and a share carries the fix',
     () async {
-      final state = LecaState();
-      state.setBooking(
-        const Booking(
-          kind: BookKind.ride,
-          title: 'Motorcycle',
-          amountUsd: 1.2,
-          vehicleId: 'motorcycle',
-        ),
-      );
-      state.syncRideMatch();
+      final state = LecaState()
+        ..setBooking(
+          const Booking(
+            kind: BookKind.ride,
+            title: 'Motorcycle',
+            amountUsd: 1.2,
+            vehicleId: 'motorcycle',
+          ),
+        )
+        ..syncRideMatch();
       expect(state.rideMatch?.plate, '2A-4521');
 
       TripLocation.override = () async =>
