@@ -3,5 +3,4 @@ unknownMacro:linux/runner/*
 missingInclude:linux/runner/*
 missingInclude:windows/runner/*
 unusedFunction:windows/runner/*
-missingOverride:windows/runner/*
 virtualCallInConstructor:windows/runner/*
