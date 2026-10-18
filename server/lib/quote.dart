@@ -67,31 +67,33 @@ String fareBody({
 
 String fareProof(String body) => sha256.convert(utf8.encode(body)).toString();
 
-/// Prices a trip. Accepts routed `meters` and traffic `minutes` when the
-/// caller has them; the proof covers whichever distance was used.
+/// Prices a trip from the coordinates.
+///
+/// A claimed road under half the geodesic is not signed. A claimed time
+/// is kept, including a fast one.
 Map<String, Object?> quoteTrip(Map<String, Object?> body) {
   const kinds = {'ride', 'rent', 'rent-self', 'delivery'};
   final asked = '${body['kind'] ?? ''}';
   final kind = kinds.contains(asked) ? asked : 'delivery';
   final vehicle = kind == 'delivery' ? '' : '${body['vehicle'] ?? ''}';
-  final fromLat = _coord(body['fromLat']);
-  final fromLng = _coord(body['fromLng']);
-  final toLat = _coord(body['toLat']);
-  final toLng = _coord(body['toLng']);
+  final fromLat = _lat(body['fromLat']);
+  final fromLng = _lng(body['fromLng']);
+  final toLat = _lat(body['toLat']);
+  final toLng = _lng(body['toLng']);
   if (fromLat == null || fromLng == null || toLat == null || toLng == null) {
     throw FormatException('quote_invalid');
   }
   final card = RateCard.active;
-  final routeMeters = body['meters'];
-  final routed =
-      routeMeters is int &&
-      routeMeters >= card.minMeters &&
-      routeMeters <= 2000000;
-  final meters = routed
-      ? routeMeters
-      : card.roadMeters(_km(fromLat, fromLng, toLat, toLng));
-  final traffic = body['minutes'];
-  final minutes = card.tripMinutes(meters, traffic is int ? traffic : null);
+  final claimedMeters = body['meters'];
+  final claimedMinutes = body['minutes'];
+  final leg = card.pricedLeg(
+    straightKm: _km(fromLat, fromLng, toLat, toLng),
+    claimedMeters: claimedMeters is int ? claimedMeters : null,
+    claimedMinutes: claimedMinutes is int ? claimedMinutes : null,
+  );
+  final meters = leg.meters;
+  final minutes = leg.minutes;
+  final routed = leg.routed;
   final rawHours = body['hours'];
   final hours = rawHours is int && rawHours > 0 && rawHours <= 24 * 90
       ? rawHours
@@ -128,9 +130,21 @@ Map<String, Object?> quoteTrip(Map<String, Object?> body) {
   };
 }
 
-double? _coord(Object? raw) {
+double? _number(Object? raw) {
   if (raw is! num) return null;
   final value = raw.toDouble();
-  if (value.isNaN || value.abs() > 180) return null;
+  if (value.isNaN || value.isInfinite) return null;
+  return value;
+}
+
+double? _lat(Object? raw) {
+  final value = _number(raw);
+  if (value == null || value.abs() > 90) return null;
+  return value;
+}
+
+double? _lng(Object? raw) {
+  final value = _number(raw);
+  if (value == null || value.abs() > 180) return null;
   return value;
 }

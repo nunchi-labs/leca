@@ -34,6 +34,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serviceRides => 'Rides';
 
   @override
+  String get serviceMoto => 'Motorcycle';
+
+  @override
   String get serviceRent => 'Rent';
 
   @override
@@ -154,6 +157,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serviceFeeNone => '5% of this sale.';
 
   @override
+  String driverFastBonus(String amount) {
+    return 'Leca pays the driver an extra $amount for getting there faster than the card\'s average time, inside the posted speed limit. Leca pays this, and the fare you pay does not change.';
+  }
+
+  @override
   String driverMinutes(String name, int minutes) {
     return '$name is $minutes minutes away';
   }
@@ -205,6 +213,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidAmount => 'Enter a valid amount.';
+
+  @override
+  String get tipTitle => 'Tip the driver';
+
+  @override
+  String get tipNone => 'No tip';
+
+  @override
+  String get tipCustom => 'Other amount';
+
+  @override
+  String get tipHint =>
+      'The tip is added to this payment and goes to the driver. The fare does not change.';
+
+  @override
+  String get tipAsk => 'Add a tip for the driver before you pay?';
+
+  @override
+  String get tipSkip => 'Continue without a tip';
+
+  @override
+  String get tipAdd => 'Add this tip to the payment';
 
   @override
   String get iPaid => 'I have paid';
@@ -495,7 +525,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Go online after the partner file and training are complete. You are an independent partner, not an employee.';
 
   @override
-  String get driveVehicleNote => 'Vehicle you drive (e.g. tuktuk)';
+  String get driveVehicleNote => 'Vehicle you drive (e.g. motorcycle)';
 
   @override
   String get goOnline => 'Go online';
@@ -689,6 +719,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ridesPartnerBody =>
       'Rides match independent Cambodian partners. Leca does not own the vehicles. The fare is shown up front and is not discounted after you accept it.';
+
+  @override
+  String get motoRideBody =>
+      'A passenger sits behind the driver on a motorcycle with no trailer. This is not a tuk-tuk or a remorque. Two adults and a child can ride, and the driver, the passenger, and a child of three or older wear helmets. The ride is available in Phnom Penh and across Cambodia. Leca is based in Siem Reap, where Grab does not offer a motorcycle.';
+
+  @override
+  String get motoRideDetail =>
+      'No trailer. The passenger sits behind the driver.';
+
+  @override
+  String get otherRides => 'Tuk-tuk, car, and the other rides';
 
   @override
   String get rentPartnerBody =>
@@ -923,7 +964,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get talkIroh =>
-      'Text, voice, and video go directly over iroh. This device\'s key is how other people reach you. A name is optional.';
+      'Chat and prices ride an iroh swarm. Web, iPhone, Mac, and Windows are on it together. This device\'s key is how the others reach you.';
 
   @override
   String get talkWith => 'Talk';
@@ -1013,4 +1054,129 @@ class AppLocalizationsEn extends AppLocalizations {
   String talkInCall(String name, String kind) {
     return '$name started $kind';
   }
+
+  @override
+  String get servicePhone => 'Phone';
+
+  @override
+  String get phoneTitle => 'Phone';
+
+  @override
+  String get phoneData =>
+      'Calls are data. iroh carries the voice between the two devices.';
+
+  @override
+  String get phoneYourNumber => 'Your number';
+
+  @override
+  String get phoneCopy => 'Copy';
+
+  @override
+  String get phoneCopied => 'Number copied';
+
+  @override
+  String get phoneHint => 'Paste a Leca number, or a name';
+
+  @override
+  String get phoneCall => 'Call';
+
+  @override
+  String get phoneAccept => 'Accept';
+
+  @override
+  String get phoneDecline => 'Decline';
+
+  @override
+  String get phoneHangup => 'Hang up';
+
+  @override
+  String get phoneMute => 'Mute';
+
+  @override
+  String get phoneMuted => 'Muted';
+
+  @override
+  String phoneDialing(String name) {
+    return 'Calling $name';
+  }
+
+  @override
+  String phoneRinging(String name) {
+    return '$name is calling';
+  }
+
+  @override
+  String get phoneLive => 'In call';
+
+  @override
+  String get phoneBusy => 'Busy';
+
+  @override
+  String get phoneUnreachable => 'No route. Paste the full number.';
+
+  @override
+  String get phoneDeclined => 'Declined';
+
+  @override
+  String get phoneSelf => 'That number is this device';
+
+  @override
+  String get phoneOffline => 'The data line is not up';
+
+  @override
+  String get phoneGear => 'The microphone is off. The call stays up.';
+
+  @override
+  String get phoneTimeout => 'No answer';
+
+  @override
+  String get phoneContacts => 'Contacts';
+
+  @override
+  String get phoneEmpty => 'No contacts yet. A number is an iroh address.';
+
+  @override
+  String get phoneRecent => 'Recent';
+
+  @override
+  String get phoneWeb =>
+      'This browser shows the number. The call runs in the installed app.';
+
+  @override
+  String get phoneHeadset => 'A headset keeps the two voices apart.';
+
+  @override
+  String get phoneWayIn => 'In';
+
+  @override
+  String get phoneWayOut => 'Out';
+
+  @override
+  String get phoneWayMissed => 'Missed';
+
+  @override
+  String get talkCall => 'Call';
+
+  @override
+  String get chatFaceAnon => 'Distance only';
+
+  @override
+  String get chatFaceName => 'Show my name';
+
+  @override
+  String get chatFaceHide => 'Don\'t appear';
+
+  @override
+  String chatAway(int km) {
+    return '$km km away';
+  }
+
+  @override
+  String get chatAwayNear => 'Under 1 km';
+
+  @override
+  String get chatRadius => 'Chat radius';
+
+  @override
+  String get chatHiddenBody => 'You are not in this chat.';
 }

@@ -24,6 +24,10 @@ class CambodiaRules {
     return k == 'bicycle' || k == 'bike' || k == 'cycle';
   }
 
+  /// A motorcycle with no trailer may carry two adults and a child.
+  /// The 2015 Law on Road Traffic requires helmets for the driver, the
+  /// passenger, and a child of three or older. A tuk-tuk or remorque is a
+  /// different vehicle. Paid transport still needs the MPWT permit.
   static bool isMotorcycle(String kind) {
     final k = normKind(kind);
     return k == 'motorcycle' || k == 'motorbike' || k == 'moto';

@@ -8,6 +8,7 @@
   "serviceFood": "Food",
   "serviceSend": "Send anything",
   "serviceRides": "Rides",
+  "serviceMoto": "Motorcycle",
   "serviceRent": "Rent",
   "bornInCambodia": "Every city and village in Cambodia.",
   "searchHint": "Search dishes or kitchens",
@@ -92,6 +93,12 @@
   "deliveryFee": "Delivery",
   "serviceFee": "Service fee",
   "serviceFeeNone": "5% of this sale.",
+  "driverFastBonus": "Leca pays the driver an extra {amount} for getting there faster than the card's average time, inside the posted speed limit. Leca pays this, and the fare you pay does not change.",
+  "@driverFastBonus": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
   "driverMinutes": "{name} is {minutes} minutes away",
   "@driverMinutes": {
     "placeholders": {
@@ -125,6 +132,13 @@
   "loadingQr": "Creating QR code…",
   "errorQr": "Could not create the QR code.",
   "invalidAmount": "Enter a valid amount.",
+  "tipTitle": "Tip the driver",
+  "tipNone": "No tip",
+  "tipCustom": "Other amount",
+  "tipHint": "The tip is added to this payment and goes to the driver. The fare does not change.",
+  "tipAsk": "Add a tip for the driver before you pay?",
+  "tipSkip": "Continue without a tip",
+  "tipAdd": "Add this tip to the payment",
   "iPaid": "I have paid",
   "paidTitle": "Order received",
   "paidBody": "Keep the receipt in your bank app. Leca does not hold this payment.",
@@ -216,7 +230,7 @@
   "businessInvalid": "Enter a kind and a name.",
   "saveBusiness": "Save business",
   "driveBody": "Go online after the partner file and training are complete. You are an independent partner, not an employee.",
-  "driveVehicleNote": "Vehicle you drive (e.g. tuktuk)",
+  "driveVehicleNote": "Vehicle you drive (e.g. motorcycle)",
   "goOnline": "Go online",
   "listVehicleBody": "List a vehicle you own. Any lawful kind, with a driver or self-drive.",
   "vehicleKind": "Vehicle kind",
@@ -278,6 +292,9 @@
   "saleHint": "Car, motorcycle, bicycle, or tuktuk — rent or buy, with a driver or without.",
   "shopTitle": "Shop",
   "ridesPartnerBody": "Rides match independent Cambodian partners. Leca does not own the vehicles. The fare is shown up front and is not discounted after you accept it.",
+  "motoRideBody": "A passenger sits behind the driver on a motorcycle with no trailer. This is not a tuk-tuk or a remorque. Two adults and a child can ride, and the driver, the passenger, and a child of three or older wear helmets. The ride is available in Phnom Penh and across Cambodia. Leca is based in Siem Reap, where Grab does not offer a motorcycle.",
+  "motoRideDetail": "No trailer. The passenger sits behind the driver.",
+  "otherRides": "Tuk-tuk, car, and the other rides",
   "rentPartnerBody": "Rent or buy a vehicle the owner listed. Leca does not operate a fleet.",
   "rentExamplesKh": "Examples of partner-owned vehicles. Leca does not own or operate them.",
   "platformFleetBlocked": "Leca does not operate autonomous or company-owned vehicles in Cambodia.",
@@ -359,7 +376,7 @@
   "talkVoice": "Voice",
   "talkVideo": "Video",
   "talkProof": "This chat checks out",
-  "talkIroh": "Text, voice, and video go directly over iroh. This device's key is how other people reach you. A name is optional.",
+  "talkIroh": "Chat and prices ride an iroh swarm. Web, iPhone, Mac, and Windows are on it together. This device's key is how the others reach you.",
   "talkWith": "Talk",
   "whoDriver": "Driver",
   "whoCustomer": "Customer",
@@ -429,5 +446,59 @@
       "name": {"type": "String"},
       "kind": {"type": "String"}
     }
-  }
+  },
+  "servicePhone": "Phone",
+  "phoneTitle": "Phone",
+  "phoneData": "Calls are data. iroh carries the voice between the two devices.",
+  "phoneYourNumber": "Your number",
+  "phoneCopy": "Copy",
+  "phoneCopied": "Number copied",
+  "phoneHint": "Paste a Leca number, or a name",
+  "phoneCall": "Call",
+  "phoneAccept": "Accept",
+  "phoneDecline": "Decline",
+  "phoneHangup": "Hang up",
+  "phoneMute": "Mute",
+  "phoneMuted": "Muted",
+  "phoneDialing": "Calling {name}",
+  "@phoneDialing": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "phoneRinging": "{name} is calling",
+  "@phoneRinging": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "phoneLive": "In call",
+  "phoneBusy": "Busy",
+  "phoneUnreachable": "No route. Paste the full number.",
+  "phoneDeclined": "Declined",
+  "phoneSelf": "That number is this device",
+  "phoneOffline": "The data line is not up",
+  "phoneGear": "The microphone is off. The call stays up.",
+  "phoneTimeout": "No answer",
+  "phoneContacts": "Contacts",
+  "phoneEmpty": "No contacts yet. A number is an iroh address.",
+  "phoneRecent": "Recent",
+  "phoneWeb": "This browser shows the number. The call runs in the installed app.",
+  "phoneHeadset": "A headset keeps the two voices apart.",
+  "phoneWayIn": "In",
+  "phoneWayOut": "Out",
+  "phoneWayMissed": "Missed",
+  "talkCall": "Call",
+  "chatFaceAnon": "Distance only",
+  "chatFaceName": "Show my name",
+  "chatFaceHide": "Don't appear",
+  "chatAway": "{km} km away",
+  "@chatAway": {
+    "placeholders": {
+      "km": {"type": "int"}
+    }
+  },
+  "chatAwayNear": "Under 1 km",
+  "chatRadius": "Chat radius",
+  "chatHiddenBody": "You are not in this chat."
 }

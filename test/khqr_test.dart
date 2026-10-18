@@ -61,25 +61,27 @@ void main() {
     );
     expect(cash.text, startsWith('CASH|KH|'));
 
-    final visa = QrFactory.build(
-      rail: MarketConfig.cambodia.railById('visa'),
-      amountUsd: 2.5,
-      orderId: 'LECA1',
-      note: '',
-      storeLabel: 'Kitchen',
-      merchantCity: 'Phnom Penh',
+    expect(
+      () => QrFactory.build(
+        rail: MarketConfig.cambodia.railById('visa'),
+        amountUsd: 2.5,
+        orderId: 'LECA1',
+        note: '',
+        storeLabel: 'Kitchen',
+        merchantCity: 'Phnom Penh',
+      ),
+      throwsA(predicate<QrException>((e) => e.code == 'stripe_unconfigured')),
     );
-    expect(visa.text, contains('checkout.stripe.com'));
-    expect(visa.text, contains('visa'));
-
-    final discover = QrFactory.build(
-      rail: MarketConfig.cambodia.railById('discover'),
-      amountUsd: 2.5,
-      orderId: 'LECA1',
-      note: '',
-      storeLabel: 'Kitchen',
-      merchantCity: 'Phnom Penh',
+    expect(
+      () => QrFactory.build(
+        rail: MarketConfig.cambodia.railById('discover'),
+        amountUsd: 2.5,
+        orderId: 'LECA1',
+        note: '',
+        storeLabel: 'Kitchen',
+        merchantCity: 'Phnom Penh',
+      ),
+      throwsA(predicate<QrException>((e) => e.code == 'stripe_unconfigured')),
     );
-    expect(discover.text, contains('discover'));
   });
 }

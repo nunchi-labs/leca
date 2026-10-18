@@ -13,9 +13,12 @@ import 'state.dart';
 import 'traffic.dart';
 
 class BookScreen extends StatelessWidget {
-  const BookScreen({super.key, required this.kind});
+  const BookScreen({super.key, required this.kind, this.vehicleId});
 
   final BookKind kind;
+
+  /// When set, the list is that one vehicle. `motorcycle` is the plain bike.
+  final String? vehicleId;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +53,7 @@ class BookScreen extends StatelessWidget {
   String _title(AppLocalizations l10n) {
     switch (kind) {
       case BookKind.ride:
-        return l10n.serviceRides;
+        return vehicleId == 'motorcycle' ? l10n.serviceMoto : l10n.serviceRides;
       case BookKind.rent:
         return l10n.serviceRent;
       case BookKind.send:
@@ -63,7 +66,9 @@ class BookScreen extends StatelessWidget {
   String _body(AppLocalizations l10n) {
     switch (kind) {
       case BookKind.ride:
-        return l10n.ridesPartnerBody;
+        return vehicleId == 'motorcycle'
+            ? l10n.motoRideBody
+            : l10n.ridesPartnerBody;
       case BookKind.rent:
         return l10n.rentPartnerBody;
       case BookKind.send:
@@ -81,13 +86,32 @@ class BookScreen extends StatelessWidget {
   ) {
     switch (kind) {
       case BookKind.ride:
+        final offers = market.regularVehicles;
+        final focused = vehicleId == null
+            ? offers
+            : offers.where((offer) => offer.id == vehicleId).toList();
         return [
           _AutoTrip(
             l10n: l10n,
             state: state,
-            offers: market.regularVehicles,
+            offers: focused.isEmpty ? offers : focused,
             onPay: (booking) => _pay(context, state, booking),
           ),
+          if (vehicleId != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('other_rides'),
+                onPressed: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const BookScreen(kind: BookKind.ride),
+                    ),
+                  );
+                },
+                child: Text(l10n.otherRides),
+              ),
+            ),
         ];
       case BookKind.rent:
         return [
@@ -289,7 +313,11 @@ class _AutoTripState extends State<_AutoTrip> {
         else
           for (final offer in widget.offers)
             _OfferTile(
+              key: Key('ride_offer_${offer.id}'),
               title: offer.nameFor(state.locale),
+              subtitle: offer.id == 'motorcycle' && widget.offers.length != 1
+                  ? l10n.motoRideDetail
+                  : '',
               fareKey: 'ride:${offer.id}',
               lockWithDriver: true,
               quoteFor: ({required bool withDriver}) => _quote(offer.id),
@@ -528,6 +556,7 @@ class _TradeBoardState extends State<_TradeBoard> {
 /// chosen mode. With a [fareKey] either side may propose another price.
 class _OfferTile extends StatefulWidget {
   const _OfferTile({
+    super.key,
     required this.title,
     required this.onPay,
     required this.l10n,
@@ -594,6 +623,7 @@ class _OfferTileState extends State<_OfferTile> {
                 widget.title,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
+              if (widget.subtitle.isNotEmpty) Text(widget.subtitle),
               Text(
                 key == null
                     ? widget.subtitle

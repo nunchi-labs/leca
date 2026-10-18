@@ -128,6 +128,116 @@ class RateCard {
     return estimate < 1 ? 1 : estimate;
   }
 
+  /// Distance and time a quote may publish.
+  ///
+  /// A claimed road under half the geodesic is ignored. A claimed time is
+  /// the time, including a fast one. The card's estimate fills in a missing time.
+  ({int meters, int minutes, bool routed}) pricedLeg({
+    required double straightKm,
+    int? claimedMeters,
+    int? claimedMinutes,
+  }) {
+    final geodesic = (straightKm * 1000).round();
+    final floor = geodesic <= 0 ? minMeters : geodesic ~/ 2;
+    final claimedOk =
+        claimedMeters != null &&
+        claimedMeters >= floor &&
+        claimedMeters >= minMeters &&
+        claimedMeters <= 2000000;
+    final meters = claimedOk ? claimedMeters : roadMeters(straightKm);
+    final minutes = tripMinutes(meters, claimedMinutes);
+    return (meters: meters, minutes: minutes, routed: claimedOk);
+  }
+
+  /// What the saved minutes are worth on this card. This is not added to
+  /// the passenger fare, and it is not what Leca pays. [companyFastTipCents]
+  /// is the amount Leca can fund from its fee.
+  ///
+  /// The pace has to stay within Sub-decree 86 (8 July 2015) under the
+  /// 2015 Law on Road Traffic. In a city or town that is 30 km/h for
+  /// motorcycles and tricycles and 40 km/h for cars and vans. On a longer
+  /// road it is 60 km/h for a motorcycle of unknown capacity, 40 km/h for
+  /// a tricycle, and 80 km/h for a car or van. A trip of 20 km or less is
+  /// treated as inside a town. A bicycle has no motor limit in that
+  /// sub-decree. A pace over the posted maximum earns nothing.
+  int driverBonusCents({
+    required String kind,
+    required String vehicle,
+    required int meters,
+    required int actualMinutes,
+    bool? inTown,
+  }) {
+    if (kind != 'delivery' && kind != 'ride' && kind != 'rent') return 0;
+    if (meters < 1 || actualMinutes < 1) return 0;
+    final average = tripMinutes(meters, null);
+    if (actualMinutes >= average) return 0;
+    final town = inTown ?? meters <= 20000;
+    final limit = _postedLimitKmh(vehicle, inTown: town);
+    if (limit == 0) return 0;
+    if (limit != null && meters * 60 > limit * 1000 * actualMinutes) {
+      return 0;
+    }
+    final rate =
+        kinds[kind] ??
+        kinds['delivery'] ??
+        const RateKind(base: 40, perKm: 18, perMin: 2);
+    final scale = rate.scaled ? this.scale(vehicle) : 100;
+    final perMinute = (rate.perMin * scale + 50) ~/ 100;
+    if (perMinute <= 0) return 0;
+    return (average - actualMinutes) * perMinute;
+  }
+
+  /// Cents Leca pays the partner for a fast, legal trip.
+  ///
+  /// The passenger fare does not include this. It is funded from Leca's
+  /// 5% fee, and only up to one fifth of that fee, so four fifths of the
+  /// fee still covers the sale. A trip with no room in the fee pays nothing.
+  int companyFastTipCents({
+    required String kind,
+    required String vehicle,
+    required int meters,
+    required int actualMinutes,
+    required int fareCents,
+    bool? inTown,
+  }) {
+    final earned = driverBonusCents(
+      kind: kind,
+      vehicle: vehicle,
+      meters: meters,
+      actualMinutes: actualMinutes,
+      inTown: inTown,
+    );
+    if (earned < 1 || fareCents < 1) return 0;
+    final fee = (fareCents * 5 + 50) ~/ 100;
+    final room = fee ~/ 5;
+    if (room < 1) return 0;
+    return earned < room ? earned : room;
+  }
+
+  /// Null when the vehicle is not a motor vehicle in Sub-decree 86.
+  /// Zero when it is not a road vehicle that sub-decree prices.
+  int? _postedLimitKmh(String vehicle, {required bool inTown}) {
+    final k = vehicle.toLowerCase().replaceAll(RegExp(r'[\s_-]+'), '');
+    if (k == 'bicycle' || k == 'bike' || k == 'cycle') return null;
+    if (k == 'boat') return 0;
+    final trailer =
+        (k.contains('motorcycle') && k.contains('trailer')) ||
+        k == 'motortrailer';
+    final tri =
+        k == 'tuktuk' || k == 'tuk' || k == 'remorque' || k == 'tricycle';
+    final moto =
+        k == 'motorcycle' || k == 'motorbike' || k == 'moto' || trailer;
+    final light = k == 'car' || k == 'van6' || k == 'van';
+    if (inTown) {
+      if (light && !moto && !tri) return 40;
+      return 30;
+    }
+    if (tri || trailer) return 40;
+    if (moto) return 60;
+    if (light) return 80;
+    return 40;
+  }
+
   /// Hours that are charged for a rental of [hours]: each full day bills
   /// [dayHours], and the remainder bills up to [dayHours].
   int billableHours(int hours) {

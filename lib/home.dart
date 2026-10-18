@@ -9,9 +9,12 @@ import 'device.dart';
 import 'l10n/app_localizations.dart';
 import 'market.dart';
 import 'pay.dart';
+import 'phone_screen.dart';
 import 'restaurant.dart';
 import 'shop.dart';
 import 'state.dart';
+import 'swarm.dart';
+import 'talk_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -497,6 +500,40 @@ class _Header extends StatelessWidget {
             child: Text(l10n.languageToggle),
           ),
           IconButton(
+            key: const Key('front_chat'),
+            tooltip: l10n.chat,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => TalkScreen(
+                    room: frontRoom,
+                    title: l10n.chat,
+                    fareKey: frontFare,
+                    onCheckout: () {
+                      final live = LecaScope.of(context);
+                      final usd = live.payable(frontFare, 0);
+                      if (usd <= 0) return;
+                      live.setBooking(
+                        Booking(
+                          kind: BookKind.goods,
+                          title: l10n.chat,
+                          amountUsd: usd,
+                          detail: frontRoom,
+                        ),
+                      );
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const PayScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.forum_outlined),
+          ),
+          IconButton(
             key: const Key('account_button'),
             tooltip: l10n.accountTitle,
             onPressed: () {
@@ -527,7 +564,28 @@ class _ServiceRow extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
+            _ServiceChip(
+              key: const Key('service_phone'),
+              label: l10n.servicePhone,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const PhoneScreen()),
+              ),
+            ),
+            const SizedBox(width: 8),
             _ServiceChip(label: l10n.serviceFood, selected: true, onTap: () {}),
+            const SizedBox(width: 8),
+            _ServiceChip(
+              key: const Key('service_moto'),
+              label: l10n.serviceMoto,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const BookScreen(
+                    kind: BookKind.ride,
+                    vehicleId: 'motorcycle',
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(width: 8),
             _ServiceChip(
               label: l10n.serviceRides,
@@ -564,6 +622,7 @@ class _ServiceRow extends StatelessWidget {
 
 class _ServiceChip extends StatelessWidget {
   const _ServiceChip({
+    super.key,
     required this.label,
     required this.onTap,
     this.selected = false,

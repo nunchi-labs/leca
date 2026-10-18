@@ -18,6 +18,8 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     await tester.pumpWidget(const LecaApp());
     await tester.pump();
+    await tester.tap(find.byKey(const Key('open_sign_in')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('sign_in_facebook')), findsOneWidget);
     await tester.pump();
     expect(tester.getSize(find.byType(FacebookMark)), const Size(16, 16));

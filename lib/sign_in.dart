@@ -23,6 +23,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _country = TextEditingController(text: '+855');
   bool _register = false;
   bool _filledKeyName = false;
+  bool _closing = false;
 
   /// Country code plus the local number. A leading 0 is the trunk prefix
   /// and drops when the country code is present.
@@ -35,6 +36,24 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final state = LecaScope.of(context);
+    final chosen = state.keyName;
+    if (!_filledKeyName && chosen.isNotEmpty && _keyName.text.isEmpty) {
+      _keyName.text = chosen;
+      _filledKeyName = true;
+    }
+    if (_closing || state.session == null) return;
+    _closing = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      if (navigator.canPop()) navigator.pop();
+    });
+  }
+
+  @override
   void dispose() {
     _phone.dispose();
     _code.dispose();
@@ -44,16 +63,6 @@ class _SignInScreenState extends State<SignInScreen> {
     _keyName.dispose();
     _country.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final chosen = LecaScope.of(context).keyName;
-    if (!_filledKeyName && chosen.isNotEmpty && _keyName.text.isEmpty) {
-      _keyName.text = chosen;
-      _filledKeyName = true;
-    }
   }
 
   String _errorText(AppLocalizations l10n, String? code) {

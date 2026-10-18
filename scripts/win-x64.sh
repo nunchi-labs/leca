@@ -288,7 +288,8 @@ sync_and_build() {
   # exits before flutter runs, so Windows reports that flutter is missing.
   say "flutter build windows"
   guest 'rmdir /s /q C:\leca\src\build\windows' || true
-  guest 'cd /d C:\leca\src && C:\flutter\bin\flutter.bat build windows --release --dart-define=AUTH_API=https://gno.money'
+  local api="${LECA_AUTH_API:-https://gno.money}"
+  guest "cd /d C:\\leca\\src && C:\\flutter\\bin\\flutter.bat build windows --release --dart-define=AUTH_API=${api}"
   mkdir -p "$src/build/windows"
   guest "tar -C C:/leca/src/build/windows -czf - x64" | tar -xzf - -C "$src/build/windows"
   [[ -f $src/build/windows/x64/runner/Release/leca.exe ]] || {

@@ -1,27 +1,21 @@
 #!/usr/bin/env bash
 # Build each target on the machine that can compile it.
 #
-#   ./build.sh                         # everything reachable
-#   ./build.sh macos android           # just these
-#   ./build.sh x86                     # linux-x64 and windows-x64 on the PC
-#   ./build.sh linux-arm64 windows-arm64
+#   ./build.sh                         # everything these two machines build
+#   ./build.sh macos ios               # the Mac
+#   ./build.sh android linux-x64 windows-x64
 #
-# A target compiles on this machine when the OS matches. Otherwise:
-#   macos, ios, linux-arm64, windows-arm64   the Mac in scripts/mac.host
-#   linux-arm64, windows-arm64 on that Mac   qemu/build.sh
-#   linux-x64, windows-x64                   scripts/x86.host
+#   macos, ios                         the Mac in scripts/mac.host
+#   android, linux-x64, windows-x64    the Hetzner machine in scripts/hetzner.host
+#   linux-arm64, windows-arm64         GitHub ARM runners
 #
-# The PC password, if the build key is not installed yet, is
-# qemu/.cache/x86/password (not committed). The Mac key is
-# qemu/.cache/mac/id_ed25519.
+# Windows x64 on Hetzner is a KVM guest (scripts/win-x64.sh).
+# The Mac key is qemu/.cache/mac/id_ed25519.
 set -euo pipefail
 export COPYFILE_DISABLE=1
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 AUTH_DEFINE=(--dart-define="AUTH_API=${LECA_AUTH_API:-https://gno.money}")
-X86_CACHE="$ROOT/qemu/.cache/x86"
-HOST="$(tr -d '[:space:]' < "$ROOT/scripts/x86.host")"
-KEY="$X86_CACHE/id_ed25519"
 
 die() {
   echo "build: $*" >&2
@@ -72,7 +66,8 @@ native_ok() {
   os="$(host_os)"
   arch="$(host_arch)"
   case "$1" in
-    web | android) return 0 ;;
+    web) return 0 ;;
+    android) [[ $(host_os) == linux ]] ;;
     linux-x64) [[ $os == linux && $arch == x64 ]] ;;
     linux-arm64) [[ $os == linux && $arch == arm64 ]] ;;
     macos | ios) [[ $os == darwin ]] ;;
@@ -82,176 +77,11 @@ native_ok() {
   esac
 }
 
-ensure_key() {
-  mkdir -p "$X86_CACHE"
-  if [[ ! -f $KEY ]]; then
-    ssh-keygen -t ed25519 -N "" -f "$KEY" -C leca-build >/dev/null
-  fi
-}
-
-# One TCP session for the whole build. A burst of new connections makes
-# this PC stop listening on port 22.
-x86_opts() {
-  X86_OPTS=(
-    -i "$KEY"
-    -o BatchMode=yes
-    -o StrictHostKeyChecking=accept-new
-    -o UserKnownHostsFile="$X86_CACHE/known_hosts"
-    -o ConnectTimeout=12
-    -o LogLevel=ERROR
-    -o ControlMaster=auto
-    -o ControlPath="$X86_CACHE/cm.sock"
-    -o ControlPersist=30m
-    -o ServerAliveInterval=30
-    -o ServerAliveCountMax=120
-  )
-}
-
-x86_open() {
-  ensure_key
-  mkdir -p "$X86_CACHE"
-  x86_opts
-  if ssh "${X86_OPTS[@]}" -O check "$HOST" >/dev/null 2>&1; then
-    return 0
-  fi
-  rm -f "$X86_CACHE/cm.sock"
-  if ssh "${X86_OPTS[@]}" -f -N "$HOST"; then
-    return 0
-  fi
-  local passfile="$X86_CACHE/password"
-  [[ -f $passfile ]] || return 1
-  local ask
-  ask="$(mktemp)"
-  cat >"$ask" <<EOF
-#!/bin/sh
-cat "$passfile"
-EOF
-  chmod 700 "$ask"
-  DISPLAY="${DISPLAY:-:0}" SSH_ASKPASS="$ask" SSH_ASKPASS_REQUIRE=force \
-    ssh "${X86_OPTS[@]}" \
-      -o PreferredAuthentications=password \
-      -o PubkeyAuthentication=no \
-      -f -N "$HOST"
-  local rc=$?
-  rm -f "$ask"
-  return "$rc"
-}
-
-x86_reachable() {
-  x86_open
-}
-
-unreachable() {
-  cat >&2 <<EOF
-build: cannot log in to ${HOST}.
-The build key is qemu/.cache/x86/id_ed25519. On that machine, sshd must
-accept it for the user in scripts/x86.host.
-EOF
-  exit 1
-}
-
-# Run a command on the x86 PC over the shared connection.
-x86_ssh() {
-  x86_open || unreachable
-  x86_opts
-  # The arguments are the remote command, so they expand on this machine.
-  # shellcheck disable=SC2029
-  ssh "${X86_OPTS[@]}" "$HOST" "$@"
-}
-
-x86_kind() {
-  # linux, or windows. echo ok works in both bash and cmd.
-  local out
-  out="$(x86_ssh 'bash -lc "echo linux" || echo windows')"
-  if [[ $out == *linux* ]]; then
-    echo linux
-  else
-    echo windows
-  fi
-}
-
-sync_tree() {
-  local dest_tar=$1
-  tar -C "$ROOT" --no-xattrs -czf - \
-    --exclude build \
-    --exclude .dart_tool \
-    --exclude .git \
-    --exclude qemu/.cache \
-    --exclude '._*' \
-    --exclude .DS_Store \
-    --exclude '**/ephemeral' \
-    --exclude '**/.gradle' \
-    . | x86_ssh "$dest_tar"
-}
-
 build_local() {
   local name=$1
   shift
   echo "build: $name on $(host_os)-$(host_arch)"
   (cd "$ROOT" && "$@")
-}
-
-build_arm() {
-  local which=$1
-  echo "build: $which on this Mac (qemu)"
-  "$ROOT/qemu/build.sh" "$which"
-}
-
-build_x86() {
-  local -a want=("$@")
-  echo "build: ${want[*]} on $HOST"
-  local kind ref
-  kind="$(x86_kind)"
-  ref="$(flutter_ref)"
-  echo "build: $HOST is $kind, flutter $ref"
-  if [[ $kind == linux ]]; then
-    x86_ssh "mkdir -p ~/leca" || return 1
-    sync_tree "tar -xzf - -C ~/leca" || return 1
-    local sudo_pass=""
-    [[ -f $X86_CACHE/password ]] && sudo_pass="$(tr -d '[:space:]' < "$X86_CACHE/password")"
-    [[ -n $sudo_pass ]] || die "qemu/.cache/x86/password is empty"
-    local envp
-    envp="LECA_SUDO_PASSWORD=$(printf '%q' "$sudo_pass") LECA_FLUTTER_REF=$(printf '%q' "$ref")"
-    local t want_linux=no want_win=no
-    for t in "${want[@]}"; do
-      [[ $t == linux-x64 ]] && want_linux=yes
-      [[ $t == windows-x64 ]] && want_win=yes
-    done
-    if [[ $want_linux == yes ]]; then
-      x86_ssh "$envp bash ~/leca/scripts/remote.sh" || return 1
-      mkdir -p "$ROOT/build/linux"
-      x86_ssh "tar -C ~/leca/build/linux -czf - x64" | tar -xzf - -C "$ROOT/build/linux" || return 1
-      [[ -e $ROOT/build/linux/x64/release/bundle ]] || return 1
-      echo "build: linux-x64 bundle is in build/linux/x64/"
-    fi
-    if [[ $want_win == yes ]]; then
-      x86_ssh "$envp bash ~/leca/scripts/win-x64.sh" || return 1
-      mkdir -p "$ROOT/build/windows"
-      x86_ssh "tar -C ~/leca/build/windows -czf - x64" | tar -xzf - -C "$ROOT/build/windows" || return 1
-      [[ -f $ROOT/build/windows/x64/runner/Release/leca.exe ]] || return 1
-      echo "build: windows-x64 bundle is in build/windows/x64/"
-    fi
-    return 0
-  fi
-  x86_ssh 'powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path C:\leca\src | Out-Null"'
-  sync_tree "tar -xzf - -C C:/leca/src"
-  local args=""
-  local t
-  for t in "${want[@]}"; do
-    args+=" $t"
-  done
-  x86_ssh "powershell -NoProfile -ExecutionPolicy Bypass -File C:\\leca\\src\\scripts\\remote.ps1 -Ref $ref $args"
-  for t in "${want[@]}"; do
-    if [[ $t == windows-x64 ]]; then
-      mkdir -p "$ROOT/build/windows"
-      x86_ssh "tar -C C:/leca/src/build/windows -czf - x64" | tar -xzf - -C "$ROOT/build/windows"
-      echo "build: windows-x64 bundle is in build/windows/x64/"
-    else
-      mkdir -p "$ROOT/build/linux"
-      x86_ssh "tar -C C:/leca/src/build/linux -czf - x64" | tar -xzf - -C "$ROOT/build/linux"
-      echo "build: linux-x64 bundle is in build/linux/x64/"
-    fi
-  done
 }
 
 ensure_linux_deps() {
@@ -400,18 +230,78 @@ build_on_mac() {
   mac_ssh "$host" "tar -C ~/leca/dist -czf - ." | tar -xzf - -C "$ROOT/dist" || return 1
 }
 
+hetzner_target() {
+  [[ -f $ROOT/scripts/hetzner.host ]] || die "scripts/hetzner.host is missing"
+  tr -d '[:space:]' < "$ROOT/scripts/hetzner.host"
+}
+
+# True on the Hetzner build machine, whose address is scripts/hetzner.host.
+on_hetzner() {
+  local ip
+  ip="$(hetzner_target)"
+  ip="${ip#*@}"
+  command -v ip >/dev/null || return 1
+  ip -4 -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | grep -qx "$ip"
+}
+
+hetzner_ssh() {
+  local host=$1
+  shift
+  ssh \
+    -o BatchMode=yes \
+    -o StrictHostKeyChecking=accept-new \
+    -o ConnectTimeout=15 \
+    -o IPQoS=none \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=120 \
+    "$host" "$@"
+}
+
+# Windows x64 cannot be compiled on Linux. The guest runs on this machine.
+build_windows_local() {
+  command -v zip >/dev/null || pacman -S --noconfirm --needed zip
+  echo "build: windows-x64 on $(hostname -s) (kvm)"
+  LECA_SRC="$ROOT" \
+    LECA_FLUTTER_REF="$(flutter_ref)" \
+    LECA_AUTH_API="${LECA_AUTH_API:-https://gno.money}" \
+    "$ROOT/scripts/win-x64.sh"
+  pack_dir "$ROOT/build/windows/x64/runner/Release" "$ROOT/dist/Leca-windows-x64.zip"
+  echo "build: Leca-windows-x64.zip"
+}
+
+# Compile on Hetzner, then copy dist/ back. That machine runs this same script.
+build_on_hetzner() {
+  local target=$1 host
+  host="$(hetzner_target)"
+  echo "build: $target on $host"
+  hetzner_ssh "$host" "mkdir -p ~/leca" || return 1
+  tar -C "$ROOT" --no-xattrs -czf - \
+    --exclude build \
+    --exclude dist \
+    --exclude .dart_tool \
+    --exclude .git \
+    --exclude qemu/.cache \
+    --exclude '._*' \
+    --exclude .DS_Store \
+    --exclude '**/ephemeral' \
+    --exclude '**/.gradle' \
+    . | hetzner_ssh "$host" "tar -xzf - -C ~/leca" || return 1
+  hetzner_ssh "$host" "export PATH=\"/usr/local/bin:/opt/flutter/bin:\$PATH\" LECA_AUTH_API=$(printf '%q' "${LECA_AUTH_API:-https://gno.money}"); cd ~/leca && ./build.sh $target" || return 1
+  mkdir -p "$ROOT/dist"
+  hetzner_ssh "$host" "tar -C ~/leca/dist -czf - ." | tar -xzf - -C "$ROOT/dist" || return 1
+}
+
 usage() {
   cat <<EOF
 Usage: ./build.sh [target ...]
 
-  macos  ios                  a Mac (this machine, or scripts/mac.host)
-  android  web                this machine
-  linux-x64  linux-arm64      this machine when the arch matches, else the Mac VM or $HOST
-  windows-x64  windows-arm64  this machine when the arch matches, else the Mac VM or $HOST
-  x86                              both x64 targets
-  arm                              both arm64 VM targets
+  macos  ios                     the Mac (this machine, or scripts/mac.host)
+  android  linux-x64  windows-x64   the Hetzner machine (scripts/hetzner.host)
+  web                             this machine
+  linux-arm64  windows-arm64     a GitHub ARM runner
 
-No arguments builds every target. Packages land in dist/.
+No arguments builds every target these two machines can produce.
+Packages land in dist/.
 EOF
 }
 
@@ -419,29 +309,22 @@ expand() {
   case $1 in
     x86) echo linux-x64 windows-x64 ;;
     arm) echo linux-arm64 windows-arm64 ;;
-    mac) echo macos ios android ;;
-    all) echo android web linux-x64 linux-arm64 macos ios windows-x64 windows-arm64 ;;
+    mac) echo macos ios ;;
+    all) echo android web linux-x64 macos ios windows-x64 ;;
     *) echo "$1" ;;
   esac
 }
 
-# Targets this machine cannot compile. Arm VMs run on the Mac.
+# Targets this machine cannot compile.
 dispatch_remote() {
   local target=$1
   case "$target" in
     macos | ios) build_on_mac "$target" ;;
+    android | linux-x64 | windows-x64) build_on_hetzner "$target" ;;
     linux-arm64 | windows-arm64)
-      if [[ $(host_os) == darwin ]]; then
-        if [[ $target == linux-arm64 ]]; then
-          build_arm linux
-        else
-          build_arm windows
-        fi
-      else
-        build_on_mac "$target"
-      fi
+      echo "build: $target is built on a GitHub ARM runner" >&2
+      return 1
       ;;
-    linux-x64 | windows-x64) return 2 ;;
     *) die "no builder for $target" ;;
   esac
 }
@@ -460,12 +343,15 @@ main() {
     done
   done
   local fail=0 t rc
-  local -a x86=()
   for t in "${targets[@]}"; do
     case "$t" in
       android | web | macos | ios | linux-x64 | linux-arm64 | windows-x64 | windows-arm64) ;;
       *) die "unknown target $t" ;;
     esac
+    if [[ $t == windows-x64 ]] && on_hetzner; then
+      build_windows_local || fail=1
+      continue
+    fi
     if native_ok "$t"; then
       build_native "$t" || fail=1
       continue
@@ -474,21 +360,8 @@ main() {
     dispatch_remote "$t"
     rc=$?
     set -e
-    if [[ $rc -eq 0 ]]; then
-      continue
-    elif [[ $rc -eq 2 ]]; then
-      x86+=("$t")
-    else
-      fail=1
-    fi
+    [[ $rc -eq 0 ]] || fail=1
   done
-  if [[ ${#x86[@]} -gt 0 ]]; then
-    if x86_reachable; then
-      build_x86 "${x86[@]}" || fail=1
-    else
-      unreachable
-    fi
-  fi
   exit "$fail"
 }
 

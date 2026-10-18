@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:leca/catalog.dart';
+import 'package:leca/compliance.dart';
 import 'package:leca/market.dart';
 import 'package:leca/state.dart';
 
@@ -19,6 +20,20 @@ void main() {
     expect(state.saleUsd, 1.80);
     expect(state.feeUsd, 0.09);
     expect(state.totalUsd, 1.89);
+    state.setTip(0.50);
+    expect(state.tipUsd, 0.50);
+    expect(state.totalUsd, 2.39);
+    state.setTip(0);
+    expect(state.totalUsd, 1.89);
+  });
+
+  test('a plain motorcycle is the first ride, not a tuk-tuk', () {
+    final rides = MarketConfig.cambodia.regularVehicles;
+    expect(rides.first.id, 'motorcycle');
+    expect(CambodiaRules.isMotorcycle('motorcycle'), isTrue);
+    expect(CambodiaRules.isTricycle('motorcycle'), isFalse);
+    expect(CambodiaRules.isMotorcycleWithTrailer('motorcycle'), isFalse);
+    expect(rides.map((offer) => offer.id), contains('tuktuk'));
   });
 
   test('any legal vehicle is another offer, not an enum case', () {

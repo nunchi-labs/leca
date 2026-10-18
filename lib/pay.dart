@@ -13,6 +13,7 @@ import 'market.dart';
 import 'quote.dart';
 import 'state.dart';
 import 'talk_screen.dart';
+import 'tip.dart';
 import 'traffic.dart';
 
 enum _QrPhase { loading, ready, error }
@@ -96,6 +97,61 @@ class _PayScreenState extends State<PayScreen> {
     _debounce?.cancel();
     if (_ready) _note.dispose();
     super.dispose();
+  }
+
+  Future<void> _onPaid() async {
+    final state = LecaScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    if (state.acceptsTip && state.tipUsd <= 0) {
+      final add = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          final live = LecaScope.of(dialogContext);
+          return AlertDialog(
+            title: Text(l10n.tipAsk),
+            content: const SingleChildScrollView(child: TipChoices()),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  live.setTip(0);
+                  Navigator.pop(dialogContext, false);
+                },
+                child: Text(l10n.tipSkip),
+              ),
+              FilledButton(
+                key: const Key('tip_add'),
+                onPressed: live.tipUsd <= 0
+                    ? null
+                    : () => Navigator.pop(dialogContext, true),
+                child: Text(l10n.tipAdd),
+              ),
+            ],
+          );
+        },
+      );
+      if (!mounted) return;
+      if (add == true || state.tipUsd > 0) {
+        unawaited(_rebuild());
+        return;
+      }
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.paidTitle),
+        content: Text(l10n.paidBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.close),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    state.clearCart();
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Future<void> _rebuild() async {
@@ -191,6 +247,7 @@ class _PayScreenState extends State<PayScreen> {
         unawaited(_rebuild());
       },
       onNote: _onNoteChanged,
+      onTip: () => unawaited(_rebuild()),
     );
 
     final Widget qr;
@@ -218,26 +275,7 @@ class _PayScreenState extends State<PayScreen> {
         hint: _hint(l10n, state.rail),
         stripe: state.rail.kind == RailKind.stripe,
         cash: state.rail.kind == RailKind.cash,
-        onPaid: () async {
-          await showDialog<void>(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: Text(l10n.paidTitle),
-                content: Text(l10n.paidBody),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(l10n.close),
-                  ),
-                ],
-              );
-            },
-          );
-          if (!context.mounted) return;
-          state.clearCart();
-          Navigator.of(context).popUntil((r) => r.isFirst);
-        },
+        onPaid: () => unawaited(_onPaid()),
       );
     }
 
@@ -268,6 +306,7 @@ class _Details extends StatelessWidget {
     required this.note,
     required this.onRail,
     required this.onNote,
+    required this.onTip,
   });
 
   final AppLocalizations l10n;
@@ -275,6 +314,7 @@ class _Details extends StatelessWidget {
   final TextEditingController note;
   final ValueChanged<String> onRail;
   final ValueChanged<String> onNote;
+  final VoidCallback onTip;
 
   Future<void> _share(BuildContext context, String audience) async {
     final text = await state.shareTrip(audience);
@@ -401,6 +441,10 @@ class _Details extends StatelessWidget {
             ),
           ],
           Text('${l10n.serviceFee}  ${moneyUsd(state.feeUsd)}'),
+          if (state.acceptsTip) ...[
+            const SizedBox(height: 12),
+            TipChoices(onChanged: onTip),
+          ],
           const SizedBox(height: 8),
           Text(l10n.noWallet),
           const SizedBox(height: 16),
@@ -439,6 +483,40 @@ class _Details extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FastBonus extends StatelessWidget {
+  const _FastBonus({required this.l10n, required this.state});
+
+  final AppLocalizations l10n;
+  final LecaState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final booking = state.booking;
+    if (booking == null || booking.meters < 1 || booking.minutes < 1) {
+      return const SizedBox.shrink();
+    }
+    final kind = _quoteKind(booking);
+    if (kind == null) return const SizedBox.shrink();
+    final card = RateCard.known[booking.card] ?? RateCard.active;
+    final fareCents = (booking.amountUsd * 100).round();
+    final bonus = card.companyFastTipCents(
+      kind: kind,
+      vehicle: booking.vehicleId,
+      meters: booking.meters,
+      actualMinutes: booking.minutes,
+      fareCents: fareCents,
+    );
+    if (bonus <= 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        l10n.driverFastBonus(moneyUsd(bonus / 100)),
+        key: const Key('driver_fast_bonus'),
       ),
     );
   }
@@ -495,6 +573,7 @@ class _PartnerCard extends StatelessWidget {
                       Text('${l10n.plateLabel} ${partner.plate}'),
                       Text('${l10n.staffIdLabel} ${partner.staffId}'),
                       Text(l10n.upfrontFare),
+                      _FastBonus(l10n: l10n, state: state),
                       TrafficMinutes(
                         from: northOf(state.origin, 2.4),
                         to: state.origin,

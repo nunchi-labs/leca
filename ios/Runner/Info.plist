@@ -68,6 +68,8 @@
 	<string>Leca uses Face ID to confirm it is you.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Share this trip’s location with your family or the authorities.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Leca uses the microphone for data calls.</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

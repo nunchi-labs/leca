@@ -34,5 +34,7 @@
 	<string>Share this trip’s location with your family or the authorities.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Share this trip’s location with your family or the authorities.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Leca uses the microphone for data calls.</string>
 </dict>
 </plist>

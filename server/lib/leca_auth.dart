@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
 
 import 'password.dart';
+import 'phone_book.dart';
 import 'quote.dart';
 import 'trust.dart';
 import 'webauthn.dart';
@@ -361,6 +362,9 @@ class AuthCore {
   final Map<String, _Otp> _otps = {};
   final Map<String, _Pending> _pending = {};
   final Map<String, AuthUser> _sessions = {};
+  final Map<String, DateTime> _sessionExpires = {};
+
+  static const sessionTtl = Duration(days: 30);
   final Map<String, _EmailAccount> _emails = {};
   final Map<String, _KeyAccount> _keys = {};
   final Map<String, _KeyChallenge> _keyChallenges = {};
@@ -668,16 +672,20 @@ class AuthCore {
     if (path == null) return;
     final file = File(path);
     if (!file.existsSync()) return;
-    final decoded = jsonDecode(file.readAsStringSync());
-    if (decoded is! Map) return;
-    for (final entry in decoded.entries) {
-      final value = entry.value;
-      if (value is! Map) continue;
-      _emails['${entry.key}'] = _EmailAccount(
-        salt: '${value['salt']}',
-        hash: '${value['hash']}',
-        displayName: '${value['displayName']}',
-      );
+    try {
+      final decoded = jsonDecode(file.readAsStringSync());
+      if (decoded is! Map) return;
+      for (final entry in decoded.entries) {
+        final value = entry.value;
+        if (value is! Map) continue;
+        _emails['${entry.key}'] = _EmailAccount(
+          salt: '${value['salt']}',
+          hash: '${value['hash']}',
+          displayName: '${value['displayName']}',
+        );
+      }
+    } on Object catch (error) {
+      stderr.writeln('accounts.json skipped: $error');
     }
   }
 
@@ -698,12 +706,16 @@ class AuthCore {
       for (final entry in decoded.entries) {
         final value = entry.value;
         if (value is! Map) continue;
+        final stored = value['user'] is Map ? value['user'] as Map : value;
+        final expires =
+            DateTime.tryParse('${value['expires']}') ?? now().add(sessionTtl);
         _sessions['${entry.key}'] = AuthUser(
-          id: '${value['id']}',
-          method: '${value['method']}',
-          displayName: '${value['displayName']}',
-          handle: '${value['handle']}',
+          id: '${stored['id']}',
+          method: '${stored['method']}',
+          displayName: '${stored['displayName']}',
+          handle: '${stored['handle']}',
         );
+        _sessionExpires['${entry.key}'] = expires;
       }
     } on Object catch (_) {}
   }
@@ -717,7 +729,12 @@ class AuthCore {
       ..writeAsStringSync(
         jsonEncode({
           for (final entry in _sessions.entries)
-            entry.key: entry.value.toJson(),
+            entry.key: {
+              'user': entry.value.toJson(),
+              'expires': (_sessionExpires[entry.key] ?? now().add(sessionTtl))
+                  .toUtc()
+                  .toIso8601String(),
+            },
         }),
         flush: true,
       )
@@ -726,6 +743,17 @@ class AuthCore {
 
   void _remember(String token, AuthUser user) {
     _sessions[token] = user;
+    _sessionExpires[token] = now().add(sessionTtl);
+    _saveSessions();
+  }
+
+  /// Drops one session. Sign-out calls this so the token cannot be reused.
+  void forgetToken(String token) {
+    if (_sessions.remove(token) == null &&
+        _sessionExpires.remove(token) == null) {
+      return;
+    }
+    _sessionExpires.remove(token);
     _saveSessions();
   }
 
@@ -904,7 +932,18 @@ class AuthCore {
     return {'status': 'pending'};
   }
 
-  AuthUser? userForToken(String token) => _sessions[token];
+  AuthUser? userForToken(String token) {
+    final user = _sessions[token];
+    if (user == null) return null;
+    final expires = _sessionExpires[token];
+    if (expires != null && !now().isBefore(expires)) {
+      _sessions.remove(token);
+      _sessionExpires.remove(token);
+      _saveSessions();
+      return null;
+    }
+    return user;
+  }
 
   Future<String> providerCallback(
     String provider,
@@ -1716,6 +1755,13 @@ Future<void> handleAuth(
       await _json(response, 200, core.pending(id));
       return;
     }
+    if (request.method == 'POST' && path == '/v1/auth/logout') {
+      final header = request.headers.value('authorization') ?? '';
+      final token = header.startsWith('Bearer ') ? header.substring(7) : '';
+      if (token.isNotEmpty) core.forgetToken(token);
+      await _json(response, 200, {'ok': true});
+      return;
+    }
     if (request.method == 'GET' && path == '/v1/auth/me') {
       final header = request.headers.value('authorization') ?? '';
       final token = header.startsWith('Bearer ') ? header.substring(7) : '';
@@ -1754,6 +1800,12 @@ Future<void> handleAuth(
       await _json(response, 200, await core.trafficRoute(body));
       return;
     }
+    if (path == '/v1/phone/here' ||
+        path == '/v1/phone/find' ||
+        path == '/v1/phone/at') {
+      await _handlePhone(core, request, response, path);
+      return;
+    }
     if (trust != null &&
         (path.startsWith('/v1/driver/') ||
             path.startsWith('/v1/report') ||
@@ -1768,6 +1820,42 @@ Future<void> handleAuth(
   } on Object catch (_) {
     await _json(response, 500, {'error': 'failed'});
   }
+}
+
+Future<void> _handlePhone(
+  AuthCore core,
+  HttpRequest request,
+  HttpResponse response,
+  String path,
+) async {
+  final user = _bearer(core, request);
+  final book = PhoneDirectory.shared;
+  if (request.method == 'POST' && path == '/v1/phone/here') {
+    final body = await _readJson(request);
+    final ok = book.publish(
+      userId: user.id,
+      name: user.displayName.isEmpty ? user.handle : user.displayName,
+      endpoint: '${body['endpoint'] ?? ''}',
+      addr: '${body['addr'] ?? ''}',
+    );
+    if (!ok) throw AuthFailure('phone_invalid');
+    await _json(response, 200, {'ok': true});
+    return;
+  }
+  if (request.method == 'GET' && path == '/v1/phone/find') {
+    final found = book.find(request.uri.queryParameters['q'] ?? '');
+    await _json(response, 200, {
+      'matches': [for (final hit in found) hit.toJson()],
+    });
+    return;
+  }
+  if (request.method == 'GET' && path == '/v1/phone/at') {
+    final hit = book.at(request.uri.queryParameters['endpoint'] ?? '');
+    if (hit == null) throw AuthFailure('not_found', 404);
+    await _json(response, 200, hit.toJson());
+    return;
+  }
+  throw AuthFailure('not_found', 404);
 }
 
 AuthUser _bearer(AuthCore core, HttpRequest request) {

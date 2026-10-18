@@ -164,11 +164,14 @@ TripQuote priceTrip({
   int hours = 0,
 }) {
   final card = RateCard.active;
-  final routed = routeMeters != null && routeMeters >= card.minMeters;
-  final meters = routed
-      ? routeMeters
-      : card.roadMeters(kmBetween(fromLat, fromLng, toLat, toLng));
-  final minutes = card.tripMinutes(meters, traffic);
+  final leg = card.pricedLeg(
+    straightKm: kmBetween(fromLat, fromLng, toLat, toLng),
+    claimedMeters: routeMeters,
+    claimedMinutes: traffic,
+  );
+  final meters = leg.meters;
+  final minutes = leg.minutes;
+  final routed = leg.routed;
   final cents = card.fareCents(
     kind: kind,
     vehicle: vehicle,

@@ -15,9 +15,11 @@ import 'identity.dart';
 import 'location.dart';
 import 'market.dart';
 import 'passkey_auth.dart';
+import 'phone.dart';
 import 'quote.dart';
 import 'rate.dart';
 import 'records.dart';
+import 'swarm.dart';
 import 'talk.dart';
 import 'traffic.dart';
 import 'vault.dart';
@@ -45,6 +47,15 @@ class LecaState extends ChangeNotifier {
 
   /// Kilometres from [origin]. [countryWide] means the whole country, not a circle.
   double radiusKm = 10;
+
+  /// Who this device meets in the front-screen chat, separate from search.
+  double chatRadiusKm = 10;
+
+  /// `anon` shows a distance, `name` shows the account name, `hide` stays out.
+  String chatFace = chatFaceAnon;
+
+  /// Stable id for the front chat before an account exists.
+  String guestId = _freshGuest();
   TripFix? here;
 
   static const countryWide = 101.0;
@@ -52,6 +63,9 @@ class LecaState extends ChangeNotifier {
   bool get wholeCountry => radiusKm >= countryWide;
   PopularWindow window = PopularWindow.hour;
   String note = '';
+
+  /// Extra for the driver, on top of the fare. Not part of the fare proof.
+  double tipUsd = 0;
   Booking? booking;
   final Map<String, int> qty = <String, int>{};
 
@@ -78,6 +92,8 @@ class LecaState extends ChangeNotifier {
   final Set<String> suspendedPartnerIds = <String>{};
   final List<TripShare> shares = <TripShare>[];
   final List<PlatformReport> reports = <PlatformReport>[];
+  final List<PhoneContact> phoneContacts = <PhoneContact>[];
+  final List<CallRecord> phoneLog = <CallRecord>[];
   bool driving = false;
   String driveNote = '';
   String? supplyError;
@@ -108,9 +124,15 @@ class LecaState extends ChangeNotifier {
     _saveTimer = Timer(const Duration(milliseconds: 300), save);
   }
 
+  /// Writes now if a save is waiting. Closing the app must not drop it.
+  void flushSave() {
+    if (_saveTimer == null || _restoring) return;
+    unawaited(save());
+  }
+
   @override
   void dispose() {
-    _saveTimer?.cancel();
+    flushSave();
     super.dispose();
   }
 
@@ -166,7 +188,11 @@ class LecaState extends ChangeNotifier {
     'cityId': cityId,
     'railId': railId,
     'radiusKm': radiusKm,
+    'chatRadiusKm': chatRadiusKm,
+    'chatFace': chatFace,
+    'guestId': guestId,
     'note': note,
+    'tipUsd': tipUsd,
     'booking': booking?.toJson(),
     'qty': qty,
     'session': session?.toJson(),
@@ -185,6 +211,8 @@ class LecaState extends ChangeNotifier {
     'reports': [for (final r in reports) r.toJson()],
     'driving': driving,
     'driveNote': driveNote,
+    'phoneContacts': [for (final contact in phoneContacts) contact.toJson()],
+    'phoneLog': [for (final record in phoneLog) record.toJson()],
   };
 
   void _apply(Map<dynamic, dynamic> raw) {
@@ -199,7 +227,21 @@ class LecaState extends ChangeNotifier {
     if (market.rails.any((r) => r.id == rail)) railId = rail;
     final radius = raw['radiusKm'];
     if (radius is num) radiusKm = radius.toDouble().clamp(1, countryWide);
+    final chatRadius = raw['chatRadiusKm'];
+    if (chatRadius is num) {
+      chatRadiusKm = chatRadius.toDouble().clamp(1, countryWide);
+    }
+    final face = '${raw['chatFace'] ?? ''}';
+    if (face == chatFaceAnon || face == chatFaceName || face == chatFaceHide) {
+      chatFace = face;
+    }
+    final savedGuest = '${raw['guestId'] ?? ''}';
+    if (RegExp(r'^[A-Za-z0-9_-]{8,40}$').hasMatch(savedGuest)) {
+      guestId = savedGuest;
+    }
     note = '${raw['note'] ?? ''}';
+    final tip = raw['tipUsd'];
+    tipUsd = tip is num && tip > 0 ? (tip * 100).round() / 100 : 0;
     booking = Booking.fromJson(raw['booking']);
     final rawQty = raw['qty'];
     if (rawQty is Map) {
@@ -258,6 +300,8 @@ class LecaState extends ChangeNotifier {
     _fill(raw['reports'], reports, PlatformReport.fromJson);
     driving = raw['driving'] == true;
     driveNote = '${raw['driveNote'] ?? ''}';
+    _fill(raw['phoneContacts'], phoneContacts, PhoneContact.fromJson);
+    _fill(raw['phoneLog'], phoneLog, CallRecord.fromJson);
     syncRideMatch(notify: false);
   }
 
@@ -286,6 +330,22 @@ class LecaState extends ChangeNotifier {
     final next = km.clamp(1, countryWide).toDouble();
     if ((next - radiusKm).abs() < 0.01) return;
     radiusKm = next;
+    notifyListeners();
+  }
+
+  void setChatRadius(double km) {
+    final next = km.clamp(1, countryWide).toDouble();
+    if ((next - chatRadiusKm).abs() < 0.01) return;
+    chatRadiusKm = next;
+    notifyListeners();
+  }
+
+  void setChatFace(String face) {
+    if (face != chatFaceAnon && face != chatFaceName && face != chatFaceHide) {
+      return;
+    }
+    if (chatFace == face) return;
+    chatFace = face;
     notifyListeners();
   }
 
@@ -386,9 +446,28 @@ class LecaState extends ChangeNotifier {
 
   double get feeUsd => saleFeeUsd(saleUsd);
 
+  /// A tip goes to a driver. A self-drive rental and a goods sale have none.
+  bool takesTip(Booking? value) {
+    if (value == null) return false;
+    if (value.kind == BookKind.goods) return false;
+    if (value.detail.contains('self-drive')) return false;
+    return value.kind == BookKind.ride ||
+        value.kind == BookKind.send ||
+        value.kind == BookKind.rent;
+  }
+
+  bool get acceptsTip => itemCount > 0 || takesTip(booking);
+
   double get totalUsd {
-    final cents = (saleUsd * 100).round() + (feeUsd * 100).round();
+    final tip = acceptsTip ? (tipUsd * 100).round() : 0;
+    final cents = (saleUsd * 100).round() + (feeUsd * 100).round() + tip;
     return cents / 100;
+  }
+
+  void setTip(double usd) {
+    final cents = (usd * 100).round();
+    tipUsd = cents <= 0 ? 0 : cents / 100;
+    notifyListeners();
   }
 
   void toggleLocale() {
@@ -445,6 +524,7 @@ class LecaState extends ChangeNotifier {
     qty.clear();
     booking = value;
     rideMatch = null;
+    if (!takesTip(value)) tipUsd = 0;
     notifyListeners();
   }
 
@@ -453,6 +533,7 @@ class LecaState extends ChangeNotifier {
     booking = null;
     rideMatch = null;
     note = '';
+    tipUsd = 0;
     railId = MarketConfig.active.defaultRailId;
     notifyListeners();
   }
@@ -972,6 +1053,7 @@ class LecaState extends ChangeNotifier {
   }
 
   void signOut() {
+    final token = session?.token;
     session = null;
     businesses.clear();
     items.clear();
@@ -996,6 +1078,14 @@ class LecaState extends ChangeNotifier {
     authError = null;
     clearCart();
     notifyListeners();
+    unawaited(save());
+    if (token != null && token.isNotEmpty && AuthConfig.apiLive) {
+      unawaited(() async {
+        try {
+          await AuthApi.post('/v1/auth/logout', const {}, token: token);
+        } on Object catch (_) {}
+      }());
+    }
   }
 
   Future<void> openBusiness({
@@ -1166,11 +1256,17 @@ class LecaState extends ChangeNotifier {
       required String titleEn,
       required double kmNorth,
       String room = '',
+      String vehicle = '',
     }) {
       final point = at(kmNorth);
+      final wheels = vehicle.isNotEmpty
+          ? vehicle
+          : kind == 'ride'
+          ? 'tuktuk'
+          : '';
       final quote = priceTrip(
         kind: kind == 'ride' ? 'ride' : 'delivery',
-        vehicle: kind == 'ride' ? 'tuktuk' : '',
+        vehicle: wheels,
         fromLat: origin.latitude,
         fromLng: origin.longitude,
         toLat: point.latitude,
@@ -1198,6 +1294,14 @@ class LecaState extends ChangeNotifier {
         titleEn: 'Deliver nom banh chok',
         kmNorth: 1.2,
         room: 'nom_banh_chok',
+      ),
+      job(
+        id: 'j_moto',
+        kind: 'ride',
+        titleKm: 'ជិះម៉ូតូ',
+        titleEn: 'Motorcycle ride',
+        kmNorth: 2,
+        vehicle: 'motorcycle',
       ),
       job(
         id: 'j_ride',
@@ -1430,6 +1534,7 @@ class LecaState extends ChangeNotifier {
     DateTime? at,
     String kind = 'text',
     String? name,
+    String? who,
   }) {
     final body = text.trim();
     if (body.isEmpty) return;
@@ -1454,7 +1559,7 @@ class LecaState extends ChangeNotifier {
       room: placeId,
       kind: kind,
       name: name ?? (asBusiness ? 'Shop' : session?.displayName ?? 'Guest'),
-      who: name == null && !asBusiness ? who : '',
+      who: who ?? (name == null && !asBusiness ? this.who : ''),
       at: now,
       text: body,
     );
@@ -1478,8 +1583,12 @@ class LecaState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// This account's handle inside a room. Empty before sign-in.
-  String get who => talkWho(session?.id ?? '');
+  /// This person's handle inside a room. A guest id stands in before sign-in.
+  String get who {
+    final id = session?.id ?? '';
+    if (id.isNotEmpty) return talkWho(id);
+    return talkWho('guest:$guestId');
+  }
 
   List<TalkLine> _chain(String placeId) => [
     for (final message in thread(placeId))
@@ -1535,6 +1644,24 @@ class LecaState extends ChangeNotifier {
       }
     }
     return customer;
+  }
+
+  /// Keeps one row per endpoint. A later call refreshes the address.
+  void rememberPhone(PhoneContact contact) {
+    if (!phoneEndpoint.hasMatch(contact.endpoint)) return;
+    phoneContacts.removeWhere((item) => item.endpoint == contact.endpoint);
+    phoneContacts.insert(0, contact);
+    if (phoneContacts.length > 40) {
+      phoneContacts.removeRange(40, phoneContacts.length);
+    }
+    notifyListeners();
+  }
+
+  void logPhone(CallRecord record) {
+    if (!phoneEndpoint.hasMatch(record.endpoint)) return;
+    phoneLog.insert(0, record);
+    if (phoneLog.length > 40) phoneLog.removeRange(40, phoneLog.length);
+    notifyListeners();
   }
 
   /// The bargain over one fare, if anyone has bid on it.
@@ -1595,6 +1722,11 @@ class LecaState extends ChangeNotifier {
         '${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
     return 'LECA$stamp';
   }
+}
+
+String _freshGuest() {
+  final hex = DateTime.now().toUtc().microsecondsSinceEpoch.toRadixString(16);
+  return 'g$hex';
 }
 
 class AuthException implements Exception {

@@ -18,6 +18,8 @@ Future<void> _signInGoogle(WidgetTester tester) async {
   addTearDown(tester.view.resetPhysicalSize);
   await tester.pumpWidget(const LecaApp());
   await tester.pump();
+  await tester.tap(find.byKey(const Key('open_sign_in')));
+  await tester.pumpAndSettle();
   expect(find.byKey(const Key('sign_in_phone')), findsOneWidget);
   expect(find.byKey(const Key('sign_in_telegram')), findsOneWidget);
   expect(find.byKey(const Key('sign_in_x')), findsOneWidget);
@@ -29,6 +31,9 @@ Future<void> _signInGoogle(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 500));
   await tester.pump();
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('open_market')));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -43,6 +48,7 @@ void main() {
       expect(find.text('ជិះ'), findsOneWidget);
       expect(find.text('ជួលយាន'), findsOneWidget);
       expect(find.text('ផ្ញើអ្វីក៏បាន'), findsOneWidget);
+      expect(find.byKey(const Key('front_chat')), findsOneWidget);
       expect(find.text('នំបញ្ចុកព្រឹក'), findsOneWidget);
       expect(find.textContaining('គ្រប់ក្រុង ឃុំ និងភូមិ'), findsWidgets);
       expect(find.byKey(const Key('search_radius')), findsOneWidget);
@@ -110,6 +116,8 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       await tester.pumpWidget(const LecaApp());
       await tester.pump();
+      await tester.tap(find.byKey(const Key('open_sign_in')));
+      await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('sign_in_phone_number')),
         '123',
@@ -146,7 +154,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump();
-      expect(find.byKey(const Key('account_button')), findsOneWidget);
+      expect(find.byKey(const Key('chat_account')), findsOneWidget);
     });
   });
 
@@ -205,7 +213,7 @@ void main() {
         await tester.scrollUntilVisible(find.byKey(const Key('sign_out')), 400);
         await tester.tap(find.byKey(const Key('sign_out')));
         await tester.pumpAndSettle();
-        expect(find.byKey(const Key('sign_in_phone')), findsOneWidget);
+        expect(find.byKey(const Key('open_sign_in')), findsOneWidget);
       });
     },
   );
@@ -238,6 +246,7 @@ void main() {
       await _signInGoogle(tester);
 
       expect(find.byKey(const Key('desk_home')), findsOneWidget);
+      expect(find.byKey(const Key('front_chat')), findsOneWidget);
       expect(find.byKey(const Key('open_business')), findsOneWidget);
       expect(find.byKey(const Key('deliver_to')), findsOneWidget);
       expect(find.byKey(const Key('drive_cta')), findsNothing);
@@ -265,6 +274,50 @@ void main() {
       await tester.tap(find.byKey(const Key('save_driver')));
       await tester.pump();
       expect(find.text('បញ្ចូលប្រភេទយាន។'), findsOneWidget);
+    });
+  });
+
+  testWidgets('the front screen swarm chat carries a line and a price', (
+    tester,
+  ) async {
+    await _run(TargetPlatform.android, () async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      await tester.pumpWidget(const LecaApp());
+      await tester.pump();
+      expect(find.byKey(const Key('open_sign_in')), findsOneWidget);
+      expect(find.byKey(const Key('send_chat')), findsOneWidget);
+      expect(find.byKey(const Key('fare_field_front')), findsOneWidget);
+      expect(find.byKey(const Key('chat_radius')), findsOneWidget);
+      expect(find.byKey(const Key('chat_face_anon')), findsOneWidget);
+      expect(find.textContaining('iroh'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('chat_face_hide')));
+      await tester.pump();
+      expect(find.byKey(const Key('chat_hidden')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('chat_face_name')));
+      await tester.pump();
+      expect(find.byKey(const Key('chat_hidden')), findsNothing);
+      await tester.enterText(find.byType(TextField).last, 'on the swarm');
+      await tester.tap(find.byKey(const Key('send_chat')));
+      await tester.pump();
+      expect(find.textContaining('on the swarm'), findsOneWidget);
+      expect(find.byKey(const Key('talk_proof')), findsOneWidget);
+    });
+  });
+
+  testWidgets('a Windows desk has the same front-screen chat', (tester) async {
+    await _run(TargetPlatform.windows, () async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      await _signInGoogle(tester);
+      expect(find.byKey(const Key('desk_home')), findsOneWidget);
+      expect(find.byKey(const Key('front_chat')), findsOneWidget);
+      Navigator.of(tester.element(find.byKey(const Key('desk_home')))).pop();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('send_chat')), findsOneWidget);
+      expect(find.byKey(const Key('open_market')), findsOneWidget);
     });
   });
 }

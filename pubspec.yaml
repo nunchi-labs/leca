@@ -1,5 +1,5 @@
 name: leca
-description: Leca — Cambodia. Food, rides, rentals.
+description: Leca — Cambodia. Food, rides, rentals, and data-only calls.
 publish_to: "none"
 version: 0.2.0+2
 
@@ -24,6 +24,8 @@ dependencies:
   cryptography: ^2.9.0
   local_auth: ^3.0.2
   passkeys: ^2.23.1
+  record: ^7.1.2
+  flutter_soloud: ^5.2.1
 
 dev_dependencies:
   flutter_test:

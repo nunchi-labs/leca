@@ -12,17 +12,14 @@ class StripeCheckout {
 
   static bool get hasPublishableKey => publishableKey.startsWith('pk_');
 
-  static String checkoutUrl({
-    required String orderId,
-    required double amountUsd,
-    required String brand,
-  }) {
-    final id = Uri.encodeComponent(orderId);
-    final card = Uri.encodeComponent(brand);
-    if (hasPublishableKey) {
-      return 'https://checkout.stripe.com/c/pay/leca_${id}_${card}_${amountUsd.toStringAsFixed(2)}';
-    }
-    return 'https://checkout.stripe.com/c/pay/cs_test_leca_${id}_$card';
+  /// A Checkout Session URL from the Leca server. A publishable key
+  /// cannot create a charge, so a missing session is not a payment link.
+  static String? checkoutUrl({String? sessionUrl}) {
+    if (sessionUrl == null) return null;
+    final uri = Uri.tryParse(sessionUrl);
+    if (uri == null || uri.scheme != 'https') return null;
+    if (uri.host != 'checkout.stripe.com') return null;
+    return sessionUrl;
   }
 }
 
@@ -41,10 +38,14 @@ class QrFactory {
     }
     switch (rail.kind) {
       case RailKind.khqr:
+        final account = rail.bakongAccountId;
+        if (account == null || account.isEmpty) {
+          throw const QrException.failed();
+        }
         return PayPayload(
           rail: rail,
           text: Khqr.generate(
-            bakongAccountId: rail.bakongAccountId ?? 'leca.kh@abaa',
+            bakongAccountId: account,
             merchantName: market.merchantName,
             merchantCity: merchantCity,
             amount: amountUsd,
@@ -57,14 +58,9 @@ class QrFactory {
           ),
         );
       case RailKind.stripe:
-        return PayPayload(
-          rail: rail,
-          text: StripeCheckout.checkoutUrl(
-            orderId: orderId,
-            amountUsd: amountUsd,
-            brand: rail.id,
-          ),
-        );
+        final url = StripeCheckout.checkoutUrl();
+        if (url == null) throw const QrException.stripe();
+        return PayPayload(rail: rail, text: url);
       case RailKind.generic:
         return PayPayload(
           rail: rail,
@@ -84,6 +80,7 @@ class QrFactory {
 class QrException implements Exception {
   const QrException.invalidAmount() : code = 'invalid_amount';
   const QrException.failed() : code = 'failed';
+  const QrException.stripe() : code = 'stripe_unconfigured';
 
   final String code;
 }

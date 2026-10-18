@@ -146,6 +146,12 @@ abstract class AppLocalizations {
   /// **'ជិះ'**
   String get serviceRides;
 
+  /// No description provided for @serviceMoto.
+  ///
+  /// In km, this message translates to:
+  /// **'ម៉ូតូ'**
+  String get serviceMoto;
+
   /// No description provided for @serviceRent.
   ///
   /// In km, this message translates to:
@@ -356,6 +362,12 @@ abstract class AppLocalizations {
   /// **'៥% នៃការលក់នេះ។'**
   String get serviceFeeNone;
 
+  /// No description provided for @driverFastBonus.
+  ///
+  /// In km, this message translates to:
+  /// **'Leca បង់ឱ្យអ្នកបើកបន្ថែម {amount} ព្រោះទៅដល់លឿនជាងមធ្យមនៃតារាងថ្លៃ ដោយមិនលើសល្បឿនកំណត់។ ប្រាក់នេះចេញពី Leca ហើយថ្លៃដែលអ្នកបង់មិនប្តូរ។'**
+  String driverFastBonus(String amount);
+
   /// No description provided for @driverMinutes.
   ///
   /// In km, this message translates to:
@@ -445,6 +457,48 @@ abstract class AppLocalizations {
   /// In km, this message translates to:
   /// **'ចំនួនទឹកប្រាក់មិនត្រឹមត្រូវ។'**
   String get invalidAmount;
+
+  /// No description provided for @tipTitle.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្ថែមលុយឱ្យអ្នកបើក'**
+  String get tipTitle;
+
+  /// No description provided for @tipNone.
+  ///
+  /// In km, this message translates to:
+  /// **'គ្មានលុយបន្ថែម'**
+  String get tipNone;
+
+  /// No description provided for @tipCustom.
+  ///
+  /// In km, this message translates to:
+  /// **'ចំនួនផ្សេង'**
+  String get tipCustom;
+
+  /// No description provided for @tipHint.
+  ///
+  /// In km, this message translates to:
+  /// **'លុយបន្ថែមនេះបញ្ចូលក្នុងការបង់ ហើយទៅអ្នកបើក។ ថ្លៃធ្វើដំណើរមិនប្តូរ។'**
+  String get tipHint;
+
+  /// No description provided for @tipAsk.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្ថែមលុយឱ្យអ្នកបើកមុនពេលបង់?'**
+  String get tipAsk;
+
+  /// No description provided for @tipSkip.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្តដោយគ្មានលុយបន្ថែម'**
+  String get tipSkip;
+
+  /// No description provided for @tipAdd.
+  ///
+  /// In km, this message translates to:
+  /// **'បញ្ចូលលុយបន្ថែមនេះក្នុងការបង់'**
+  String get tipAdd;
 
   /// No description provided for @iPaid.
   ///
@@ -995,7 +1049,7 @@ abstract class AppLocalizations {
   /// No description provided for @driveVehicleNote.
   ///
   /// In km, this message translates to:
-  /// **'យានដែលអ្នកបើក (ឧ. ទូកទូក)'**
+  /// **'យានដែលអ្នកបើក (ឧ. ម៉ូតូ)'**
   String get driveVehicleNote;
 
   /// No description provided for @goOnline.
@@ -1363,6 +1417,24 @@ abstract class AppLocalizations {
   /// In km, this message translates to:
   /// **'ការជិះផ្គូផ្គងជាមួយអ្នកបើកកម្ពុជាឯករាជ្យ។ Leca មិនកាន់កាប់យានទេ។ តម្លៃបង្ហាញមុន ហើយមិនបញ្ចុះក្រោយពេលអ្នកជិះយល់ព្រម។'**
   String get ridesPartnerBody;
+
+  /// No description provided for @motoRideBody.
+  ///
+  /// In km, this message translates to:
+  /// **'អ្នករួមដំណើរអង្គុយពីក្រោយអ្នកបើក លើម៉ូតូគ្មានរ៉ឺម៉ក។ នេះមិនមែនទូកទូក ឬរម៉កទេ។ អាចជិះបានមនុស្សពេញវ័យពីរនាក់ និងកុមារម្នាក់។ អ្នកបើក អ្នករួមដំណើរ និងកុមារអាយុបីឆ្នាំឡើង ពាក់មួកសុវត្ថិភាព។ ការជិះនេះមាននៅភ្នំពេញ និងគ្រប់ខេត្ត។ Leca មានមូលដ្ឋាននៅសៀមរាប ជាកន្លែងដែល Grab មិនមានម៉ូតូ។'**
+  String get motoRideBody;
+
+  /// No description provided for @motoRideDetail.
+  ///
+  /// In km, this message translates to:
+  /// **'គ្មានរ៉ឺម៉ក។ អ្នករួមដំណើរអង្គុយពីក្រោយអ្នកបើក។'**
+  String get motoRideDetail;
+
+  /// No description provided for @otherRides.
+  ///
+  /// In km, this message translates to:
+  /// **'ទូកទូក ឡាន និងការជិះផ្សេងទៀត'**
+  String get otherRides;
 
   /// No description provided for @rentPartnerBody.
   ///
@@ -1787,7 +1859,7 @@ abstract class AppLocalizations {
   /// No description provided for @talkIroh.
   ///
   /// In km, this message translates to:
-  /// **'អក្សរ សំឡេង និងវីដេអូទៅផ្ទាល់តាម iroh។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។ ឈ្មោះមិនបាច់មានទេ។'**
+  /// **'ការជជែក និងតម្លៃជិះលើហ្វូង iroh។ វេប អាយហ្វូន ម៉ាក និងវីនដូនៅលើហ្វូងតែមួយ។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។'**
   String get talkIroh;
 
   /// No description provided for @talkWith.
@@ -1927,6 +1999,240 @@ abstract class AppLocalizations {
   /// In km, this message translates to:
   /// **'{name} បានចាប់ផ្ដើម {kind}'**
   String talkInCall(String name, String kind);
+
+  /// No description provided for @servicePhone.
+  ///
+  /// In km, this message translates to:
+  /// **'ទូរស័ព្ទ'**
+  String get servicePhone;
+
+  /// No description provided for @phoneTitle.
+  ///
+  /// In km, this message translates to:
+  /// **'ទូរស័ព្ទ'**
+  String get phoneTitle;
+
+  /// No description provided for @phoneData.
+  ///
+  /// In km, this message translates to:
+  /// **'ការហៅជាទិន្នន័យ។ iroh ដឹកសំឡេងរវាងឧបករណ៍ទាំងពីរ។'**
+  String get phoneData;
+
+  /// No description provided for @phoneYourNumber.
+  ///
+  /// In km, this message translates to:
+  /// **'លេខរបស់អ្នក'**
+  String get phoneYourNumber;
+
+  /// No description provided for @phoneCopy.
+  ///
+  /// In km, this message translates to:
+  /// **'ចម្លង'**
+  String get phoneCopy;
+
+  /// No description provided for @phoneCopied.
+  ///
+  /// In km, this message translates to:
+  /// **'បានចម្លងលេខ'**
+  String get phoneCopied;
+
+  /// No description provided for @phoneHint.
+  ///
+  /// In km, this message translates to:
+  /// **'បិទភ្ជាប់លេខ Leca ឬឈ្មោះ'**
+  String get phoneHint;
+
+  /// No description provided for @phoneCall.
+  ///
+  /// In km, this message translates to:
+  /// **'ហៅ'**
+  String get phoneCall;
+
+  /// No description provided for @phoneAccept.
+  ///
+  /// In km, this message translates to:
+  /// **'ទទួល'**
+  String get phoneAccept;
+
+  /// No description provided for @phoneDecline.
+  ///
+  /// In km, this message translates to:
+  /// **'បដិសេធ'**
+  String get phoneDecline;
+
+  /// No description provided for @phoneHangup.
+  ///
+  /// In km, this message translates to:
+  /// **'ដាក់'**
+  String get phoneHangup;
+
+  /// No description provided for @phoneMute.
+  ///
+  /// In km, this message translates to:
+  /// **'បិទមីក'**
+  String get phoneMute;
+
+  /// No description provided for @phoneMuted.
+  ///
+  /// In km, this message translates to:
+  /// **'មីកបិទ'**
+  String get phoneMuted;
+
+  /// No description provided for @phoneDialing.
+  ///
+  /// In km, this message translates to:
+  /// **'កំពុងហៅ {name}'**
+  String phoneDialing(String name);
+
+  /// No description provided for @phoneRinging.
+  ///
+  /// In km, this message translates to:
+  /// **'{name} កំពុងហៅ'**
+  String phoneRinging(String name);
+
+  /// No description provided for @phoneLive.
+  ///
+  /// In km, this message translates to:
+  /// **'កំពុងនិយាយ'**
+  String get phoneLive;
+
+  /// No description provided for @phoneBusy.
+  ///
+  /// In km, this message translates to:
+  /// **'ជាប់ខ្សែ'**
+  String get phoneBusy;
+
+  /// No description provided for @phoneUnreachable.
+  ///
+  /// In km, this message translates to:
+  /// **'គ្មានផ្លូវ។ បិទភ្ជាប់លេខពេញ។'**
+  String get phoneUnreachable;
+
+  /// No description provided for @phoneDeclined.
+  ///
+  /// In km, this message translates to:
+  /// **'គេបដិសេធ'**
+  String get phoneDeclined;
+
+  /// No description provided for @phoneSelf.
+  ///
+  /// In km, this message translates to:
+  /// **'លេខនេះជាឧបករណ៍នេះ'**
+  String get phoneSelf;
+
+  /// No description provided for @phoneOffline.
+  ///
+  /// In km, this message translates to:
+  /// **'ខ្សែទិន្នន័យមិនទាន់រួច'**
+  String get phoneOffline;
+
+  /// No description provided for @phoneGear.
+  ///
+  /// In km, this message translates to:
+  /// **'មីក្រូហ្វូនបិទ។ ការហៅនៅតភ្ជាប់។'**
+  String get phoneGear;
+
+  /// No description provided for @phoneTimeout.
+  ///
+  /// In km, this message translates to:
+  /// **'គ្មានអ្នកទទួល'**
+  String get phoneTimeout;
+
+  /// No description provided for @phoneContacts.
+  ///
+  /// In km, this message translates to:
+  /// **'ទំនាក់ទំនង'**
+  String get phoneContacts;
+
+  /// No description provided for @phoneEmpty.
+  ///
+  /// In km, this message translates to:
+  /// **'មិនទាន់មានទំនាក់ទំនង។ លេខនេះជាអាសយដ្ឋាន iroh។'**
+  String get phoneEmpty;
+
+  /// No description provided for @phoneRecent.
+  ///
+  /// In km, this message translates to:
+  /// **'ថ្មីៗ'**
+  String get phoneRecent;
+
+  /// No description provided for @phoneWeb.
+  ///
+  /// In km, this message translates to:
+  /// **'កម្មវិធីរុករកបង្ហាញលេខ។ ការហៅដើរក្នុងកម្មវិធីដែលបានដំឡើង។'**
+  String get phoneWeb;
+
+  /// No description provided for @phoneHeadset.
+  ///
+  /// In km, this message translates to:
+  /// **'កាសធ្វើឱ្យសំឡេងទាំងពីរដាច់ពីគ្នា។'**
+  String get phoneHeadset;
+
+  /// No description provided for @phoneWayIn.
+  ///
+  /// In km, this message translates to:
+  /// **'ចូល'**
+  String get phoneWayIn;
+
+  /// No description provided for @phoneWayOut.
+  ///
+  /// In km, this message translates to:
+  /// **'ចេញ'**
+  String get phoneWayOut;
+
+  /// No description provided for @phoneWayMissed.
+  ///
+  /// In km, this message translates to:
+  /// **'ខកខាន'**
+  String get phoneWayMissed;
+
+  /// No description provided for @talkCall.
+  ///
+  /// In km, this message translates to:
+  /// **'ហៅ'**
+  String get talkCall;
+
+  /// No description provided for @chatFaceAnon.
+  ///
+  /// In km, this message translates to:
+  /// **'ចម្ងាយប៉ុណ្ណោះ'**
+  String get chatFaceAnon;
+
+  /// No description provided for @chatFaceName.
+  ///
+  /// In km, this message translates to:
+  /// **'បង្ហាញឈ្មោះ'**
+  String get chatFaceName;
+
+  /// No description provided for @chatFaceHide.
+  ///
+  /// In km, this message translates to:
+  /// **'មិនបង្ហាញខ្លួន'**
+  String get chatFaceHide;
+
+  /// No description provided for @chatAway.
+  ///
+  /// In km, this message translates to:
+  /// **'ចម្ងាយ {km} គ.ម'**
+  String chatAway(int km);
+
+  /// No description provided for @chatAwayNear.
+  ///
+  /// In km, this message translates to:
+  /// **'ក្រោម ១ គ.ម'**
+  String get chatAwayNear;
+
+  /// No description provided for @chatRadius.
+  ///
+  /// In km, this message translates to:
+  /// **'រង្វង់ជជែក'**
+  String get chatRadius;
+
+  /// No description provided for @chatHiddenBody.
+  ///
+  /// In km, this message translates to:
+  /// **'អ្នកមិននៅក្នុងការជជែកនេះទេ។'**
+  String get chatHiddenBody;
 }
 
 class _AppLocalizationsDelegate

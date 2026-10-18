@@ -78,6 +78,7 @@ void main() {
       TalkIdentity? resolve(String token) => switch (token) {
         'tok-ada' => (id: 'phone:85512000001', name: 'Ada Real'),
         'tok-bo' => (id: 'email:bo@x.kh', name: 'Bo'),
+        'tok-cy' => (id: 'key:cy', name: 'Cy'),
         _ => null,
       };
       var hub = TalkHub(logDir: dir.path, resolve: resolve);
@@ -112,10 +113,17 @@ void main() {
       expect(adaHello['you'], 'Ada Real');
       expect(adaHello['who'], talkWho('phone:85512000001'));
       expect('${adaHello['who']}', isNot(contains('85512')));
-      bo.add(jsonEncode({'type': 'join', 'room': 'ride:tuktuk', 'name': 'Bo'}));
+      bo.add(
+        jsonEncode({
+          'type': 'join',
+          'room': 'ride:tuktuk',
+          'name': 'Bo',
+          'token': 'tok-bo',
+        }),
+      );
       final boHello = await boIn.nextWhere((m) => m['type'] == 'welcome');
       expect(boHello['you'], 'Bo');
-      expect(boHello['who'], '');
+      expect(boHello['who'], talkWho('email:bo@x.kh'));
       expect('${boHello['names']}', contains('Ada Real'));
 
       ada.add(jsonEncode({'type': 'say', 'kind': 'text', 'text': 'hello'}));
@@ -127,10 +135,7 @@ void main() {
       expect(entry['who'], talkWho('phone:85512000001'));
       expect(publishedTalkChecks(entry), isTrue);
 
-      // A guest cannot bargain; a signed-in account can, in the fixed form.
-      bo.add(
-        jsonEncode({'type': 'say', 'kind': 'price', 'text': 'ask 2.40 driver'}),
-      );
+      // A badly formed price is ignored. A signed-in account can bargain.
       ada
         ..add(
           jsonEncode({
@@ -164,7 +169,12 @@ void main() {
       addTearDown(late.close);
       final lateIn = _Inbox(late);
       late.add(
-        jsonEncode({'type': 'join', 'room': 'ride:tuktuk', 'name': 'Cy'}),
+        jsonEncode({
+          'type': 'join',
+          'room': 'ride:tuktuk',
+          'name': 'Cy',
+          'token': 'tok-cy',
+        }),
       );
       final lateHello = await lateIn.nextWhere((m) => m['type'] == 'welcome');
       final log = lateHello['log']! as List;

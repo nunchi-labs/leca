@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -44,11 +45,28 @@ Future<void> main() async {
   final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
   stdout.writeln('Leca on http://${server.address.host}:$port');
   await for (final request in server) {
+    unawaited(_serve(request, core, talk, trust));
+  }
+}
+
+Future<void> _serve(
+  HttpRequest request,
+  AuthCore core,
+  TalkHub talk,
+  TrustStore trust,
+) async {
+  try {
     if (WebSocketTransformer.isUpgradeRequest(request) &&
         request.uri.path == '/v1/room') {
       talk.attach(await WebSocketTransformer.upgrade(request));
-      continue;
+      return;
     }
     await handleAuth(core, request, trust: trust);
+  } on Object catch (error) {
+    stderr.writeln('request failed: $error');
+    try {
+      request.response.statusCode = 500;
+      await request.response.close();
+    } on Object catch (_) {}
   }
 }

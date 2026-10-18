@@ -11,6 +11,7 @@ One app for customers and operators (not a separate driver app):
 - Open a business (restaurant, pharmacy, or any lawful kind)
 - Drive, accept jobs, and list a vehicle
 - Pay: **Stripe** plus Cambodian KHQR rails (**ABA Pay**, Bakong, ACLEDA, Wing Bank, other QR)
+- Data-only phone: the number is an iroh address, and the voice rides that link
 
 Native on **Android, iOS, macOS, Windows, Linux, and web** (Flutter). A phone is for delivery: search is a kilometre radius from the phone's GPS, and the same phone can go out on a job. A Mac or Windows computer manages products and prices. It can receive a delivery, and it does not go out and make one. The top of the radius control is the whole country, which is not a circle.
 
@@ -94,18 +95,18 @@ Output: `build/app/outputs/flutter-apk/app-release.apk`.
 
 | Target | Where |
 | --- | --- |
-| macos, ios, android | this Mac |
-| linux-arm64, windows-arm64 | Ubuntu and Windows 11 ARM VMs on this Mac |
-| linux-x64 | the Omarchy PC in `scripts/x86.host` (`omarchy pkg add`, Flutter from mise) |
-| windows-x64 | a KVM Windows guest on that PC (`scripts/win-x64.sh`, `LECA_WIN_MEM` default `32G`) |
+| macos, ios | the Mac in `scripts/mac.host` |
+| android, linux-x64 | the Hetzner machine in `scripts/hetzner.host` |
+| windows-x64 | a KVM Windows guest on that Hetzner machine (`scripts/win-x64.sh`, `LECA_WIN_MEM` default `32G`) |
+| linux-arm64, windows-arm64 | GitHub ARM runners |
 
 ```bash
 ./build.sh
-./build.sh linux-x64
-./build.sh linux-arm64 windows-arm64
+./build.sh macos ios
+./build.sh android linux-x64 windows-x64
 ```
 
-The ARM VMs are `./qemu/build.sh linux` and `./qemu/build.sh windows`. Disks stay in `qemu/.cache`. `LECA_QEMU_MEM` (default `8G`) and `LECA_QEMU_CPUS` (default `4`) size them. Delete `qemu/.cache/linux` or `qemu/.cache/windows` to recreate that VM.
+`linux-arm64` and `windows-arm64` stay on the GitHub ARM runners. `./qemu/build.sh` can still boot those ARM VMs on the Apple Silicon Mac, outside `./build.sh`.
 
 ## Driver, shops, rides
 
@@ -122,6 +123,12 @@ The app price is what gets charged until both sides agree on something else. A d
 ### Chat
 
 Everyone on a trip shares one room: text, voice, video, and price lines. Each line hashes the previous one (`leca-talk/2`), so the whole conversation, including every price ask, allow, and end, is one proof. A line is bound to its author by `who`, a 16-hex hash of the account id that the server derives from the session token on join; names are shown, ids never leave the server, and two people with the same name cannot act for each other. Only signed-in accounts can place price lines. The relay is `/v1/room` on the Leca server; devices also open a direct iroh link with each other.
+
+### Phone
+
+A call is data. The number is this device's iroh endpoint (`leca1`, the endpoint id, and the current address). Paste that card, call a saved contact, or call the other person in a trip room. Signaling is an iroh stream (`leca-phone/1`). Voice is 20 ms G.711 μ-law datagrams on the same connection. The microphone and speaker are the handset: echo cancel is on, and Android uses voice-communication mode. A carrier voice circuit is not in the call.
+
+While the auth server is up, a signed-in device publishes its address at `POST /v1/phone/here` and can be found by name at `GET /v1/phone/find`. A listing expires after 90 seconds. The call still goes device to device over iroh. In a browser the number is shown; the call itself runs in the installed app.
 
 ### Nothing is lost on restart
 

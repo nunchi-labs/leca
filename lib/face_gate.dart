@@ -17,11 +17,7 @@ class PlatformFaceGate extends FaceGate {
     final auth = LocalAuthentication();
     try {
       final kinds = await auth.getAvailableBiometrics();
-      final face =
-          kinds.contains(BiometricType.face) ||
-          kinds.contains(BiometricType.strong) ||
-          kinds.contains(BiometricType.weak);
-      if (!face) return null;
+      if (!kinds.contains(BiometricType.face)) return null;
       return await auth.authenticate(
         localizedReason: 'Confirm it is you',
         biometricOnly: true,

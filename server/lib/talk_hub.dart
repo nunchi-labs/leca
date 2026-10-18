@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:crypto/crypto.dart';
+
+/// The front-screen room. Names and distances apply only here.
+const talkFrontRoom = 'front';
 
 /// Who a session token belongs to. Null when the token is unknown.
 typedef TalkIdentity = ({String id, String name});
@@ -102,24 +106,42 @@ class TalkHub {
   }
 
   _Seat? _join(WebSocket socket, Map<String, Object?> message) {
+    final token = '${message['token'] ?? ''}';
     final room = _clip('${message['room'] ?? ''}', 80, 'lobby');
+    final TalkIdentity? identity;
+    var guest = false;
+    if (token.isEmpty) {
+      final guestId = _clip('${message['guest'] ?? ''}', 40, '');
+      if (room != talkFrontRoom || !_guestOk(guestId)) {
+        unawaited(socket.close());
+        return null;
+      }
+      identity = (
+        id: 'guest:$guestId',
+        name: _clip('${message['name'] ?? ''}', 24, 'Guest'),
+      );
+      guest = true;
+    } else {
+      identity = _resolve(token);
+      if (identity == null) {
+        unawaited(socket.close());
+        return null;
+      }
+    }
     final known =
         _rooms.containsKey(room) || (_file(room)?.existsSync() ?? false);
     if (!known && _rooms.length >= maxRooms) {
       unawaited(socket.close());
       return null;
     }
-    var name = _clip('${message['name'] ?? ''}', 24, 'Guest');
-    var who = '';
-    final token = '${message['token'] ?? ''}';
-    final identity = token.isEmpty ? null : _resolve(token);
-    if (identity != null) {
-      who = talkWho(identity.id);
-      if (identity.name.trim().isNotEmpty) {
-        name = _clip(identity.name, 24, name);
-      }
-    }
-    final seat = _Seat(socket, room, name, who);
+    final name = _clip(
+      identity.name.trim().isEmpty ? 'Guest' : identity.name,
+      24,
+      'Guest',
+    );
+    final who = talkWho(identity.id);
+    final seat = _Seat(socket, room, name, who)..guest = guest;
+    _applyPlace(seat, message);
     _seats.putIfAbsent(room, () => []).add(seat);
     _remember(seat, message);
     final log = _log(room);
@@ -128,7 +150,8 @@ class TalkHub {
       'you': name,
       'who': who,
       'log': [for (final line in log) line.toJson()],
-      'names': _names(room),
+      'names': _names(room, seat),
+      'people': _people(room, seat),
       'peers': _peers(room, except: seat),
     });
     _presence(room);
@@ -140,6 +163,9 @@ class TalkHub {
       case 'addr':
         _remember(seat, message);
         _presence(seat.room);
+      case 'place':
+        _applyPlace(seat, message);
+        _presence(seat.room);
       case 'say':
         final kind = '${message['kind'] ?? 'text'}';
         final text = _clip('${message['text'] ?? ''}', 280, '');
@@ -148,21 +174,41 @@ class TalkHub {
         if (!kinds.contains(kind)) return;
         if (kind == 'price') {
           // A bargain line needs a signed-in account behind it.
-          if (seat.who.isEmpty || !_priceLine.hasMatch(text)) return;
+          if (seat.guest || seat.who.isEmpty || !_priceLine.hasMatch(text)) {
+            return;
+          }
         }
+        if (seat.room == talkFrontRoom && seat.face == 'hide') return;
         final prior = _log(seat.room);
         if (prior.length >= maxLines) return;
         final line = _append(
           prior: prior,
           room: seat.room,
           kind: kind,
-          name: seat.name,
+          name: seat.lineName,
           who: seat.who,
           text: text,
         );
         prior.add(line);
         _persist(seat.room, line);
-        _broadcast(seat.room, {'type': 'entry', 'entry': line.toJson()});
+        final swarmId = _clip('${message['id'] ?? ''}', 64, '');
+        _broadcast(seat.room, {
+          'type': 'entry',
+          'entry': line.toJson(),
+          if (swarmId.isNotEmpty) 'id': swarmId,
+        }, from: seat);
+      case 'swarm':
+        final frame = '${message['frame'] ?? ''}';
+        if (frame.isEmpty || frame.length > 12000) return;
+        if (!frame.startsWith('{')) return;
+        if (frame.contains('\n') || frame.contains('\r')) return;
+        if (seat.room == talkFrontRoom && seat.face == 'hide') return;
+        _broadcast(
+          seat.room,
+          {'type': 'swarm', 'frame': frame},
+          except: seat,
+          from: seat,
+        );
     }
   }
 
@@ -181,28 +227,117 @@ class TalkHub {
       ..addr = addr;
   }
 
-  void _presence(String room) {
-    _broadcast(room, {
-      'type': 'presence',
-      'names': _names(room),
-      'peers': _peers(room),
-    });
+  void _applyPlace(_Seat seat, Map<String, Object?> message) {
+    final lat = _coord(message['lat'], -90, 90);
+    final lng = _coord(message['lng'], -180, 180);
+    if (lat != null && lng != null) {
+      seat
+        ..lat = lat
+        ..lng = lng;
+    }
+    final radius = message['radius'];
+    if (radius is num) {
+      seat.radiusKm = radius.toDouble().clamp(1, talkCountryKm);
+    }
+    final face = '${message['face'] ?? ''}';
+    if (face == 'anon' || face == 'name' || face == 'hide') seat.face = face;
   }
 
-  List<String> _names(String room) => [
-    for (final seat in _seats[room] ?? const <_Seat>[]) seat.name,
-  ];
+  void _presence(String room) {
+    final seats = List<_Seat>.from(_seats[room] ?? const []);
+    if (room != talkFrontRoom) {
+      _broadcast(room, {
+        'type': 'presence',
+        'names': _names(room, null),
+        'peers': _peers(room),
+      });
+      return;
+    }
+    for (final seat in seats) {
+      _send(seat, {
+        'type': 'presence',
+        'names': _names(room, seat),
+        'people': _people(room, seat),
+        'peers': _peers(room, except: seat),
+      });
+    }
+  }
+
+  List<String> _names(String room, _Seat? viewer) {
+    if (room != talkFrontRoom || viewer == null) {
+      return [for (final seat in _seats[room] ?? const <_Seat>[]) seat.name];
+    }
+    return [
+      for (final seat in _seats[room] ?? const <_Seat>[])
+        if (seat != viewer && _sees(viewer, seat) && seat.face == 'name')
+          seat.name,
+    ];
+  }
+
+  List<Map<String, Object?>> _people(String room, _Seat viewer) {
+    if (room != talkFrontRoom) return const [];
+    return [
+      for (final seat in _seats[room] ?? const <_Seat>[])
+        if (seat != viewer && _sees(viewer, seat))
+          {
+            'who': seat.who,
+            'km': _km(viewer, seat),
+            if (seat.face == 'name' && seat.name.isNotEmpty) 'name': seat.name,
+          },
+    ];
+  }
+
+  bool _sees(_Seat viewer, _Seat other) {
+    if (other.face == 'hide') return false;
+    final fromLat = viewer.lat;
+    final fromLng = viewer.lng;
+    final toLat = other.lat;
+    final toLng = other.lng;
+    if (fromLat == null || fromLng == null || toLat == null || toLng == null) {
+      return false;
+    }
+    return chatSees(
+      km: talkKm(fromLat, fromLng, toLat, toLng),
+      radiusKm: viewer.radiusKm,
+      theirRadiusKm: other.radiusKm,
+    );
+  }
+
+  int _km(_Seat viewer, _Seat other) {
+    final km = talkKm(viewer.lat!, viewer.lng!, other.lat!, other.lng!);
+    if (km < 0.5) return 0;
+    return km.round();
+  }
 
   List<Map<String, String>> _peers(String room, {_Seat? except}) {
     return [
       for (final seat in _seats[room] ?? const <_Seat>[])
-        if (seat != except && seat.endpoint.isNotEmpty && seat.addr.isNotEmpty)
-          {'endpoint': seat.endpoint, 'addr': seat.addr, 'name': seat.name},
+        if (seat != except &&
+            seat.endpoint.isNotEmpty &&
+            seat.addr.isNotEmpty &&
+            (except == null || room != talkFrontRoom || _sees(except, seat)))
+          {
+            'endpoint': seat.endpoint,
+            'addr': seat.addr,
+            'name': room == talkFrontRoom ? seat.lineName : seat.name,
+          },
     ];
   }
 
-  void _broadcast(String room, Map<String, Object?> message) {
+  void _broadcast(
+    String room,
+    Map<String, Object?> message, {
+    _Seat? except,
+    _Seat? from,
+  }) {
     for (final seat in List<_Seat>.from(_seats[room] ?? const [])) {
+      if (seat == except) continue;
+      if (from != null &&
+          room == talkFrontRoom &&
+          seat != from &&
+          !_sees(seat, from)) {
+        continue;
+      }
       _send(seat, message);
     }
   }
@@ -231,6 +366,45 @@ String talkWho(String accountId) {
   return digest.toString().substring(0, 16);
 }
 
+const talkCountryKm = 101.0;
+
+/// Both circles have to cover the gap. A country-wide radius does not cut.
+bool chatSees({
+  required double km,
+  required double radiusKm,
+  required double theirRadiusKm,
+  double countryKm = talkCountryKm,
+}) {
+  final mine = radiusKm >= countryKm || km <= radiusKm;
+  final theirs = theirRadiusKm >= countryKm || km <= theirRadiusKm;
+  return mine && theirs;
+}
+
+double talkKm(double lat1, double lng1, double lat2, double lng2) {
+  const earthKm = 6371.0;
+  double rad(double degrees) => degrees * math.pi / 180;
+  final dLat = rad(lat2 - lat1);
+  final dLng = rad(lng2 - lng1);
+  final a =
+      math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(rad(lat1)) *
+          math.cos(rad(lat2)) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
+  return earthKm * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+}
+
+final _guestId = RegExp(r'^[A-Za-z0-9_-]{8,40}$');
+
+bool _guestOk(String id) => _guestId.hasMatch(id);
+
+double? _coord(Object? raw, double low, double high) {
+  if (raw is! num) return null;
+  final value = raw.toDouble();
+  if (value < low || value > high) return null;
+  return value;
+}
+
 class _Seat {
   _Seat(this.socket, this.room, this.name, this.who);
 
@@ -240,6 +414,14 @@ class _Seat {
   final String who;
   String endpoint = '';
   String addr = '';
+  bool guest = false;
+  double? lat;
+  double? lng;
+  double radiusKm = 10;
+  String face = 'anon';
+
+  /// What a front-room line may carry. A distance is filled in by the reader.
+  String get lineName => room == talkFrontRoom && face != 'name' ? '' : name;
 }
 
 class _Line {

@@ -34,6 +34,9 @@ class AppLocalizationsKm extends AppLocalizations {
   String get serviceRides => 'ជិះ';
 
   @override
+  String get serviceMoto => 'ម៉ូតូ';
+
+  @override
   String get serviceRent => 'ជួលយាន';
 
   @override
@@ -154,6 +157,11 @@ class AppLocalizationsKm extends AppLocalizations {
   String get serviceFeeNone => '៥% នៃការលក់នេះ។';
 
   @override
+  String driverFastBonus(String amount) {
+    return 'Leca បង់ឱ្យអ្នកបើកបន្ថែម $amount ព្រោះទៅដល់លឿនជាងមធ្យមនៃតារាងថ្លៃ ដោយមិនលើសល្បឿនកំណត់។ ប្រាក់នេះចេញពី Leca ហើយថ្លៃដែលអ្នកបង់មិនប្តូរ។';
+  }
+
+  @override
   String driverMinutes(String name, int minutes) {
     return '$name នៅចម្ងាយ $minutes នាទី';
   }
@@ -205,6 +213,28 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get invalidAmount => 'ចំនួនទឹកប្រាក់មិនត្រឹមត្រូវ។';
+
+  @override
+  String get tipTitle => 'បន្ថែមលុយឱ្យអ្នកបើក';
+
+  @override
+  String get tipNone => 'គ្មានលុយបន្ថែម';
+
+  @override
+  String get tipCustom => 'ចំនួនផ្សេង';
+
+  @override
+  String get tipHint =>
+      'លុយបន្ថែមនេះបញ្ចូលក្នុងការបង់ ហើយទៅអ្នកបើក។ ថ្លៃធ្វើដំណើរមិនប្តូរ។';
+
+  @override
+  String get tipAsk => 'បន្ថែមលុយឱ្យអ្នកបើកមុនពេលបង់?';
+
+  @override
+  String get tipSkip => 'បន្តដោយគ្មានលុយបន្ថែម';
+
+  @override
+  String get tipAdd => 'បញ្ចូលលុយបន្ថែមនេះក្នុងការបង់';
 
   @override
   String get iPaid => 'ខ្ញុំបានបង់ហើយ';
@@ -492,7 +522,7 @@ class AppLocalizationsKm extends AppLocalizations {
       'ចូលបណ្ដាញបានបន្ទាប់ពីឯកសារដៃគូ និងការបណ្ដុះបណ្ដាលគ្រប់។ អ្នកជាដៃគូឯករាជ្យ មិនមែននិយោជិត។';
 
   @override
-  String get driveVehicleNote => 'យានដែលអ្នកបើក (ឧ. ទូកទូក)';
+  String get driveVehicleNote => 'យានដែលអ្នកបើក (ឧ. ម៉ូតូ)';
 
   @override
   String get goOnline => 'ចូលបណ្ដាញ';
@@ -683,6 +713,16 @@ class AppLocalizationsKm extends AppLocalizations {
   @override
   String get ridesPartnerBody =>
       'ការជិះផ្គូផ្គងជាមួយអ្នកបើកកម្ពុជាឯករាជ្យ។ Leca មិនកាន់កាប់យានទេ។ តម្លៃបង្ហាញមុន ហើយមិនបញ្ចុះក្រោយពេលអ្នកជិះយល់ព្រម។';
+
+  @override
+  String get motoRideBody =>
+      'អ្នករួមដំណើរអង្គុយពីក្រោយអ្នកបើក លើម៉ូតូគ្មានរ៉ឺម៉ក។ នេះមិនមែនទូកទូក ឬរម៉កទេ។ អាចជិះបានមនុស្សពេញវ័យពីរនាក់ និងកុមារម្នាក់។ អ្នកបើក អ្នករួមដំណើរ និងកុមារអាយុបីឆ្នាំឡើង ពាក់មួកសុវត្ថិភាព។ ការជិះនេះមាននៅភ្នំពេញ និងគ្រប់ខេត្ត។ Leca មានមូលដ្ឋាននៅសៀមរាប ជាកន្លែងដែល Grab មិនមានម៉ូតូ។';
+
+  @override
+  String get motoRideDetail => 'គ្មានរ៉ឺម៉ក។ អ្នករួមដំណើរអង្គុយពីក្រោយអ្នកបើក។';
+
+  @override
+  String get otherRides => 'ទូកទូក ឡាន និងការជិះផ្សេងទៀត';
 
   @override
   String get rentPartnerBody =>
@@ -916,7 +956,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get talkIroh =>
-      'អក្សរ សំឡេង និងវីដេអូទៅផ្ទាល់តាម iroh។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។ ឈ្មោះមិនបាច់មានទេ។';
+      'ការជជែក និងតម្លៃជិះលើហ្វូង iroh។ វេប អាយហ្វូន ម៉ាក និងវីនដូនៅលើហ្វូងតែមួយ។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។';
 
   @override
   String get talkWith => 'ជជែក';
@@ -1004,4 +1044,128 @@ class AppLocalizationsKm extends AppLocalizations {
   String talkInCall(String name, String kind) {
     return '$name បានចាប់ផ្ដើម $kind';
   }
+
+  @override
+  String get servicePhone => 'ទូរស័ព្ទ';
+
+  @override
+  String get phoneTitle => 'ទូរស័ព្ទ';
+
+  @override
+  String get phoneData => 'ការហៅជាទិន្នន័យ។ iroh ដឹកសំឡេងរវាងឧបករណ៍ទាំងពីរ។';
+
+  @override
+  String get phoneYourNumber => 'លេខរបស់អ្នក';
+
+  @override
+  String get phoneCopy => 'ចម្លង';
+
+  @override
+  String get phoneCopied => 'បានចម្លងលេខ';
+
+  @override
+  String get phoneHint => 'បិទភ្ជាប់លេខ Leca ឬឈ្មោះ';
+
+  @override
+  String get phoneCall => 'ហៅ';
+
+  @override
+  String get phoneAccept => 'ទទួល';
+
+  @override
+  String get phoneDecline => 'បដិសេធ';
+
+  @override
+  String get phoneHangup => 'ដាក់';
+
+  @override
+  String get phoneMute => 'បិទមីក';
+
+  @override
+  String get phoneMuted => 'មីកបិទ';
+
+  @override
+  String phoneDialing(String name) {
+    return 'កំពុងហៅ $name';
+  }
+
+  @override
+  String phoneRinging(String name) {
+    return '$name កំពុងហៅ';
+  }
+
+  @override
+  String get phoneLive => 'កំពុងនិយាយ';
+
+  @override
+  String get phoneBusy => 'ជាប់ខ្សែ';
+
+  @override
+  String get phoneUnreachable => 'គ្មានផ្លូវ។ បិទភ្ជាប់លេខពេញ។';
+
+  @override
+  String get phoneDeclined => 'គេបដិសេធ';
+
+  @override
+  String get phoneSelf => 'លេខនេះជាឧបករណ៍នេះ';
+
+  @override
+  String get phoneOffline => 'ខ្សែទិន្នន័យមិនទាន់រួច';
+
+  @override
+  String get phoneGear => 'មីក្រូហ្វូនបិទ។ ការហៅនៅតភ្ជាប់។';
+
+  @override
+  String get phoneTimeout => 'គ្មានអ្នកទទួល';
+
+  @override
+  String get phoneContacts => 'ទំនាក់ទំនង';
+
+  @override
+  String get phoneEmpty => 'មិនទាន់មានទំនាក់ទំនង។ លេខនេះជាអាសយដ្ឋាន iroh។';
+
+  @override
+  String get phoneRecent => 'ថ្មីៗ';
+
+  @override
+  String get phoneWeb =>
+      'កម្មវិធីរុករកបង្ហាញលេខ។ ការហៅដើរក្នុងកម្មវិធីដែលបានដំឡើង។';
+
+  @override
+  String get phoneHeadset => 'កាសធ្វើឱ្យសំឡេងទាំងពីរដាច់ពីគ្នា។';
+
+  @override
+  String get phoneWayIn => 'ចូល';
+
+  @override
+  String get phoneWayOut => 'ចេញ';
+
+  @override
+  String get phoneWayMissed => 'ខកខាន';
+
+  @override
+  String get talkCall => 'ហៅ';
+
+  @override
+  String get chatFaceAnon => 'ចម្ងាយប៉ុណ្ណោះ';
+
+  @override
+  String get chatFaceName => 'បង្ហាញឈ្មោះ';
+
+  @override
+  String get chatFaceHide => 'មិនបង្ហាញខ្លួន';
+
+  @override
+  String chatAway(int km) {
+    return 'ចម្ងាយ $km គ.ម';
+  }
+
+  @override
+  String get chatAwayNear => 'ក្រោម ១ គ.ម';
+
+  @override
+  String get chatRadius => 'រង្វង់ជជែក';
+
+  @override
+  String get chatHiddenBody => 'អ្នកមិននៅក្នុងការជជែកនេះទេ។';
 }
