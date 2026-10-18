@@ -90,8 +90,13 @@ jobs:
             "$RUNNER_TEMP/flutter/bin/flutter" precache --windows
           fi
       - run: ./build.sh ${{ matrix.target }}
+      # upload-artifact skips paths listed in .gitignore, and dist/ is ignored.
+      - name: Stage packages
+        run: |
+          mkdir -p packages
+          cp -a dist/. packages/
       - uses: actions/upload-artifact@v4
         with:
           name: Leca-${{ matrix.target }}
-          path: dist/*
+          path: packages/
           if-no-files-found: error
