@@ -23,7 +23,7 @@ The server in `server/` checks the real accounts:
 - WhatsApp: a 4-digit code. Meta sends it when `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_ID` are set, using the authentication template in `WHATSAPP_TEMPLATE`. Twilio sends it when `TWILIO_WHATSAPP_FROM` is set instead. `LECA_DEV_OTP=1` returns the code in the response instead.
 - Telegram, WeChat, Facebook, X, and Google: the server opens the provider, takes the callback, and keeps the session. Telegram uses the bot token. X uses OAuth 2.0 with PKCE. WeChat uses the website QR login.
 
-The live server is `root@65.21.232.29`. The main address is [https://leca.world](https://leca.world). These names serve the same site once each A record is `65.21.232.29`: `leca.my`, `leca.homes`, `leca.quest`, `leca.autos`, `leca.boats`, `leca.beer`, `leca.beauty`, and `leca.baby`. Email and password are real accounts. Test sign-in is off. Google, Facebook, WeChat, and phone SMS start only after their secrets are in `/etc/leca-auth.env`. Google’s redirect is `https://leca.world/v1/auth/google/callback`.
+The live server is `root@65.21.232.29`. The main address is [https://leca.world](https://leca.world). These names redirect there once each A record is `65.21.232.29`: `leca.my`, `leca.homes`, `leca.quest`, `leca.autos`, `leca.boats`, `leca.beer`, `leca.beauty`, and `leca.baby`. Email and password are real accounts. Test sign-in is off. Google, Facebook, WeChat, and phone SMS start only after their secrets are in `/etc/leca-auth.env`. Google’s redirect is `https://leca.world/v1/auth/google/callback`.
 
 ```bash
 flutter run --dart-define=AUTH_API=https://leca.world

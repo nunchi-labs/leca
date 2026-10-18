@@ -1,0 +1,15 @@
+[Unit]
+Description=Leca API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/leca/server
+EnvironmentFile=/etc/leca-auth.env
+ExecStart=/opt/flutter/bin/cache/dart-sdk/bin/dart bin/server.dart
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

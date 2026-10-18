@@ -1,18 +1,84 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:cryptography/cryptography.dart';
 
 import 'password.dart';
 import 'quote.dart';
 import 'trust.dart';
+import 'webauthn.dart';
+
+String assetLinksJson(String fingerprint) {
+  if (fingerprint.isEmpty) return '[]';
+  return jsonEncode([
+    {
+      'relation': ['delegate_permission/common.get_login_creds'],
+      'target': {
+        'namespace': 'android_app',
+        'package_name': 'app.leca.leca',
+        'sha256_cert_fingerprints': [fingerprint],
+      },
+    },
+  ]);
+}
+
+String appleAssociationJson(String teamId) {
+  final apps = teamId.isEmpty ? const <String>[] : ['$teamId.app.leca.leca'];
+  return jsonEncode({
+    'webcredentials': {'apps': apps},
+  });
+}
 
 class AuthFailure implements Exception {
   AuthFailure(this.code, [this.status = 400]);
 
   final String code;
   final int status;
+}
+
+/// Bytes the device signs. The app builds this same text in `keyProofMessage`.
+String keyProofMessage({
+  required String challenge,
+  required String publicKey,
+  required String name,
+}) {
+  return 'leca-key/1\n$challenge\n$publicKey\n$name\n';
+}
+
+/// A display name tied to a key. Newlines are spaces. Eighty characters is the cap.
+String normalizeKeyName(String raw) {
+  final name = raw.replaceAll(RegExp(r'[\r\n]'), ' ').trim();
+  if (name.length <= 80) return name;
+  return name.substring(0, 80);
+}
+
+String keyAccountId(List<int> publicKey) {
+  final hex = publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  return 'key:$hex';
+}
+
+String keyHandle(List<int> publicKey) =>
+    keyAccountId(publicKey).substring(4, 12);
+
+String _encodeKey(List<int> bytes) =>
+    base64Url.encode(bytes).replaceAll('=', '');
+
+Uint8List _decodeKey(String raw) {
+  final pad = '=' * ((4 - raw.length % 4) % 4);
+  try {
+    return Uint8List.fromList(base64Url.decode('$raw$pad'));
+  } on FormatException {
+    throw AuthFailure('key_invalid');
+  }
+}
+
+String _canonicalPublicKey(String raw) {
+  final bytes = _decodeKey(raw);
+  if (bytes.length != 32) throw AuthFailure('key_invalid');
+  return _encodeKey(bytes);
 }
 
 class AuthConfig {
@@ -205,6 +271,51 @@ class _EmailAccount {
   final String displayName;
 }
 
+class _PasskeyAccount {
+  _PasskeyAccount({
+    required this.userHandle,
+    required this.displayName,
+    required this.alg,
+    required this.x,
+    required this.y,
+    required this.signCount,
+  });
+
+  final String userHandle;
+  String displayName;
+  final int alg;
+  final String x;
+  final String y;
+  int signCount;
+}
+
+class _PasskeyChallenge {
+  _PasskeyChallenge({
+    required this.create,
+    required this.expires,
+    this.userHandle = '',
+    this.name = '',
+  });
+
+  final bool create;
+  final DateTime expires;
+  final String userHandle;
+  final String name;
+}
+
+class _KeyAccount {
+  _KeyAccount({required this.displayName});
+
+  String displayName;
+}
+
+class _KeyChallenge {
+  _KeyChallenge(this.publicKey, this.expires);
+
+  final String publicKey;
+  final DateTime expires;
+}
+
 class _Otp {
   _Otp(this.code, this.expires);
 
@@ -237,6 +348,8 @@ class AuthCore {
        now = now ?? DateTime.now,
        _random = random ?? Random.secure() {
     _loadAccounts();
+    _loadKeys();
+    _loadPasskeys();
     _loadSessions();
   }
 
@@ -249,6 +362,10 @@ class AuthCore {
   final Map<String, _Pending> _pending = {};
   final Map<String, AuthUser> _sessions = {};
   final Map<String, _EmailAccount> _emails = {};
+  final Map<String, _KeyAccount> _keys = {};
+  final Map<String, _KeyChallenge> _keyChallenges = {};
+  final Map<String, _PasskeyAccount> _passkeys = {};
+  final Map<String, _PasskeyChallenge> _passkeyChallenges = {};
 
   Future<Map<String, Object?>> whatsappStart(String rawPhone) async {
     final phone = _digits(rawPhone);
@@ -341,6 +458,204 @@ class AuthCore {
     );
   }
 
+  /// A fresh challenge for [publicKey]. The signature has to cover this value.
+  Future<Map<String, Object?>> keyChallenge(String publicKey) async {
+    final encoded = _canonicalPublicKey(publicKey);
+    final challenge = _encodeKey(_randomBytes(32));
+    _keyChallenges[challenge] = _KeyChallenge(
+      encoded,
+      now().add(const Duration(minutes: 5)),
+    );
+    final account = _keys[encoded];
+    return {
+      'challenge': challenge,
+      'known': account != null,
+      if (account != null) 'displayName': account.displayName,
+    };
+  }
+
+  /// Checks the device signature and ties [name] to the public key.
+  Future<Map<String, Object?>> keyFinish({
+    required String publicKey,
+    required String challenge,
+    required String signature,
+    required String name,
+  }) async {
+    final encoded = _canonicalPublicKey(publicKey);
+    final submitted = normalizeKeyName(name);
+    final existing = _keys[encoded];
+    final pending = _keyChallenges.remove(challenge);
+    if (pending == null ||
+        now().isAfter(pending.expires) ||
+        pending.publicKey != encoded) {
+      throw AuthFailure('challenge_invalid');
+    }
+    final ok = await _verifyKey(
+      publicKey: encoded,
+      challenge: challenge,
+      name: submitted,
+      signature: signature,
+    );
+    if (!ok) throw AuthFailure('signature_invalid');
+    final stored = submitted.isEmpty
+        ? (existing?.displayName ?? '')
+        : submitted;
+    _keys[encoded] = _KeyAccount(displayName: stored);
+    _saveKeys();
+    final bytes = _decodeKey(encoded);
+    final shown = stored.isEmpty ? keyHandle(bytes) : stored;
+    return _issue(
+      AuthUser(
+        id: keyAccountId(bytes),
+        method: 'key',
+        displayName: shown,
+        handle: keyHandle(bytes),
+      ),
+    );
+  }
+
+  Future<bool> _verifyKey({
+    required String publicKey,
+    required String challenge,
+    required String name,
+    required String signature,
+  }) async {
+    final sig = _decodeKey(signature);
+    if (sig.length != 64) return false;
+    final raw = _decodeKey(publicKey);
+    try {
+      return Ed25519().verify(
+        utf8.encode(
+          keyProofMessage(
+            challenge: challenge,
+            publicKey: publicKey,
+            name: name,
+          ),
+        ),
+        signature: Signature(
+          sig,
+          publicKey: SimplePublicKey(raw, type: KeyPairType.ed25519),
+        ),
+      );
+    } on Object {
+      return false;
+    }
+  }
+
+  String get rpId {
+    final host = Uri.parse(config.publicUrl).host;
+    return host.isEmpty ? 'leca.world' : host;
+  }
+
+  Map<String, Object?> passkeyRegisterStart({String name = ''}) {
+    final challenge = _encodeKey(_randomBytes(32));
+    final user = _randomBytes(16);
+    final handle = _encodeKey(user);
+    _passkeyChallenges[challenge] = _PasskeyChallenge(
+      create: true,
+      expires: now().add(const Duration(minutes: 5)),
+      userHandle: handle,
+      name: normalizeKeyName(name),
+    );
+    return {
+      'challenge': challenge,
+      'userId': base64Url.encode(user),
+      'rpId': rpId,
+      'name': normalizeKeyName(name),
+    };
+  }
+
+  Future<Map<String, Object?>> passkeyRegisterFinish({
+    required String challenge,
+    required String clientDataJSON,
+    required String attestationObject,
+  }) async {
+    final pending = _passkeyChallenges.remove(challenge);
+    if (pending == null || !pending.create || now().isAfter(pending.expires)) {
+      throw AuthFailure('challenge_invalid');
+    }
+    final PasskeyPublic credential;
+    try {
+      credential = WebAuthn.registration(
+        rpId: rpId,
+        challenge: challenge,
+        clientDataJson: clientDataJSON,
+        attestationObject: attestationObject,
+      );
+    } on WebAuthnFailure catch (e) {
+      throw AuthFailure(e.code);
+    }
+    final id = _encodeKey(credential.credentialId);
+    _passkeys[id] = _PasskeyAccount(
+      userHandle: pending.userHandle,
+      displayName: pending.name,
+      alg: credential.alg,
+      x: _encodeKey(credential.x),
+      y: credential.y.isEmpty ? '' : _encodeKey(credential.y),
+      signCount: credential.signCount,
+    );
+    _savePasskeys();
+    return _issue(_passkeyUser(_passkeys[id]!, id));
+  }
+
+  Map<String, Object?> passkeyLoginStart() {
+    final challenge = _encodeKey(_randomBytes(32));
+    _passkeyChallenges[challenge] = _PasskeyChallenge(
+      create: false,
+      expires: now().add(const Duration(minutes: 5)),
+    );
+    return {'challenge': challenge, 'rpId': rpId};
+  }
+
+  Future<Map<String, Object?>> passkeyLoginFinish({
+    required String id,
+    required String challenge,
+    required String clientDataJSON,
+    required String authenticatorData,
+    required String signature,
+  }) async {
+    final pending = _passkeyChallenges.remove(challenge);
+    if (pending == null || pending.create || now().isAfter(pending.expires)) {
+      throw AuthFailure('challenge_invalid');
+    }
+    final encoded = _canonicalBytes(id);
+    final account = _passkeys[encoded];
+    if (account == null) throw AuthFailure('passkey_invalid');
+    final int count;
+    try {
+      count = await WebAuthn.assertion(
+        rpId: rpId,
+        challenge: challenge,
+        clientDataJson: clientDataJSON,
+        authenticatorData: authenticatorData,
+        signature: signature,
+        alg: account.alg,
+        x: _decodeKey(account.x),
+        y: account.y.isEmpty ? const <int>[] : _decodeKey(account.y),
+        signCount: account.signCount,
+      );
+    } on WebAuthnFailure catch (e) {
+      throw AuthFailure(e.code);
+    }
+    if (count > 0) account.signCount = count;
+    _savePasskeys();
+    return _issue(_passkeyUser(account, encoded));
+  }
+
+  AuthUser _passkeyUser(_PasskeyAccount account, String id) {
+    final shown = account.displayName.isEmpty
+        ? id.substring(0, id.length < 8 ? id.length : 8)
+        : account.displayName;
+    return AuthUser(
+      id: 'passkey:${account.userHandle}',
+      method: 'passkey',
+      displayName: shown,
+      handle: shown,
+    );
+  }
+
+  String _canonicalBytes(String raw) => _encodeKey(_decodeKey(raw));
+
   String _email(String raw) {
     final address = raw.trim().toLowerCase();
     final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(address);
@@ -412,6 +727,102 @@ class AuthCore {
     _sessions[token] = user;
     _saveSessions();
   }
+
+  String? get _keyPath {
+    final path = accountPath;
+    if (path == null) return null;
+    return '${File(path).parent.path}/keys.json';
+  }
+
+  void _loadKeys() {
+    final path = _keyPath;
+    if (path == null) return;
+    final file = File(path);
+    if (!file.existsSync()) return;
+    try {
+      final decoded = jsonDecode(file.readAsStringSync());
+      if (decoded is! Map) return;
+      for (final entry in decoded.entries) {
+        final value = entry.value;
+        if (value is! Map) continue;
+        _keys['${entry.key}'] = _KeyAccount(
+          displayName: '${value['displayName'] ?? ''}',
+        );
+      }
+    } catch (_) {}
+  }
+
+  void _saveKeys() {
+    final path = _keyPath;
+    if (path == null) return;
+    final file = File(path);
+    file.parent.createSync(recursive: true);
+    final tmp = File('$path.tmp');
+    tmp.writeAsStringSync(
+      jsonEncode({
+        for (final entry in _keys.entries)
+          entry.key: {'displayName': entry.value.displayName},
+      }),
+      flush: true,
+    );
+    tmp.renameSync(path);
+  }
+
+  String? get _passkeyPath {
+    final path = accountPath;
+    if (path == null) return null;
+    return '${File(path).parent.path}/passkeys.json';
+  }
+
+  void _loadPasskeys() {
+    final path = _passkeyPath;
+    if (path == null) return;
+    final file = File(path);
+    if (!file.existsSync()) return;
+    try {
+      final decoded = jsonDecode(file.readAsStringSync());
+      if (decoded is! Map) return;
+      for (final entry in decoded.entries) {
+        final value = entry.value;
+        if (value is! Map) continue;
+        _passkeys['${entry.key}'] = _PasskeyAccount(
+          userHandle: '${value['userHandle'] ?? ''}',
+          displayName: '${value['displayName'] ?? ''}',
+          alg: value['alg'] is int ? value['alg'] as int : -7,
+          x: '${value['x'] ?? ''}',
+          y: '${value['y'] ?? ''}',
+          signCount: value['signCount'] is int ? value['signCount'] as int : 0,
+        );
+      }
+    } catch (_) {}
+  }
+
+  void _savePasskeys() {
+    final path = _passkeyPath;
+    if (path == null) return;
+    final file = File(path);
+    file.parent.createSync(recursive: true);
+    final tmp = File('$path.tmp');
+    tmp.writeAsStringSync(
+      jsonEncode({
+        for (final entry in _passkeys.entries)
+          entry.key: {
+            'userHandle': entry.value.userHandle,
+            'displayName': entry.value.displayName,
+            'alg': entry.value.alg,
+            'x': entry.value.x,
+            'y': entry.value.y,
+            'signCount': entry.value.signCount,
+          },
+      }),
+      flush: true,
+    );
+    tmp.renameSync(path);
+  }
+
+  Uint8List _randomBytes(int length) => Uint8List.fromList(
+    List<int>.generate(length, (_) => _random.nextInt(256)),
+  );
 
   void _saveAccounts() {
     final path = accountPath;
@@ -1011,6 +1422,8 @@ input, button { font: inherit; }
 input { width: 100%; box-sizing: border-box; padding: 0.6rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 8px; }
 button { margin-top: 0.8rem; margin-right: 0.4rem; padding: 0.6rem 0.8rem; border-radius: 8px; border: 0; background: #b42318; color: white; }
 button.alt { background: white; color: #1a1410; border: 1px solid #1a1410; }
+#facebook { display: inline-flex; align-items: center; gap: 8px; }
+#facebook svg { display: block; width: 16px; height: 16px; }
 #out { margin-top: 1rem; white-space: pre-wrap; }
 </style></head>
 <body><main>
@@ -1027,7 +1440,7 @@ button.alt { background: white; color: #1a1410; border: 1px solid #1a1410; }
 <button id="verify" class="alt" type="button">Verify phone</button>
 <p>
 <button id="google" class="alt" type="button">Google</button>
-<button id="facebook" class="alt" type="button">Facebook</button>
+<button id="facebook" class="alt" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0866FF" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>Continue with Facebook</button>
 <button id="wechat" class="alt" type="button">WeChat</button>
 </p>
 <p id="out"></p>
@@ -1191,6 +1604,92 @@ Future<void> handleAuth(
       );
       return;
     }
+    if (request.method == 'POST' && path == '/v1/auth/key/challenge') {
+      final body = await _readJson(request);
+      await _json(
+        response,
+        200,
+        await core.keyChallenge('${body['publicKey']}'),
+      );
+      return;
+    }
+    if (request.method == 'POST' && path == '/v1/auth/key/finish') {
+      final body = await _readJson(request);
+      await _json(
+        response,
+        200,
+        await core.keyFinish(
+          publicKey: '${body['publicKey']}',
+          challenge: '${body['challenge']}',
+          signature: '${body['signature']}',
+          name: '${body['name'] ?? ''}',
+        ),
+      );
+      return;
+    }
+    if (request.method == 'GET' && path == '/.well-known/assetlinks.json') {
+      response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.json
+        ..write(
+          assetLinksJson(Platform.environment['ANDROID_CERT_SHA256'] ?? ''),
+        );
+      await response.close();
+      return;
+    }
+    if (request.method == 'GET' &&
+        path == '/.well-known/apple-app-site-association') {
+      response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.json
+        ..write(
+          appleAssociationJson(Platform.environment['APPLE_TEAM_ID'] ?? ''),
+        );
+      await response.close();
+      return;
+    }
+    if (request.method == 'POST' && path == '/v1/auth/passkey/register/start') {
+      final body = await _readJson(request);
+      await _json(
+        response,
+        200,
+        core.passkeyRegisterStart(name: '${body['name'] ?? ''}'),
+      );
+      return;
+    }
+    if (request.method == 'POST' &&
+        path == '/v1/auth/passkey/register/finish') {
+      final body = await _readJson(request);
+      await _json(
+        response,
+        200,
+        await core.passkeyRegisterFinish(
+          challenge: '${body['challenge']}',
+          clientDataJSON: '${body['clientDataJSON']}',
+          attestationObject: '${body['attestationObject']}',
+        ),
+      );
+      return;
+    }
+    if (request.method == 'POST' && path == '/v1/auth/passkey/login/start') {
+      await _json(response, 200, core.passkeyLoginStart());
+      return;
+    }
+    if (request.method == 'POST' && path == '/v1/auth/passkey/login/finish') {
+      final body = await _readJson(request);
+      await _json(
+        response,
+        200,
+        await core.passkeyLoginFinish(
+          id: '${body['id']}',
+          challenge: '${body['challenge']}',
+          clientDataJSON: '${body['clientDataJSON']}',
+          authenticatorData: '${body['authenticatorData']}',
+          signature: '${body['signature']}',
+        ),
+      );
+      return;
+    }
     if (request.method == 'POST' && path == '/v1/auth/provider/start') {
       final body = await _readJson(request);
       await _json(
@@ -1336,15 +1835,27 @@ Future<void> _handleTrust(
   throw AuthFailure('not_found', 404);
 }
 
+const lecaHosts = {
+  'leca.world',
+  'leca.my',
+  'leca.homes',
+  'leca.quest',
+  'leca.autos',
+  'leca.boats',
+  'leca.beer',
+  'leca.beauty',
+  'leca.baby',
+  // The published Mac app calls this host. Its A record is this machine.
+  'gno.money',
+};
+
 Future<bool> domainPointsHere(String domain) async {
-  if (domain.isEmpty ||
-      domain.length > 253 ||
-      domain.contains(' ') ||
-      InternetAddress.tryParse(domain) != null) {
+  final name = domain.toLowerCase();
+  if (!lecaHosts.contains(name) || InternetAddress.tryParse(name) != null) {
     return false;
   }
   try {
-    final answers = await InternetAddress.lookup(domain);
+    final answers = await InternetAddress.lookup(name);
     return answers.any((address) => address.address == '65.21.232.29');
   } catch (_) {
     return false;

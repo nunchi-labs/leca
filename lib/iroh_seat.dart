@@ -2,6 +2,8 @@
 class IrohSeat {
   Future<void> start({
     required void Function(String endpoint, String addr) publish,
+    void Function(String from, String kind, String text)? onDirect,
+    List<int>? secret,
   }) async {}
 
   void notePeers(Object? peers) {}

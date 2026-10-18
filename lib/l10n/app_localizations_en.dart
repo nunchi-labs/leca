@@ -264,11 +264,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authMockBanner =>
-      'Telegram, WeChat, Facebook, X, Google, email, or WhatsApp. Without the auth server this device uses a local mock.';
+      'Face or a passkey is the fastest way in. Without the auth server this device uses a local mock.';
 
   @override
-  String get authLiveBanner =>
-      'Sign in with email. The other buttons are on this page too.';
+  String get authLiveBanner => 'Face or a passkey is the fastest way in.';
+
+  @override
+  String get authOtherWays => 'Other ways';
 
   @override
   String get authTelegram => 'Continue with Telegram (mock)';
@@ -359,6 +361,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authNameHint => 'Your name';
+
+  @override
+  String get authKeyLabel => 'This device';
+
+  @override
+  String get authKeyExplain =>
+      'This device holds the key other people use to reach you directly. A name is optional.';
+
+  @override
+  String get authKeyNameHint => 'Name, if you want one';
+
+  @override
+  String get authKeySignIn => 'Continue with this device';
+
+  @override
+  String get authFace => 'Continue with face';
+
+  @override
+  String get authFaceUnavailable => 'This device has no face recognition.';
+
+  @override
+  String get authFaceDenied => 'Face recognition was declined.';
+
+  @override
+  String get authPasskey => 'Continue with a passkey';
+
+  @override
+  String get authPasskeyUnavailable =>
+      'Passkeys are not available on this device.';
+
+  @override
+  String get authPasskeyCancelled => 'Passkey sign-in was cancelled.';
 
   @override
   String get authEmailSignIn => 'Sign in with email';
@@ -889,7 +923,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get talkIroh =>
-      'Text, voice, and video connect through iroh. People in the chat do not exchange addresses.';
+      'Text, voice, and video go directly over iroh. This device\'s key is how other people reach you. A name is optional.';
 
   @override
   String get talkWith => 'Talk';

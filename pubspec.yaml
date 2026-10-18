@@ -21,6 +21,9 @@ dependencies:
   web_socket_channel: ^3.0.3
   iroh_flutter: ^1.0.3
   shared_preferences: ^2.5.6
+  cryptography: ^2.9.0
+  local_auth: ^3.0.2
+  passkeys: ^2.23.1
 
 dev_dependencies:
   flutter_test:

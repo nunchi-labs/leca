@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <base href="$FLUTTER_BASE_HREF">
 
@@ -10,27 +11,41 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Leca">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png" />
   <title>Leca</title>
   <link rel="manifest" href="manifest.json">
+  <script src="https://github.com/corbado/flutter-passkeys/releases/download/2.4.0/bundle.js"
+    type="application/javascript"></script>
   <style>
-    html, body { margin: 0; height: 100%; background: #F6F0E6; color: #1A1410; }
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      background: #F6F0E6;
+      color: #1A1410;
+    }
+
     #leca-boot {
       font-family: sans-serif;
       text-align: center;
       padding: 4rem 1rem;
     }
-    #leca-boot h1 { color: #B42318; font-weight: 700; }
+
+    #leca-boot h1 {
+      color: #B42318;
+      font-weight: 700;
+    }
   </style>
 </head>
+
 <body>
   <div id="leca-boot">
     <h1>Leca</h1>
     <p>Loading…</p>
   </div>
   <script>
-    {{flutter_js}}
-    {{flutter_build_config}}
+    { { flutter_js } }
+    { { flutter_build_config } }
     _flutter.loader.load().catch((error) => {
       const boot = document.getElementById('leca-boot');
       if (boot) boot.textContent = 'Leca could not start. Reload the page.';
@@ -38,4 +53,5 @@
     });
   </script>
 </body>
+
 </html>

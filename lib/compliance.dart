@@ -11,6 +11,11 @@ class CambodiaRules {
   static bool applies([MarketConfig? market]) =>
       (market ?? MarketConfig.active).countryCode == 'KH';
 
+  /// A person's name is required only where the law names them.
+  /// Cambodia's e-commerce law and the driver partner file do.
+  /// A device key and a customer account do not.
+  static bool requiresPersonalName([MarketConfig? market]) => applies(market);
+
   static String normKind(String kind) =>
       kind.toLowerCase().replaceAll(RegExp(r'[\s_-]+'), '');
 

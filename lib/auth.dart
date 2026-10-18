@@ -1,9 +1,21 @@
+import 'package:flutter/foundation.dart';
+
 /// Auth seams. Live keys are optional — the binary never requires them.
 class AuthConfig {
-  static const apiBase = String.fromEnvironment('AUTH_API');
+  static const _definedApi = String.fromEnvironment('AUTH_API');
   static const googleClientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
   static const facebookAppId = String.fromEnvironment('FACEBOOK_APP_ID');
   static const smsAuth = String.fromEnvironment('SMS_AUTH');
+
+  /// `AUTH_API=origin` on web uses the host that served the page, so the
+  /// same build works on the raw address and on leca.world.
+  static String get apiBase {
+    if (kIsWeb && _definedApi == 'origin') {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty && origin != 'null') return origin;
+    }
+    return _definedApi;
+  }
 
   static bool get apiLive => apiBase.isNotEmpty;
   static bool get googleLive => apiLive || googleClientId.isNotEmpty;

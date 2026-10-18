@@ -551,14 +551,20 @@ abstract class AppLocalizations {
   /// No description provided for @authMockBanner.
   ///
   /// In km, this message translates to:
-  /// **'Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។'**
+  /// **'មុខ ឬ passkey គឺជាវិធីចូលលឿនបំផុត។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។'**
   String get authMockBanner;
 
   /// No description provided for @authLiveBanner.
   ///
   /// In km, this message translates to:
-  /// **'ចូលដោយអ៊ីមែល។ ប៊ូតុងផ្សេងទៀតនៅលើទំព័រនេះដែរ។'**
+  /// **'មុខ ឬ passkey គឺជាវិធីចូលលឿនបំផុត។'**
   String get authLiveBanner;
+
+  /// No description provided for @authOtherWays.
+  ///
+  /// In km, this message translates to:
+  /// **'វិធីផ្សេង'**
+  String get authOtherWays;
 
   /// No description provided for @authTelegram.
   ///
@@ -733,6 +739,66 @@ abstract class AppLocalizations {
   /// In km, this message translates to:
   /// **'ឈ្មោះរបស់អ្នក'**
   String get authNameHint;
+
+  /// No description provided for @authKeyLabel.
+  ///
+  /// In km, this message translates to:
+  /// **'ឧបករណ៍នេះ'**
+  String get authKeyLabel;
+
+  /// No description provided for @authKeyExplain.
+  ///
+  /// In km, this message translates to:
+  /// **'ឧបករណ៍នេះរក្សាសោ ដែលអ្នកដទៃប្រើដើម្បីនិយាយផ្ទាល់។ ឈ្មោះមិនបាច់មានទេ។'**
+  String get authKeyExplain;
+
+  /// No description provided for @authKeyNameHint.
+  ///
+  /// In km, this message translates to:
+  /// **'ឈ្មោះ បើចង់ដាក់'**
+  String get authKeyNameHint;
+
+  /// No description provided for @authKeySignIn.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្តជាមួយឧបករណ៍នេះ'**
+  String get authKeySignIn;
+
+  /// No description provided for @authFace.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្តដោយមុខ'**
+  String get authFace;
+
+  /// No description provided for @authFaceUnavailable.
+  ///
+  /// In km, this message translates to:
+  /// **'ឧបករណ៍នេះមិនមានការស្គាល់មុខទេ។'**
+  String get authFaceUnavailable;
+
+  /// No description provided for @authFaceDenied.
+  ///
+  /// In km, this message translates to:
+  /// **'ការស្គាល់មុខត្រូវបានបដិសេធ។'**
+  String get authFaceDenied;
+
+  /// No description provided for @authPasskey.
+  ///
+  /// In km, this message translates to:
+  /// **'បន្តជាមួយ passkey'**
+  String get authPasskey;
+
+  /// No description provided for @authPasskeyUnavailable.
+  ///
+  /// In km, this message translates to:
+  /// **'ឧបករណ៍នេះមិនមាន passkey ទេ។'**
+  String get authPasskeyUnavailable;
+
+  /// No description provided for @authPasskeyCancelled.
+  ///
+  /// In km, this message translates to:
+  /// **'ការចូលដោយ passkey ត្រូវបានបោះបង់។'**
+  String get authPasskeyCancelled;
 
   /// No description provided for @authEmailSignIn.
   ///
@@ -1721,7 +1787,7 @@ abstract class AppLocalizations {
   /// No description provided for @talkIroh.
   ///
   /// In km, this message translates to:
-  /// **'អក្សរ សំឡេង និងវីដេអូភ្ជាប់តាម iroh។ អ្នកនៅក្នុងការជជែកមិនបាច់ផ្លាស់អាសយដ្ឋាន។'**
+  /// **'អក្សរ សំឡេង និងវីដេអូទៅផ្ទាល់តាម iroh។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។ ឈ្មោះមិនបាច់មានទេ។'**
   String get talkIroh;
 
   /// No description provided for @talkWith.

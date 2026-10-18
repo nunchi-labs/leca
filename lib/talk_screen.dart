@@ -47,6 +47,7 @@ class _TalkScreenState extends State<TalkScreen> {
   bool _voice = false;
   bool _video = false;
   List<String> _names = [];
+  final Map<String, String> _peerNames = {};
 
   @override
   void initState() {
@@ -90,13 +91,55 @@ class _TalkScreenState extends State<TalkScreen> {
         'token': ?session?.token,
       }),
     );
+    List<int>? secret;
+    try {
+      secret = (await LecaScope.of(context).ensureDeviceKey()).seed;
+    } catch (_) {}
+    if (!mounted) return;
     await _seat.start(
+      secret: secret,
+      onDirect: _onDirect,
       publish: (endpoint, addr) {
         channel.sink.add(
           jsonEncode({'type': 'addr', 'endpoint': endpoint, 'addr': addr}),
         );
       },
     );
+  }
+
+  void _onDirect(String from, String kind, String text) {
+    if (!mounted || text.isEmpty) return;
+    final state = LecaScope.of(context);
+    final thread = state.thread(widget.room);
+    if (thread.isNotEmpty &&
+        thread.last.kind == kind &&
+        thread.last.text == text) {
+      return;
+    }
+    final known = _peerNames[from] ?? '';
+    state.sendMessage(
+      placeId: widget.room,
+      text: text,
+      asBusiness: false,
+      kind: kind,
+      name: known.isEmpty ? from : known,
+    );
+    if (kind == 'price') {
+      _applyPrice(
+        state,
+        TalkLine(
+          seq: 0,
+          room: widget.room,
+          kind: kind,
+          name: known.isEmpty ? from : known,
+          who: '',
+          at: '',
+          text: text,
+          prev: '',
+          proof: '',
+        ),
+      );
+    }
   }
 
   void _onData(Object? raw) {
@@ -117,7 +160,7 @@ class _TalkScreenState extends State<TalkScreen> {
             if (fresh) _applyPrice(state, line);
           }
         }
-        _seat.notePeers(decoded['peers']);
+        _rememberPeers(decoded['peers']);
         setState(() => _names = _strings(decoded['names']));
       case 'entry':
         final line = TalkLine.fromJson(decoded['entry']);
@@ -125,10 +168,22 @@ class _TalkScreenState extends State<TalkScreen> {
           state.appendTalk(line);
           _applyPrice(state, line);
         }
-        _seat.notePeers(decoded['peers']);
+        _rememberPeers(decoded['peers']);
       case 'presence':
-        _seat.notePeers(decoded['peers']);
+        _rememberPeers(decoded['peers']);
         setState(() => _names = _strings(decoded['names']));
+    }
+  }
+
+  void _rememberPeers(Object? peers) {
+    _seat.notePeers(peers);
+    if (peers is! List) return;
+    for (final peer in peers) {
+      if (peer is! Map) continue;
+      final endpoint = '${peer['endpoint'] ?? ''}';
+      final name = '${peer['name'] ?? ''}'.trim();
+      if (endpoint.isEmpty || name.isEmpty) continue;
+      _peerNames[endpoint] = name;
     }
   }
 

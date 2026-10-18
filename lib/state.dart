@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import 'auth.dart';
 import 'auth_api.dart';
+import 'device_key.dart';
+import 'face_gate.dart';
 import 'catalog.dart';
 import 'compliance.dart';
 import 'geo.dart';
@@ -14,20 +16,25 @@ import 'talk.dart';
 import 'identity.dart';
 import 'location.dart';
 import 'market.dart';
+import 'passkey_auth.dart';
 import 'rate.dart';
 import 'records.dart';
 import 'traffic.dart';
 import 'vault.dart';
 
 class LecaState extends ChangeNotifier {
-  LecaState({Vault? vault})
+  LecaState({Vault? vault, FaceGate? faceGate, PasskeyClient? passkeys})
     : vault = vault ?? MemoryVault(),
+      faceGate = faceGate ?? const PlatformFaceGate(),
+      passkeys = passkeys ?? PlatformPasskeyClient(),
       locale = MarketConfig.active.defaultLocale,
       cityId = MarketConfig.active.defaultCityId,
       railId = MarketConfig.active.defaultRailId;
 
   /// Everything below that matters survives a restart through here.
   final Vault vault;
+  final FaceGate faceGate;
+  final PasskeyClient passkeys;
   Timer? _saveTimer;
   bool _restoring = false;
   bool restored = false;
@@ -80,6 +87,14 @@ class LecaState extends ChangeNotifier {
   bool jobsLoading = false;
   String? jobsError;
 
+  /// Seed for the device key. It stays after sign-out so the same device
+  /// is the same account next time.
+  Uint8List? _keySeed;
+  DeviceKey? _device;
+
+  /// Name last tied to this device's key.
+  String keyName = '';
+
   LocaleCode get lang =>
       locale.languageCode == 'km' ? LocaleCode.km : LocaleCode.en;
 
@@ -126,8 +141,11 @@ class LecaState extends ChangeNotifier {
         }
       } catch (_) {}
     }
+    try {
+      await ensureDeviceKey();
+    } catch (_) {}
     restored = true;
-    super.notifyListeners();
+    notifyListeners();
     unawaited(_refreshRateCard());
     unawaited(refreshTrust());
   }
@@ -152,6 +170,8 @@ class LecaState extends ChangeNotifier {
     'booking': booking?.toJson(),
     'qty': qty,
     'session': session?.toJson(),
+    'keySeed': _keySeed == null ? null : encodeKey(_keySeed!),
+    'keyName': keyName,
     'businesses': [for (final b in businesses) b.toJson()],
     'items': [for (final i in items) i.toJson()],
     'messages': [for (final m in messages) m.toJson()],
@@ -192,6 +212,17 @@ class LecaState extends ChangeNotifier {
         });
     }
     session = Session.fromJson(raw['session']);
+    final seed = raw['keySeed'];
+    if (seed is String && seed.isNotEmpty) {
+      try {
+        final bytes = decodeKey(seed);
+        if (bytes.length == 32) {
+          _keySeed = bytes;
+          _device = null;
+        }
+      } catch (_) {}
+    }
+    keyName = normalizeKeyName('${raw['keyName'] ?? ''}');
     _fill(raw['businesses'], businesses, BusinessListing.fromJson);
     _fill(raw['items'], items, ShopItem.fromJson);
     _fill(raw['messages'], messages, ChatMessage.fromJson);
@@ -653,6 +684,25 @@ class LecaState extends ChangeNotifier {
     }
     await Future<void>.delayed(const Duration(milliseconds: 380));
     try {
+      if (method == 'face') {
+        await _faceThen(() => _mockKey(name ?? ''));
+        pendingPhone = null;
+        phoneCodeSent = false;
+        authLoading = false;
+        notifyListeners();
+        return;
+      }
+      if (method == 'passkey') {
+        throw const AuthException('passkey_unavailable');
+      }
+      if (method == 'key') {
+        await _mockKey(name ?? '');
+        pendingPhone = null;
+        phoneCodeSent = false;
+        authLoading = false;
+        notifyListeners();
+        return;
+      }
       if (method == 'email') {
         _mockEmail(
           email: handle,
@@ -712,6 +762,18 @@ class LecaState extends ChangeNotifier {
     String? name,
     bool register = false,
   }) async {
+    if (method == 'face') {
+      await _faceThen(() => _keySignIn(name ?? ''));
+      return;
+    }
+    if (method == 'passkey') {
+      await _passkeySignIn(name ?? '');
+      return;
+    }
+    if (method == 'key') {
+      await _keySignIn(name ?? '');
+      return;
+    }
     if (method == 'email') {
       final path = register
           ? '/v1/auth/email/register'
@@ -778,6 +840,120 @@ class LecaState extends ChangeNotifier {
       displayName: display,
       handle: address,
     );
+  }
+
+  Future<void> _faceThen(Future<void> Function() sign) async {
+    final ok = await faceGate.confirm();
+    if (ok == null) throw const AuthException('face_unavailable');
+    if (!ok) throw const AuthException('face_denied');
+    await sign();
+    final current = session;
+    if (current == null) return;
+    session = Session(
+      id: current.id,
+      method: 'face',
+      displayName: current.displayName,
+      handle: current.handle,
+      token: current.token,
+    );
+  }
+
+  Future<void> _passkeySignIn(String name) async {
+    try {
+      final start = await AuthApi.post('/v1/auth/passkey/login/start', {});
+      final challenge = '${start['challenge'] ?? ''}';
+      final rpId = '${start['rpId'] ?? ''}';
+      final signed = await passkeys.sign(challenge: challenge, rpId: rpId);
+      _takeSession(
+        await AuthApi.post('/v1/auth/passkey/login/finish', {
+          'id': signed.id,
+          'challenge': challenge,
+          'clientDataJSON': signed.clientDataJSON,
+          'authenticatorData': signed.authenticatorData,
+          'signature': signed.signature,
+        }),
+      );
+    } on PasskeyNone {
+      await _passkeyRegister(name);
+    } on PasskeyUnavailable {
+      throw const AuthException('passkey_unavailable');
+    } on PasskeyCancelled {
+      throw const AuthException('passkey_cancelled');
+    }
+  }
+
+  Future<void> _passkeyRegister(String name) async {
+    final start = await AuthApi.post('/v1/auth/passkey/register/start', {
+      'name': name,
+    });
+    final challenge = '${start['challenge'] ?? ''}';
+    final created = await passkeys.create(
+      challenge: challenge,
+      rpId: '${start['rpId'] ?? ''}',
+      userId: '${start['userId'] ?? ''}',
+      name: normalizeKeyName(name),
+    );
+    _takeSession(
+      await AuthApi.post('/v1/auth/passkey/register/finish', {
+        'challenge': challenge,
+        'clientDataJSON': created.clientDataJSON,
+        'attestationObject': created.attestationObject,
+      }),
+    );
+  }
+
+  Future<DeviceKey> ensureDeviceKey() => _deviceKey();
+
+  Future<DeviceKey> _deviceKey() async {
+    final cached = _device;
+    if (cached != null) return cached;
+    final seed = _keySeed;
+    final key = seed == null
+        ? await DeviceKey.generate()
+        : await DeviceKey.fromSeed(seed);
+    _device = key;
+    _keySeed = key.seed;
+    return key;
+  }
+
+  Future<void> _mockKey(String name) async {
+    final key = await _deviceKey();
+    final submitted = normalizeKeyName(name);
+    if (submitted.isNotEmpty) keyName = submitted;
+    session = Session(
+      id: key.accountId,
+      method: 'key',
+      displayName: keyName.isEmpty ? key.handle : keyName,
+      handle: key.handle,
+    );
+  }
+
+  Future<void> _keySignIn(String name) async {
+    final key = await _deviceKey();
+    final submitted = normalizeKeyName(name);
+    final start = await AuthApi.post('/v1/auth/key/challenge', {
+      'publicKey': key.publicKeyEncoded,
+    });
+    final challenge = '${start['challenge'] ?? ''}';
+    if (challenge.isEmpty) throw const AuthException('failed');
+    final signature = await key.signProof(
+      challenge: challenge,
+      name: submitted,
+    );
+    _takeSession(
+      await AuthApi.post('/v1/auth/key/finish', {
+        'publicKey': key.publicKeyEncoded,
+        'challenge': challenge,
+        'signature': signature,
+        'name': submitted,
+      }),
+    );
+    if (submitted.isNotEmpty) {
+      keyName = submitted;
+    } else {
+      final shown = session?.displayName ?? '';
+      if (shown.isNotEmpty && shown != key.handle) keyName = shown;
+    }
   }
 
   void _takeSession(Map<String, Object?> json) {

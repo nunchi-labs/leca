@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'auth.dart';
+import 'facebook_mark.dart';
 import 'l10n/app_localizations.dart';
 import 'market.dart';
 import 'state.dart';
@@ -18,8 +19,10 @@ class _SignInScreenState extends State<SignInScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _name = TextEditingController();
+  final _keyName = TextEditingController();
   final _country = TextEditingController(text: '+855');
   bool _register = false;
+  bool _filledKeyName = false;
 
   /// Country code plus the local number. A leading 0 is the trunk prefix
   /// and drops when the country code is present.
@@ -38,8 +41,19 @@ class _SignInScreenState extends State<SignInScreen> {
     _email.dispose();
     _password.dispose();
     _name.dispose();
+    _keyName.dispose();
     _country.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final chosen = LecaScope.of(context).keyName;
+    if (!_filledKeyName && chosen.isNotEmpty && _keyName.text.isEmpty) {
+      _keyName.text = chosen;
+      _filledKeyName = true;
+    }
   }
 
   String _errorText(AppLocalizations l10n, String? code) {
@@ -50,6 +64,14 @@ class _SignInScreenState extends State<SignInScreen> {
         return l10n.authCodeInvalid;
       case 'handle_empty':
         return l10n.authHandleEmpty;
+      case 'face_unavailable':
+        return l10n.authFaceUnavailable;
+      case 'face_denied':
+        return l10n.authFaceDenied;
+      case 'passkey_unavailable':
+        return l10n.authPasskeyUnavailable;
+      case 'passkey_cancelled':
+        return l10n.authPasskeyCancelled;
       case 'provider_unconfigured':
         return l10n.authProviderUnconfigured;
       case 'sms_unconfigured':
@@ -120,6 +142,37 @@ class _SignInScreenState extends State<SignInScreen> {
                       style: const TextStyle(color: Color(0xFF8B1E1E)),
                     ),
                   ),
+                FilledButton.icon(
+                  key: const Key('sign_in_face'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'face',
+                          handle: '',
+                          name: _keyName.text,
+                        ),
+                  icon: const Icon(Icons.face),
+                  label: Text(l10n.authFace),
+                ),
+                const SizedBox(height: 8),
+                FilledButton.tonalIcon(
+                  key: const Key('sign_in_passkey'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'passkey',
+                          handle: '',
+                          name: _keyName.text,
+                        ),
+                  icon: const Icon(Icons.key),
+                  label: Text(l10n.authPasskey),
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  l10n.authOtherWays,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 12),
                 Text(l10n.authEmailLabel),
                 const SizedBox(height: 6),
                 TextField(
@@ -127,7 +180,6 @@ class _SignInScreenState extends State<SignInScreen> {
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
-                  autofocus: true,
                   decoration: box(l10n.authEmailHint),
                 ),
                 const SizedBox(height: 10),
@@ -171,6 +223,29 @@ class _SignInScreenState extends State<SignInScreen> {
                       _register ? l10n.authHaveAccount : l10n.authNeedAccount,
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                Text(l10n.authKeyLabel),
+                const SizedBox(height: 6),
+                Text(l10n.authKeyExplain),
+                const SizedBox(height: 6),
+                TextField(
+                  key: const Key('sign_in_key_name'),
+                  controller: _keyName,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: box(l10n.authKeyNameHint),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  key: const Key('sign_in_key'),
+                  onPressed: state.authLoading
+                      ? null
+                      : () => state.signIn(
+                          method: 'key',
+                          handle: '',
+                          name: _keyName.text,
+                        ),
+                  child: Text(l10n.authKeySignIn),
                 ),
                 const SizedBox(height: 16),
                 Text(l10n.authWhatsappLabel),
@@ -250,10 +325,21 @@ class _SignInScreenState extends State<SignInScreen> {
                           method: 'facebook',
                           handle: 'sokha.fb@leca.app',
                         ),
-                  child: Text(
-                    AuthConfig.facebookLive
-                        ? l10n.authFacebookLive
-                        : l10n.authFacebook,
+                  child: Row(
+                    children: [
+                      const FacebookMark(),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          AuthConfig.facebookLive
+                              ? l10n.authFacebookLive
+                              : l10n.authFacebook,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      // Matches the logo plus the gap, so the label stays centered.
+                      const SizedBox(width: 24),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),

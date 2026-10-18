@@ -264,10 +264,13 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get authMockBanner =>
-      'Telegram, WeChat, Facebook, X, Google, អ៊ីមែល ឬ WhatsApp។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។';
+      'មុខ ឬ passkey គឺជាវិធីចូលលឿនបំផុត។ បើគ្មានម៉ាស៊ីនមេ ឧបករណ៍នេះប្រើការសាកល្បងក្នុងម៉ាស៊ីន។';
 
   @override
-  String get authLiveBanner => 'ចូលដោយអ៊ីមែល។ ប៊ូតុងផ្សេងទៀតនៅលើទំព័រនេះដែរ។';
+  String get authLiveBanner => 'មុខ ឬ passkey គឺជាវិធីចូលលឿនបំផុត។';
+
+  @override
+  String get authOtherWays => 'វិធីផ្សេង';
 
   @override
   String get authTelegram => 'បន្តជាមួយ Telegram (សាកល្បង)';
@@ -356,6 +359,37 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get authNameHint => 'ឈ្មោះរបស់អ្នក';
+
+  @override
+  String get authKeyLabel => 'ឧបករណ៍នេះ';
+
+  @override
+  String get authKeyExplain =>
+      'ឧបករណ៍នេះរក្សាសោ ដែលអ្នកដទៃប្រើដើម្បីនិយាយផ្ទាល់។ ឈ្មោះមិនបាច់មានទេ។';
+
+  @override
+  String get authKeyNameHint => 'ឈ្មោះ បើចង់ដាក់';
+
+  @override
+  String get authKeySignIn => 'បន្តជាមួយឧបករណ៍នេះ';
+
+  @override
+  String get authFace => 'បន្តដោយមុខ';
+
+  @override
+  String get authFaceUnavailable => 'ឧបករណ៍នេះមិនមានការស្គាល់មុខទេ។';
+
+  @override
+  String get authFaceDenied => 'ការស្គាល់មុខត្រូវបានបដិសេធ។';
+
+  @override
+  String get authPasskey => 'បន្តជាមួយ passkey';
+
+  @override
+  String get authPasskeyUnavailable => 'ឧបករណ៍នេះមិនមាន passkey ទេ។';
+
+  @override
+  String get authPasskeyCancelled => 'ការចូលដោយ passkey ត្រូវបានបោះបង់។';
 
   @override
   String get authEmailSignIn => 'ចូលដោយអ៊ីមែល';
@@ -882,7 +916,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get talkIroh =>
-      'អក្សរ សំឡេង និងវីដេអូភ្ជាប់តាម iroh។ អ្នកនៅក្នុងការជជែកមិនបាច់ផ្លាស់អាសយដ្ឋាន។';
+      'អក្សរ សំឡេង និងវីដេអូទៅផ្ទាល់តាម iroh។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។ ឈ្មោះមិនបាច់មានទេ។';
 
   @override
   String get talkWith => 'ជជែក';

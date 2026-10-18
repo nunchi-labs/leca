@@ -1,7 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+import 'package:cryptography/cryptography.dart';
+import 'package:leca_auth/cbor.dart';
 import 'package:leca_auth/leca_auth.dart';
+import 'package:pointycastle/export.dart';
 import 'package:test/test.dart';
 
 class ScriptedNet extends Net {
@@ -278,6 +283,72 @@ void main() {
     expect(session['token'], isNotEmpty);
   });
 
+  test('a device key signs in without a name, then keeps one', () async {
+    expect(
+      keyProofMessage(challenge: 'c', publicKey: 'p', name: ''),
+      'leca-key/1\nc\np\n\n',
+    );
+    final pair = await Ed25519().newKeyPair();
+    final public = await pair.extractPublicKey();
+    final pub = base64Url.encode(public.bytes).replaceAll('=', '');
+    final dir = Directory.systemTemp.createTempSync('leca-key');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final path = '${dir.path}/accounts.json';
+    final core = AuthCore(config: const AuthConfig(), accountPath: path);
+
+    Future<Map<String, Object?>> finish(String name) async {
+      final started = await core.keyChallenge(pub);
+      final challenge = started['challenge'] as String;
+      final signature = await Ed25519().sign(
+        utf8.encode(
+          keyProofMessage(challenge: challenge, publicKey: pub, name: name),
+        ),
+        keyPair: pair,
+      );
+      final raw = base64Url.encode(signature.bytes).replaceAll('=', '');
+      return core.keyFinish(
+        publicKey: pub,
+        challenge: challenge,
+        signature: raw,
+        name: name,
+      );
+    }
+
+    final created = await finish('');
+    final user = created['user'] as Map;
+    expect(user['method'], 'key');
+    expect(user['id'], startsWith('key:'));
+    expect((user['id'] as String).length, 4 + 64);
+    expect(user['displayName'], user['handle']);
+    expect(
+      () => core.keyFinish(
+        publicKey: pub,
+        challenge: 'nope',
+        signature: 'aa',
+        name: '',
+      ),
+      throwsA(predicate<AuthFailure>((e) => e.code == 'challenge_invalid')),
+    );
+    final named = await finish('Sokha');
+    expect((named['user'] as Map)['displayName'], 'Sokha');
+    expect((named['user'] as Map)['id'], user['id']);
+    final restarted = AuthCore(config: const AuthConfig(), accountPath: path);
+    final again = await restarted.keyChallenge(pub);
+    expect(again['known'], isTrue);
+    expect(again['displayName'], 'Sokha');
+    final bad = await restarted.keyChallenge(pub);
+    final wrong = await Ed25519().sign(utf8.encode('nope'), keyPair: pair);
+    expect(
+      () => restarted.keyFinish(
+        publicKey: pub,
+        challenge: bad['challenge'] as String,
+        signature: base64Url.encode(wrong.bytes).replaceAll('=', ''),
+        name: 'Sokha',
+      ),
+      throwsA(predicate<AuthFailure>((e) => e.code == 'signature_invalid')),
+    );
+  });
+
   test('traffic route reports the jam, not the empty-road time', () async {
     final net = ScriptedNet({
       'routes.googleapis.com/directions/v2:computeRoutes':
@@ -307,4 +378,99 @@ void main() {
       throwsA(predicate<AuthFailure>((e) => e.code == 'route_unconfigured')),
     );
   });
+
+  test('a passkey registers and signs in', () async {
+    final random = FortunaRandom();
+    random.seed(
+      KeyParameter(Uint8List.fromList(List<int>.generate(32, (i) => i + 1))),
+    );
+    final generator = ECKeyGenerator()
+      ..init(
+        ParametersWithRandom(
+          ECKeyGeneratorParameters(ECCurve_secp256r1()),
+          random,
+        ),
+      );
+    final pair = generator.generateKeyPair();
+    final private = pair.privateKey as ECPrivateKey;
+    final point = (pair.publicKey as ECPublicKey).Q!;
+    final x = _fixed(point.x!.toBigInteger()!);
+    final y = _fixed(point.y!.toBigInteger()!);
+    final core = AuthCore(config: const AuthConfig());
+    final started = core.passkeyRegisterStart(name: 'Ada');
+    final challenge = started['challenge'] as String;
+    final credId = Uint8List.fromList(List<int>.generate(16, (i) => i + 3));
+    final cose = Cbor.encode({1: 2, 3: -7, -1: 1, -2: x, -3: y});
+    final rpHash = sha256.convert(utf8.encode('127.0.0.1')).bytes;
+    final auth = BytesBuilder(copy: false)
+      ..add(rpHash)
+      ..addByte(0x45)
+      ..add(const [0, 0, 0, 1])
+      ..add(Uint8List(16))
+      ..addByte(0)
+      ..addByte(credId.length)
+      ..add(credId)
+      ..add(cose);
+    final attestation = Cbor.encode({
+      'fmt': 'none',
+      'attStmt': <Object?, Object?>{},
+      'authData': auth.toBytes(),
+    });
+    final client = jsonEncode({
+      'type': 'webauthn.create',
+      'challenge': challenge,
+      'origin': 'http://127.0.0.1:8080',
+    });
+    final created = await core.passkeyRegisterFinish(
+      challenge: challenge,
+      clientDataJSON: base64Url.encode(utf8.encode(client)).replaceAll('=', ''),
+      attestationObject: base64Url.encode(attestation).replaceAll('=', ''),
+    );
+    final user = created['user'] as Map;
+    expect(user['method'], 'passkey');
+    expect(user['displayName'], 'Ada');
+
+    final login = core.passkeyLoginStart();
+    final loginChallenge = login['challenge'] as String;
+    final loginAuth = BytesBuilder(copy: false)
+      ..add(rpHash)
+      ..addByte(0x05)
+      ..add(const [0, 0, 0, 2]);
+    final loginClient = jsonEncode({
+      'type': 'webauthn.get',
+      'challenge': loginChallenge,
+      'origin': 'http://127.0.0.1:8080',
+    });
+    final loginClientBytes = utf8.encode(loginClient);
+    final message = <int>[
+      ...loginAuth.toBytes(),
+      ...sha256.convert(loginClientBytes).bytes,
+    ];
+    final signer = ECDSASigner(SHA256Digest());
+    signer.init(
+      true,
+      ParametersWithRandom(PrivateKeyParameter<ECPrivateKey>(private), random),
+    );
+    final signature =
+        signer.generateSignature(Uint8List.fromList(message)) as ECSignature;
+    final raw = <int>[..._fixed(signature.r), ..._fixed(signature.s)];
+    final signed = await core.passkeyLoginFinish(
+      id: base64Url.encode(credId).replaceAll('=', ''),
+      challenge: loginChallenge,
+      clientDataJSON: base64Url.encode(loginClientBytes).replaceAll('=', ''),
+      authenticatorData: base64Url
+          .encode(loginAuth.toBytes())
+          .replaceAll('=', ''),
+      signature: base64Url.encode(raw).replaceAll('=', ''),
+    );
+    expect((signed['user'] as Map)['id'], user['id']);
+  });
+}
+
+List<int> _fixed(BigInt n) {
+  final hex = n.toUnsigned(256).toRadixString(16).padLeft(64, '0');
+  return [
+    for (var i = 0; i < hex.length; i += 2)
+      int.parse(hex.substring(i, i + 2), radix: 16),
+  ];
 }

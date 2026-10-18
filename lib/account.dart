@@ -267,7 +267,12 @@ class _OpenBusinessScreenState extends State<OpenBusinessScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) LecaScope.of(context).clearSupplyError();
+      if (!mounted) return;
+      final state = LecaScope.of(context);
+      state.clearSupplyError();
+      if (_sellerName.text.isEmpty && state.keyName.isNotEmpty) {
+        _sellerName.text = state.keyName;
+      }
     });
   }
 

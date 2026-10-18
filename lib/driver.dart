@@ -102,7 +102,14 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
   void _prefill(LecaState state) {
     final session = state.session;
     if (session == null) return;
-    if (_legal.text.isEmpty) _legal.text = session.displayName;
+    if (_legal.text.isEmpty) {
+      final chosen = state.keyName;
+      if (chosen.isNotEmpty) {
+        _legal.text = chosen;
+      } else if (session.method != 'key') {
+        _legal.text = session.displayName;
+      }
+    }
     final digits = session.handle.replaceAll(RegExp(r'[^\d+]'), '');
     if (_phone.text.isEmpty &&
         session.method == 'phone' &&
@@ -121,7 +128,9 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
   /// The one thing still missing, so the driver knows the next tap.
   String? _nextStep(AppLocalizations l10n) {
     if (_vehicle.isEmpty) return l10n.vehicleInvalid;
-    if (_legal.text.trim().isEmpty) return l10n.legalName;
+    if (CambodiaRules.requiresPersonalName() && _legal.text.trim().isEmpty) {
+      return l10n.legalName;
+    }
     if (_idNumber.text.trim().length < 6) return l10n.idNumber;
     if (_phone.text.replaceAll(RegExp(r'\D'), '').length < 8) {
       return l10n.authPhoneLabel;
@@ -219,14 +228,16 @@ class _DriverSignupScreenState extends State<DriverSignupScreen> {
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
-              _field(_legal, l10n.legalName),
-              const SizedBox(height: 12),
-              _field(
-                _onCard,
-                l10n.nameOnId,
-                onChanged: (_) => _onCardEdited = true,
-              ),
+              if (CambodiaRules.requiresPersonalName()) ...[
+                const SizedBox(height: 12),
+                _field(_legal, l10n.legalName),
+                const SizedBox(height: 12),
+                _field(
+                  _onCard,
+                  l10n.nameOnId,
+                  onChanged: (_) => _onCardEdited = true,
+                ),
+              ],
               const SizedBox(height: 12),
               _field(_idNumber, l10n.idNumber),
               const SizedBox(height: 12),

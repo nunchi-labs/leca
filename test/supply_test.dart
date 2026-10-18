@@ -50,6 +50,17 @@ void main() {
       );
       expect(
         await Identity.check(
+          legalName: '',
+          nameOnId: '',
+          idNumber: '123456',
+          selfie: _pngA,
+          idCard: _pngB,
+          requireName: false,
+        ),
+        isNull,
+      );
+      expect(
+        await Identity.check(
           legalName: 'Sokha',
           nameOnId: 'Sokha',
           idNumber: '12',

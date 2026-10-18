@@ -5,22 +5,30 @@ import 'package:iroh_flutter/iroh_flutter.dart';
 
 import 'iroh_seat.dart' show IrohSeat;
 
-/// Direct iroh link for the people already in a Leca room.
+/// Direct iroh link. The device key is the endpoint id other nodes dial.
 class NativeIrohSeat extends IrohSeat {
   Endpoint? _endpoint;
   final Map<String, EndpointAddr> _peers = {};
   final Set<String> _linked = {};
   final List<SendStream> _sends = [];
   var _closed = false;
+  void Function(String from, String kind, String text)? _onDirect;
 
   @override
   Future<void> start({
     required void Function(String endpoint, String addr) publish,
+    void Function(String from, String kind, String text)? onDirect,
+    List<int>? secret,
   }) async {
+    _onDirect = onDirect;
     try {
       await Iroh.init();
       const alpn = [108, 101, 99, 97, 45, 116, 97, 108, 107, 47, 49];
+      final secretKey = secret != null && secret.length == 32
+          ? SecretKey.fromBytes(secret)
+          : null;
       final endpoint = await Endpoint.bindWithAddressLookup(
+        secretKey: secretKey,
         alpns: const [alpn],
         relayMode: RelayMode.n0Default,
         resolve: (id) => _peers[id.toZ32()],
@@ -46,8 +54,34 @@ class NativeIrohSeat extends IrohSeat {
 
   Future<void> _read(Connection conn) async {
     try {
+      final from = conn.remoteId.toZ32();
       final opened = await conn.acceptBi();
-      await opened.$2.readToEnd(1 << 20);
+      final pending = <int>[];
+      while (!_closed) {
+        final chunk = await opened.$2.read(4096);
+        if (chunk == null) break;
+        pending.addAll(chunk);
+        var start = 0;
+        for (var i = 0; i < pending.length; i++) {
+          if (pending[i] != 0x0a) continue;
+          final line = utf8.decode(pending.sublist(start, i));
+          start = i + 1;
+          _deliver(from, line);
+        }
+        if (start > 0) pending.removeRange(0, start);
+      }
+    } catch (_) {}
+  }
+
+  void _deliver(String from, String line) {
+    if (line.isEmpty) return;
+    try {
+      final decoded = jsonDecode(line);
+      if (decoded is! Map) return;
+      final kind = '${decoded['kind'] ?? ''}';
+      final text = '${decoded['text'] ?? ''}';
+      if (kind.isEmpty || text.isEmpty || kind == 'hello') return;
+      _onDirect?.call(from, kind, text);
     } catch (_) {}
   }
 
@@ -81,7 +115,7 @@ class NativeIrohSeat extends IrohSeat {
         final opened = await conn.openBi();
         _sends.add(opened.$1);
         await opened.$1.writeAll(
-          utf8.encode('{"kind":"text","text":"joined"}\n'),
+          utf8.encode('{"kind":"hello","text":"joined"}\n'),
         );
       } catch (_) {
         _linked.remove(entry.key);

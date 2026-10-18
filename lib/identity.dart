@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:file_selector/file_selector.dart';
 
+import 'compliance.dart';
+
 /// On-device check: both files are real photos, they are not the same file,
 /// the typed name matches the name on the card, and the ID number is present.
 class Identity {
@@ -16,6 +18,7 @@ class Identity {
     required Uint8List? selfie,
     required Uint8List? idCard,
     List<Uint8List?> extras = const [],
+    bool? requireName,
   }) async {
     if (selfie == null || idCard == null || selfie.isEmpty || idCard.isEmpty) {
       return 'photo_missing';
@@ -29,7 +32,9 @@ class Identity {
       if (_same(extra, selfie) || _same(extra, idCard)) return 'photo_same';
       if (!await _decodes(extra)) return 'photo_invalid';
     }
-    if (norm(legalName).isEmpty || norm(legalName) != norm(nameOnId)) {
+    final names = requireName ?? CambodiaRules.requiresPersonalName();
+    if (names &&
+        (norm(legalName).isEmpty || norm(legalName) != norm(nameOnId))) {
       return 'name_mismatch';
     }
     final digits = idNumber.replaceAll(RegExp(r'\D'), '');

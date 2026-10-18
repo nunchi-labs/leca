@@ -1,6 +1,18 @@
 import 'package:leca/auth.dart';
+import 'package:leca/device_key.dart';
+import 'package:leca/face_gate.dart';
 import 'package:leca/state.dart';
+import 'package:leca/vault.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+class _Face extends FaceGate {
+  const _Face(this.answer);
+
+  final bool? answer;
+
+  @override
+  Future<bool?> confirm() async => answer;
+}
 
 void main() {
   test('AuthConfig is mock when dart-defines are empty', () {
@@ -116,6 +128,57 @@ void main() {
     expect(state.vehicles.single.kind, 'kayak');
     expect(state.vehicles.single.autonomous, isFalse);
     expect(state.vehicles.single.owner, isTrue);
+  });
+
+  test(
+    'device key sign-in keeps the same node, with or without a name',
+    () async {
+      expect(
+        keyProofMessage(challenge: 'c', publicKey: 'p', name: 'Sokha'),
+        'leca-key/1\nc\np\nSokha\n',
+      );
+      final vault = MemoryVault();
+      final state = LecaState(vault: vault);
+      await state.signIn(method: 'key', handle: '', name: '');
+      final id = state.session?.id;
+      expect(id, startsWith('key:'));
+      expect(state.session?.method, 'key');
+      expect(state.session?.displayName, state.session?.handle);
+      expect(state.keyName, isEmpty);
+      state.signOut();
+      await state.save();
+      final again = LecaState(vault: vault);
+      await again.restore();
+      expect(again.session, isNull);
+      await again.signIn(method: 'key', handle: '', name: 'Sokha');
+      expect(again.session?.id, id);
+      expect(again.session?.displayName, 'Sokha');
+      expect(again.keyName, 'Sokha');
+      final key = await again.ensureDeviceKey();
+      expect(key.accountId, id);
+      expect(key.publicKey, hasLength(32));
+      expect(key.seed, hasLength(32));
+    },
+  );
+
+  test('face sign-in uses the device key after the face check', () async {
+    final denied = LecaState(faceGate: const _Face(false));
+    await denied.signIn(method: 'face', handle: '', name: '');
+    expect(denied.authError, 'face_denied');
+    expect(denied.session, isNull);
+
+    final missing = LecaState(faceGate: const _Face(null));
+    await missing.signIn(method: 'face', handle: '', name: 'Ada');
+    expect(missing.authError, 'face_unavailable');
+
+    final state = LecaState(faceGate: const _Face(true));
+    await state.signIn(method: 'face', handle: '', name: 'Ada');
+    expect(state.session?.method, 'face');
+    expect(state.session?.displayName, 'Ada');
+    expect(state.session?.id, startsWith('key:'));
+    await state.signIn(method: 'passkey', handle: '');
+    expect(state.authError, 'passkey_unavailable');
+    expect(state.session?.method, 'face');
   });
 
   test('going online stays closed without a Cambodia partner file', () async {

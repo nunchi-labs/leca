@@ -1,15 +1,19 @@
+# Leca. leca.world is the site. The other names redirect there.
+# A certificate is issued only after that name's A record is 65.21.232.29.
+# The raw address serves the same site over HTTP until that DNS change.
 {
+	admin "unix//run/caddy/admin.socket"
 	on_demand_tls {
 		ask http://127.0.0.1:8088/tls-ask
 	}
 }
 
-:443 {
-	tls {
-		on_demand
-	}
-
+(leca) {
 	encode gzip
+
+	handle /.well-known/* {
+		reverse_proxy 127.0.0.1:8088
+	}
 
 	handle /v1/* {
 		reverse_proxy 127.0.0.1:8088
@@ -53,6 +57,23 @@
 	}
 }
 
+http://65.21.232.29, http://127.0.0.1 {
+	import leca
+}
+
+:443 {
+	tls {
+		on_demand
+	}
+
+	@alias host leca.my leca.homes leca.quest leca.autos leca.boats leca.beer leca.beauty leca.baby
+	redir @alias https://leca.world{uri} permanent
+
+	import leca
+}
+
 :80 {
+	@names host leca.world leca.my leca.homes leca.quest leca.autos leca.boats leca.beer leca.beauty leca.baby
+	redir @names https://leca.world{uri} permanent
 	redir https://{host}{uri} permanent
 }

@@ -195,7 +195,7 @@ class TalkHub {
     return [
       for (final seat in _seats[room] ?? const <_Seat>[])
         if (seat != except && seat.endpoint.isNotEmpty && seat.addr.isNotEmpty)
-          {'endpoint': seat.endpoint, 'addr': seat.addr},
+          {'endpoint': seat.endpoint, 'addr': seat.addr, 'name': seat.name},
     ];
   }
 
