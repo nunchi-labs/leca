@@ -122,6 +122,7 @@ pack_macos() {
   local app
   app="$(echo "$ROOT"/build/macos/Build/Products/Release/*.app)"
   [[ -d $app ]] || return 1
+  [[ -x $app/Contents/MacOS/Leca ]] || return 1
   mkdir -p "$ROOT/dist"
   rm -f "$ROOT/dist/Leca-macos.zip"
   if command -v ditto >/dev/null 2>&1; then
@@ -191,19 +192,19 @@ build_native() {
   local target=$1 arch bundle
   case "$target" in
     android)
-      build_local android flutter build apk --release "${AUTH_DEFINE[@]}"
+      build_local android flutter build apk --release "${AUTH_DEFINE[@]}" || return 1
       mkdir -p "$ROOT/dist"
       cp -f "$ROOT/build/app/outputs/flutter-apk/app-release.apk" "$ROOT/dist/Leca-android.apk"
       echo "build: Leca-android.apk"
       ;;
     web)
-      build_local web flutter build web --release --base-href /app/ "${AUTH_DEFINE[@]}"
+      build_local web flutter build web --release --base-href /app/ "${AUTH_DEFINE[@]}" || return 1
       pack_dir "$ROOT/build/web" "$ROOT/dist/Leca-web.zip"
       echo "build: Leca-web.zip"
       ;;
     linux-x64 | linux-arm64)
       ensure_linux_deps
-      build_local "$target" flutter build linux --release "${AUTH_DEFINE[@]}"
+      build_local "$target" flutter build linux --release "${AUTH_DEFINE[@]}" || return 1
       arch=x64
       [[ $target == linux-arm64 ]] && arch=arm64
       bundle="$ROOT/build/linux/$arch/release/bundle"
@@ -212,12 +213,12 @@ build_native() {
       echo "build: Leca-linux-$arch.zip"
       ;;
     macos)
-      build_local macos flutter build macos --release "${AUTH_DEFINE[@]}"
-      pack_macos
+      build_local macos flutter build macos --release "${AUTH_DEFINE[@]}" || return 1
+      pack_macos || return 1
       ;;
     ios)
-      build_local ios flutter build ios --release --no-codesign "${AUTH_DEFINE[@]}"
-      pack_ios
+      build_local ios flutter build ios --release --no-codesign "${AUTH_DEFINE[@]}" || return 1
+      pack_ios || return 1
       ;;
     windows-x64 | windows-arm64)
       arch=x64
@@ -229,7 +230,7 @@ build_native() {
         build_local "$target" flutter pub get
         patch_soloud_alloca || return 1
       fi
-      build_local "$target" flutter build windows --release "${AUTH_DEFINE[@]}"
+      build_local "$target" flutter build windows --release "${AUTH_DEFINE[@]}" || return 1
       bundle="$ROOT/build/windows/$arch/runner/Release"
       [[ -f $bundle/leca.exe ]] || return 1
       pack_dir "$bundle" "$ROOT/dist/Leca-windows-$arch.zip"
