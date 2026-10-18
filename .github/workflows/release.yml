@@ -35,105 +35,12 @@ jobs:
           dart analyze
           dart test
 
-  android:
+  package:
     needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter build apk --release --dart-define=AUTH_API=${{ env.AUTH_API }}
-      - run: cp build/app/outputs/flutter-apk/app-release.apk Leca-android.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Leca-android
-          path: Leca-android.apk
-          if-no-files-found: error
-
-  ios:
-    needs: test
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter build ios --release --no-codesign --dart-define=AUTH_API=${{ env.AUTH_API }}
-      - name: Package unsigned ipa
-        run: |
-          mkdir -p Payload
-          cp -R build/ios/iphoneos/Runner.app Payload/
-          zip -qry Leca-ios-unsigned.ipa Payload
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Leca-ios
-          path: Leca-ios-unsigned.ipa
-          if-no-files-found: error
-
-  macos:
-    needs: test
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter build macos --release --dart-define=AUTH_API=${{ env.AUTH_API }}
-      - name: Package app
-        run: |
-          app="$(ls -d build/macos/Build/Products/Release/*.app | head -1)"
-          ditto -c -k --keepParent "$app" Leca-macos.zip
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Leca-macos
-          path: Leca-macos.zip
-          if-no-files-found: error
-
-  windows:
-    needs: test
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: flutter gen-l10n
-      - run: flutter build windows --release --dart-define=AUTH_API=${{ env.AUTH_API }}
-      - name: Package app
-        shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath Leca-windows-x64.zip
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Leca-windows-x64
-          path: Leca-windows-x64.zip
-          if-no-files-found: error
+    uses: ./.github/workflows/build.yml
 
   release:
-    needs: [android, ios, macos, windows]
+    needs: package
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -162,5 +69,7 @@ jobs:
             - `Leca-android.apk`: debug-keystore signed, installs on any Android device
             - `Leca-ios-unsigned.ipa`: no code signature; sign with your own certificate before installing
             - `Leca-macos.zip`: unsigned app bundle; right-click Open on first launch
-            - `Leca-windows-x64.zip`: unzip and run `leca.exe`
+            - `Leca-windows-x64.zip` and `Leca-windows-arm64.zip`: unzip and run `leca.exe`
+            - `Leca-linux-x64.zip` and `Leca-linux-arm64.zip`: unzip and run `leca`
+            - `Leca-web.zip`: the browser app, served under `/app/`
           files: dist/*

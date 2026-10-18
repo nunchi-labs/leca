@@ -53,6 +53,9 @@ agent-tools/
 # QEMU build VMs (disk images, ISOs, keys)
 qemu/.cache/
 
+# Packaged apps produced by ./build.sh
+/dist/
+
 # Server
 server/.dart_tool/
 server/.env

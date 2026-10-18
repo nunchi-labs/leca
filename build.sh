@@ -6,11 +6,14 @@
 #   ./build.sh x86                     # linux-x64 and windows-x64 on the PC
 #   ./build.sh linux-arm64 windows-arm64
 #
-# This Mac:        macos, ios, android, linux-arm64, windows-arm64
-# onnig's x86 PC:  linux-x64 (native or WSL) and windows-x64
+# A target compiles on this machine when the OS matches. Otherwise:
+#   macos, ios, linux-arm64, windows-arm64   the Mac in scripts/mac.host
+#   linux-arm64, windows-arm64 on that Mac   qemu/build.sh
+#   linux-x64, windows-x64                   scripts/x86.host
 #
-# The PC is scripts/x86.host. The password, if the build key is not
-# installed yet, is qemu/.cache/x86/password (not committed).
+# The PC password, if the build key is not installed yet, is
+# qemu/.cache/x86/password (not committed). The Mac key is
+# qemu/.cache/mac/id_ed25519.
 set -euo pipefail
 export COPYFILE_DISABLE=1
 
@@ -31,6 +34,52 @@ flutter_ref() {
     ref="$(flutter --version 2>/dev/null | awk '/^Flutter / { print $2; exit }')"
   fi
   echo "${ref:-stable}"
+}
+
+host_os() {
+  case "$(uname -s)" in
+    Darwin) echo darwin ;;
+    Linux) echo linux ;;
+    MINGW* | MSYS* | CYGWIN*) echo windows ;;
+    *) echo other ;;
+  esac
+}
+
+host_arch() {
+  # GitHub Actions sets RUNNER_ARCH. An x64 shell on Windows ARM still
+  # reports the emulated PROCESSOR_ARCHITECTURE, so check the WOW64 value.
+  case "${RUNNER_ARCH:-}" in
+    ARM64) echo arm64; return ;;
+    X64) echo x64; return ;;
+  esac
+  local arch="${PROCESSOR_ARCHITEW6432:-${PROCESSOR_ARCHITECTURE:-}}"
+  case "$arch" in
+    ARM64 | arm64 | aarch64) echo arm64 ;;
+    AMD64 | x86_64) echo x64 ;;
+    *)
+      case "$(uname -m)" in
+        x86_64 | amd64) echo x64 ;;
+        aarch64 | arm64) echo arm64 ;;
+        *) uname -m ;;
+      esac
+      ;;
+  esac
+}
+
+# True when `flutter build` for this target can run in this process.
+native_ok() {
+  local os arch
+  os="$(host_os)"
+  arch="$(host_arch)"
+  case "$1" in
+    web | android) return 0 ;;
+    linux-x64) [[ $os == linux && $arch == x64 ]] ;;
+    linux-arm64) [[ $os == linux && $arch == arm64 ]] ;;
+    macos | ios) [[ $os == darwin ]] ;;
+    windows-x64) [[ $os == windows && $arch == x64 ]] ;;
+    windows-arm64) [[ $os == windows && $arch == arm64 ]] ;;
+    *) return 1 ;;
+  esac
 }
 
 ensure_key() {
@@ -136,7 +185,7 @@ sync_tree() {
 build_local() {
   local name=$1
   shift
-  echo "build: $name on this Mac"
+  echo "build: $name on $(host_os)-$(host_arch)"
   (cd "$ROOT" && "$@")
 }
 
@@ -202,17 +251,159 @@ build_x86() {
   done
 }
 
+ensure_linux_deps() {
+  command -v ninja >/dev/null && pkg-config --exists gtk+-3.0 && command -v zip >/dev/null && return 0
+  if [[ $(host_os) != linux ]]; then
+    return 0
+  fi
+  if command -v apt-get >/dev/null; then
+    sudo apt-get update
+    sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev unzip zip
+  elif command -v pacman >/dev/null; then
+    if [[ $(id -u) -eq 0 ]]; then
+      pacman -Sy --noconfirm --needed clang cmake ninja pkgconf gtk3 xz zip unzip
+    else
+      sudo pacman -Sy --noconfirm --needed clang cmake ninja pkgconf gtk3 xz zip unzip
+    fi
+  fi
+}
+
+pack_dir() {
+  local dir=$1 zip=$2
+  mkdir -p "$(dirname "$zip")"
+  rm -f "$zip"
+  if command -v zip >/dev/null 2>&1; then
+    (cd "$dir" && zip -qry "$zip" .)
+    return
+  fi
+  if tar --version 2>&1 | grep -qi bsdtar; then
+    tar -a -cf "$zip" -C "$dir" .
+    return
+  fi
+  powershell.exe -NoProfile -Command "Compress-Archive -Path '${dir}/*' -DestinationPath '${zip}' -Force"
+}
+
+pack_macos() {
+  local app
+  app="$(echo "$ROOT"/build/macos/Build/Products/Release/*.app)"
+  [[ -d $app ]] || return 1
+  mkdir -p "$ROOT/dist"
+  rm -f "$ROOT/dist/Leca-macos.zip"
+  if command -v ditto >/dev/null 2>&1; then
+    ditto -c -k --keepParent "$app" "$ROOT/dist/Leca-macos.zip"
+  else
+    (cd "$(dirname "$app")" && zip -qry -y "$ROOT/dist/Leca-macos.zip" "$(basename "$app")")
+  fi
+  echo "build: Leca-macos.zip"
+}
+
+pack_ios() {
+  local payload
+  [[ -d $ROOT/build/ios/iphoneos/Runner.app ]] || return 1
+  payload="$(mktemp -d)"
+  mkdir -p "$payload/Payload" "$ROOT/dist"
+  cp -R "$ROOT/build/ios/iphoneos/Runner.app" "$payload/Payload/"
+  rm -f "$ROOT/dist/Leca-ios-unsigned.ipa"
+  (cd "$payload" && zip -qry "$ROOT/dist/Leca-ios-unsigned.ipa" Payload)
+  rm -rf "$payload"
+  echo "build: Leca-ios-unsigned.ipa"
+}
+
+build_native() {
+  local target=$1 arch bundle
+  case "$target" in
+    android)
+      build_local android flutter build apk --release "${AUTH_DEFINE[@]}"
+      mkdir -p "$ROOT/dist"
+      cp -f "$ROOT/build/app/outputs/flutter-apk/app-release.apk" "$ROOT/dist/Leca-android.apk"
+      echo "build: Leca-android.apk"
+      ;;
+    web)
+      build_local web flutter build web --release --base-href /app/ "${AUTH_DEFINE[@]}"
+      pack_dir "$ROOT/build/web" "$ROOT/dist/Leca-web.zip"
+      echo "build: Leca-web.zip"
+      ;;
+    linux-x64 | linux-arm64)
+      ensure_linux_deps
+      build_local "$target" flutter build linux --release "${AUTH_DEFINE[@]}"
+      arch=x64
+      [[ $target == linux-arm64 ]] && arch=arm64
+      bundle="$ROOT/build/linux/$arch/release/bundle"
+      [[ -x $bundle/leca ]] || return 1
+      pack_dir "$bundle" "$ROOT/dist/Leca-linux-$arch.zip"
+      echo "build: Leca-linux-$arch.zip"
+      ;;
+    macos)
+      build_local macos flutter build macos --release "${AUTH_DEFINE[@]}"
+      pack_macos
+      ;;
+    ios)
+      build_local ios flutter build ios --release --no-codesign "${AUTH_DEFINE[@]}"
+      pack_ios
+      ;;
+    windows-x64 | windows-arm64)
+      arch=x64
+      [[ $target == windows-arm64 ]] && arch=arm64
+      build_local "$target" flutter build windows --release "${AUTH_DEFINE[@]}"
+      bundle="$ROOT/build/windows/$arch/runner/Release"
+      [[ -f $bundle/leca.exe ]] || return 1
+      pack_dir "$bundle" "$ROOT/dist/Leca-windows-$arch.zip"
+      echo "build: Leca-windows-$arch.zip"
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+mac_ssh() {
+  local host=$1
+  shift
+  ssh -i "$ROOT/qemu/.cache/mac/id_ed25519" \
+    -o BatchMode=yes \
+    -o StrictHostKeyChecking=accept-new \
+    -o UserKnownHostsFile="$ROOT/qemu/.cache/mac/known_hosts" \
+    -o ConnectTimeout=15 \
+    -o IPQoS=none \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=120 \
+    "$host" "$@"
+}
+
+# Compile on the Mac, then copy dist/ back. The Mac runs this same script.
+build_on_mac() {
+  local target=$1 host
+  [[ -f $ROOT/scripts/mac.host ]] || die "scripts/mac.host is missing"
+  [[ -f $ROOT/qemu/.cache/mac/id_ed25519 ]] || die "qemu/.cache/mac/id_ed25519 is missing"
+  host="$(tr -d '[:space:]' < "$ROOT/scripts/mac.host")"
+  echo "build: $target on $host"
+  mac_ssh "$host" "mkdir -p ~/leca" || return 1
+  tar -C "$ROOT" --no-xattrs -czf - \
+    --exclude build \
+    --exclude dist \
+    --exclude .dart_tool \
+    --exclude .git \
+    --exclude qemu/.cache \
+    --exclude '._*' \
+    --exclude .DS_Store \
+    --exclude '**/ephemeral' \
+    --exclude '**/.gradle' \
+    . | mac_ssh "$host" "tar -xzf - -C ~/leca" || return 1
+  mac_ssh "$host" "export PATH=\"/opt/homebrew/bin:\$HOME/flutter/flutter/bin:\$HOME/.cargo/bin:\$PATH\" LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LECA_AUTH_API=$(printf '%q' "${LECA_AUTH_API:-https://gno.money}"); cd ~/leca && ./build.sh $target" || return 1
+  mkdir -p "$ROOT/dist"
+  mac_ssh "$host" "tar -C ~/leca/dist -czf - ." | tar -xzf - -C "$ROOT/dist" || return 1
+}
+
 usage() {
   cat <<EOF
 Usage: ./build.sh [target ...]
 
-  macos  ios  android          this Mac
-  linux-arm64  windows-arm64   Ubuntu and Windows 11 ARM VMs on this Mac
-  linux-x64  windows-x64       $HOST
+  macos  ios                  a Mac (this machine, or scripts/mac.host)
+  android  web                this machine
+  linux-x64  linux-arm64      this machine when the arch matches, else the Mac VM or $HOST
+  windows-x64  windows-arm64  this machine when the arch matches, else the Mac VM or $HOST
   x86                              both x64 targets
   arm                              both arm64 VM targets
 
-No arguments builds every target. x86 is skipped with a message when the PC drops port 22.
+No arguments builds every target. Packages land in dist/.
 EOF
 }
 
@@ -221,8 +412,29 @@ expand() {
     x86) echo linux-x64 windows-x64 ;;
     arm) echo linux-arm64 windows-arm64 ;;
     mac) echo macos ios android ;;
-    all) echo macos ios android linux-arm64 windows-arm64 linux-x64 windows-x64 ;;
+    all) echo android web linux-x64 linux-arm64 macos ios windows-x64 windows-arm64 ;;
     *) echo "$1" ;;
+  esac
+}
+
+# Targets this machine cannot compile. Arm VMs run on the Mac.
+dispatch_remote() {
+  local target=$1
+  case "$target" in
+    macos | ios) build_on_mac "$target" ;;
+    linux-arm64 | windows-arm64)
+      if [[ $(host_os) == darwin ]]; then
+        if [[ $target == linux-arm64 ]]; then
+          build_arm linux
+        else
+          build_arm windows
+        fi
+      else
+        build_on_mac "$target"
+      fi
+      ;;
+    linux-x64 | windows-x64) return 2 ;;
+    *) die "no builder for $target" ;;
   esac
 }
 
@@ -239,21 +451,28 @@ main() {
       targets+=("$part")
     done
   done
-  local fail=0 t
-  for t in "${targets[@]}"; do
-    case "$t" in
-      macos) build_local macos flutter build macos --release "${AUTH_DEFINE[@]}" || fail=1 ;;
-      ios) build_local ios flutter build ios --release --no-codesign "${AUTH_DEFINE[@]}" || fail=1 ;;
-      android) build_local android flutter build apk --release "${AUTH_DEFINE[@]}" || fail=1 ;;
-      linux-arm64) build_arm linux || fail=1 ;;
-      windows-arm64) build_arm windows || fail=1 ;;
-      linux-x64 | windows-x64) ;;
-      *) die "unknown target $t" ;;
-    esac
-  done
+  local fail=0 t rc
   local -a x86=()
   for t in "${targets[@]}"; do
-    [[ $t == linux-x64 || $t == windows-x64 ]] && x86+=("$t")
+    case "$t" in
+      android | web | macos | ios | linux-x64 | linux-arm64 | windows-x64 | windows-arm64) ;;
+      *) die "unknown target $t" ;;
+    esac
+    if native_ok "$t"; then
+      build_native "$t" || fail=1
+      continue
+    fi
+    set +e
+    dispatch_remote "$t"
+    rc=$?
+    set -e
+    if [[ $rc -eq 0 ]]; then
+      continue
+    elif [[ $rc -eq 2 ]]; then
+      x86+=("$t")
+    else
+      fail=1
+    fi
   done
   if [[ ${#x86[@]} -gt 0 ]]; then
     if x86_reachable; then

@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -49,3 +50,10 @@ jobs:
       - run: flutter gen-l10n
       - run: flutter analyze --fatal-infos
       - run: flutter test --reporter compact
+
+  # Pull requests stay on the two jobs above. A push to main also builds
+  # every app, in parallel, through the same ./build.sh used on the machines.
+  package:
+    needs: [server, app]
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/build.yml
