@@ -132,6 +132,49 @@ pack_macos() {
   echo "build: Leca-macos.zip"
 }
 
+# pffft.c calls _alloca. MSVC declares that in malloc.h. The x64 headers
+# include it through the SSE headers; the ARM64 headers do not, so the
+# voice library fails with C3861. The package is already in the pub cache.
+patch_soloud_alloca() {
+  local cache="${PUB_CACHE:-}" file tmp found=0
+  if [[ -z $cache && -n ${LOCALAPPDATA:-} ]]; then
+    cache="${LOCALAPPDATA}/Pub/Cache"
+  fi
+  if [[ -z $cache && -n ${HOME:-} ]]; then
+    cache="${HOME}/.pub-cache"
+  fi
+  if command -v cygpath >/dev/null 2>&1; then
+    case $cache in
+      *\\* | *:*) cache="$(cygpath -u "$cache")" ;;
+    esac
+  fi
+  [[ -d "$cache/hosted" ]] || return 1
+  while IFS= read -r -d '' file; do
+    found=1
+    if grep -q 'include <malloc.h>' "$file"; then
+      continue
+    fi
+    tmp="$(mktemp)"
+    awk '
+      {
+        line = $0
+        sub(/\r$/, "", line)
+      }
+      line == "#elif defined(COMPILER_MSVC)" && !done {
+        print line
+        print "#  include <malloc.h>"
+        done = 1
+        next
+      }
+      { print line }
+    ' "$file" >"$tmp"
+    mv -f "$tmp" "$file"
+    grep -q 'include <malloc.h>' "$file"
+    echo "build: included malloc.h in pffft.c"
+  done < <(find "$cache/hosted" -type f -path '*/flutter_soloud-*/src/pffft/pffft.c' -print0)
+  [[ $found -eq 1 ]]
+}
+
 pack_ios() {
   local payload
   [[ -d $ROOT/build/ios/iphoneos/Runner.app ]] || return 1
@@ -182,6 +225,10 @@ build_native() {
       # VS 2026 removes <experimental/coroutine>. local_auth_windows still
       # includes it. This define keeps that build working.
       export CL="${CL:-} /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS"
+      if [[ $target == windows-arm64 ]]; then
+        build_local "$target" flutter pub get
+        patch_soloud_alloca || return 1
+      fi
       build_local "$target" flutter build windows --release "${AUTH_DEFINE[@]}"
       bundle="$ROOT/build/windows/$arch/runner/Release"
       [[ -f $bundle/leca.exe ]] || return 1
