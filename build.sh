@@ -274,13 +274,15 @@ pack_dir() {
   rm -f "$zip"
   if command -v zip >/dev/null 2>&1; then
     (cd "$dir" && zip -qry "$zip" .)
-    return
-  fi
-  if tar --version 2>&1 | grep -qi bsdtar; then
+  elif command -v cygpath >/dev/null 2>&1 && [[ -n ${SYSTEMROOT:-} ]]; then
+    # Git's tar is not bsdtar, and PowerShell rejects a Unix path.
+    "$(cygpath -u "$SYSTEMROOT")/System32/tar.exe" -a -cf "$(cygpath -w "$zip")" -C "$(cygpath -w "$dir")" .
+  elif tar --version 2>&1 | grep -qi bsdtar; then
     tar -a -cf "$zip" -C "$dir" .
-    return
+  else
+    die "no zip tool for $zip"
   fi
-  powershell.exe -NoProfile -Command "Compress-Archive -Path '${dir}/*' -DestinationPath '${zip}' -Force"
+  [[ -s $zip ]]
 }
 
 pack_macos() {
