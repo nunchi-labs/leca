@@ -524,7 +524,7 @@ class AuthCore {
     if (sig.length != 64) return false;
     final raw = _decodeKey(publicKey);
     try {
-      return Ed25519().verify(
+      return await Ed25519().verify(
         utf8.encode(
           keyProofMessage(
             challenge: challenge,

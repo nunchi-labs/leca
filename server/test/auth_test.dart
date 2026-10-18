@@ -392,8 +392,8 @@ void main() {
         ),
       );
     final pair = generator.generateKeyPair();
-    final private = pair.privateKey as ECPrivateKey;
-    final point = (pair.publicKey as ECPublicKey).Q!;
+    final private = pair.privateKey;
+    final point = pair.publicKey.Q!;
     final x = _fixed(point.x!.toBigInteger()!);
     final y = _fixed(point.y!.toBigInteger()!);
     final core = AuthCore(config: const AuthConfig());
