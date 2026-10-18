@@ -154,6 +154,8 @@ EOF
 x86_ssh() {
   x86_open || unreachable
   x86_opts
+  # The arguments are the remote command, so they expand on this machine.
+  # shellcheck disable=SC2029
   ssh "${X86_OPTS[@]}" "$HOST" "$@"
 }
 
@@ -208,7 +210,8 @@ build_x86() {
     local sudo_pass=""
     [[ -f $X86_CACHE/password ]] && sudo_pass="$(tr -d '[:space:]' < "$X86_CACHE/password")"
     [[ -n $sudo_pass ]] || die "qemu/.cache/x86/password is empty"
-    local envp="LECA_SUDO_PASSWORD=$(printf '%q' "$sudo_pass") LECA_FLUTTER_REF=$(printf '%q' "$ref")"
+    local envp
+    envp="LECA_SUDO_PASSWORD=$(printf '%q' "$sudo_pass") LECA_FLUTTER_REF=$(printf '%q' "$ref")"
     local t want_linux=no want_win=no
     for t in "${want[@]}"; do
       [[ $t == linux-x64 ]] && want_linux=yes
@@ -483,7 +486,7 @@ main() {
     if x86_reachable; then
       build_x86 "${x86[@]}" || fail=1
     else
-      unreachable || fail=1
+      unreachable
     fi
   fi
   exit "$fail"

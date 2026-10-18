@@ -478,7 +478,9 @@ build_windows() {
       kill -0 "$pid" 2>/dev/null || break
       sleep 2
     done
-    kill -0 "$pid" 2>/dev/null && kill "$pid" || true
+    if kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" || true
+    fi
     sleep 2
   fi
   boot_windows "$dir" no
@@ -524,7 +526,9 @@ stop_one() {
       kill -0 "$pid" 2>/dev/null || break
       sleep 1
     done
-    kill -0 "$pid" 2>/dev/null && kill "$pid" || true
+    if kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" || true
+    fi
   fi
   rm -f "$dir/qemu.pid"
   echo "qemu: stopped $name"
