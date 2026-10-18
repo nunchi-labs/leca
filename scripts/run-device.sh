@@ -6,7 +6,8 @@
 #   ./scripts/run-device.sh 18-pro-max      # iPhone 18 Pro Max
 #   ./scripts/run-device.sh 18-pro
 #   ./scripts/run-device.sh 17-pro-max
-#   ./scripts/run-device.sh android         # the Pixel AVD named chow
+#   ./scripts/run-device.sh android         # Android 15 Pixel, Google account skipped
+#   ./scripts/run-device.sh android-17      # Android 17 Pixel (does not finish booting here)
 #
 # iOS. Xcode 27 draws the phone in DeviceHub
 # (Xcode.app/Contents/Applications/DeviceHub.app). This Xcode has no
@@ -17,9 +18,12 @@
 # for them against this runtime. The command still tries, and prints that
 # answer, so a newer runtime can be dropped in without changing the names.
 #
-# Android. The virtual device is chow: a Pixel, arm64, Android 35, Google
-# APIs, created under the Homebrew cmdline-tools SDK. The emulator window is
-# the Android Emulator, not DeviceHub.
+# Android. `android` is the AVD chow: a Pixel on Android 15 that does boot
+# on this Mac. Its first screen is a Google account prompt. This script marks
+# setup finished and presses Home so that screen does not stay in front of Leca.
+# `android-17` is leca_android_17, Android 17 (API 37.2, 16 KB pages). This
+# Mac's emulator opens that window and then does not finish booting the guest.
+# The window, when the guest runs, is the Android Emulator, not DeviceHub.
 #
 # Override the API with LECA_AUTH_API. The default matches ./build.sh.
 set -euo pipefail
@@ -49,7 +53,8 @@ Usage: ./scripts/run-device.sh [name]
   17-pro-max     iPhone 17 Pro Max
   17             iPhone 17
   air            iPhone Air
-  android        Pixel emulator (AVD chow, Android 35)
+  android        Android 15 Pixel (AVD chow). Skips the Google account screen.
+  android-17     Android 17 Pixel (AVD leca_android_17). The guest does not finish booting on this Mac.
 
 No name lists those names and the simulators that are already booted.
 The iOS window is DeviceHub. The Android window is the Android Emulator.
@@ -67,6 +72,7 @@ resolve() {
     17) echo "iPhone 17" ;;
     air | iphone-air) echo "iPhone Air" ;;
     android | pixel | chow) echo "android" ;;
+    android-17 | 17) echo "android-17" ;;
     -h | help) echo "help" ;;
     *) die "unknown device '$1' (try: duo, 18-pro-max, android)" ;;
   esac
@@ -117,29 +123,56 @@ boot_ios() {
   echo "$udid"
 }
 
+# The Google APIs image opens an account screen before the launcher.
+# Marking setup complete and pressing Home leaves Leca in front.
+skip_google_setup() {
+  local serial=$1
+  adb -s "$serial" shell settings put global device_provisioned 1 || true
+  adb -s "$serial" shell settings put secure user_setup_complete 1 || true
+  adb -s "$serial" shell am force-stop com.google.android.gms || true
+  adb -s "$serial" shell input keyevent KEYCODE_HOME || true
+}
+
 boot_android() {
-  local serial
+  local which=$1 serial avd want
   command -v emulator >/dev/null || die "emulator is missing (looked in ${SDK_ROOT}/emulator)"
-  emulator -list-avds | grep -qx chow || die "AVD chow is missing. It is the Pixel image under ~/.android/avd."
-  serial="$(adb devices | awk '/^emulator-/{ print $1; exit }')"
+  if [[ $which == android-17 ]]; then
+    avd=leca_android_17
+    want=17
+  else
+    avd=chow
+    want=15
+  fi
+  emulator -list-avds | grep -qx "$avd" || die "AVD ${avd} is missing under ~/.android/avd."
+  serial="$(adb devices | awk '/^emulator-/ { print $1 }' | while read -r s; do
+    ver="$(adb -s "$s" shell getprop ro.build.version.release 2>/dev/null | tr -d '\r')"
+    if [[ $ver == "$want"* ]]; then
+      echo "$s"
+      break
+    fi
+  done)"
   if [[ -z $serial ]]; then
-    echo "run-device: starting the Pixel emulator (chow)"
+    echo "run-device: starting ${avd}"
     # A logged-in Mac session shows the emulator window. nohup keeps it
     # after this script goes on to flutter run.
-    nohup emulator -avd chow -netdelay none -netspeed full >/tmp/leca-android-emu.log 2>&1 &
-    adb wait-for-device
-    # Boot is not finished when adb first lists the device.
-    local i
+    nohup emulator -avd "$avd" -no-metrics -crash-report-mode never -netdelay none -netspeed full >/tmp/leca-android-emu.log 2>&1 &
+    local i s ver
     for ((i = 0; i < 90; i++)); do
-      if [[ $(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r') == 1 ]]; then
-        break
-      fi
+      serial=""
+      while read -r s; do
+        ver="$(adb -s "$s" shell getprop ro.build.version.release 2>/dev/null | tr -d '\r')"
+        if [[ $ver == "$want"* && $(adb -s "$s" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r') == 1 ]]; then
+          serial=$s
+          break
+        fi
+      done < <(adb devices | awk '/^emulator-/ { print $1 }')
+      [[ -n $serial ]] && break
       sleep 2
     done
-    serial="$(adb devices | awk '/^emulator-/{ print $1; exit }')"
   fi
-  [[ -n $serial ]] || die "the Pixel emulator did not show up in adb"
-  echo "run-device: android ${serial}"
+  [[ -n $serial ]] || die "${avd} did not finish booting"
+  skip_google_setup "$serial"
+  echo "run-device: ${which} ${serial}"
   echo "$serial"
 }
 
@@ -170,8 +203,8 @@ main() {
     usage
     exit 0
   fi
-  if [[ $pretty == android ]]; then
-    id="$(boot_android | tail -1)"
+  if [[ $pretty == android || $pretty == android-17 ]]; then
+    id="$(boot_android "$pretty" | tail -1)"
   else
     id="$(boot_ios "$pretty" | tail -1)"
   fi
