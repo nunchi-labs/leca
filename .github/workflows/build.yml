@@ -67,10 +67,28 @@ jobs:
         with:
           targets: aarch64-apple-ios
       - uses: subosito/flutter-action@v2
+        if: matrix.target != 'linux-arm64' && matrix.target != 'windows-arm64'
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # The setup action has no arm64 archive for this Flutter version.
+      # The framework still downloads the arm64 engine for the host.
+      - name: Flutter on ARM
+        if: matrix.target == 'linux-arm64' || matrix.target == 'windows-arm64'
+        run: |
+          git clone --depth 1 --branch "${FLUTTER_VERSION}" https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          bin="$RUNNER_TEMP/flutter/bin"
+          if command -v cygpath >/dev/null; then
+            bin="$(cygpath -w "$bin")"
+          fi
+          echo "$bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/flutter/bin/flutter" config --no-analytics
+          if [[ ${{ matrix.target }} == linux-arm64 ]]; then
+            "$RUNNER_TEMP/flutter/bin/flutter" precache --linux
+          else
+            "$RUNNER_TEMP/flutter/bin/flutter" precache --windows
+          fi
       - run: ./build.sh ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:

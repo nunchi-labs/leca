@@ -344,6 +344,9 @@ build_native() {
     windows-x64 | windows-arm64)
       arch=x64
       [[ $target == windows-arm64 ]] && arch=arm64
+      # VS 2026 removes <experimental/coroutine>. local_auth_windows still
+      # includes it. This define keeps that build working.
+      export CL="${CL:-} /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS"
       build_local "$target" flutter build windows --release "${AUTH_DEFINE[@]}"
       bundle="$ROOT/build/windows/$arch/runner/Release"
       [[ -f $bundle/leca.exe ]] || return 1
