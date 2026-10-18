@@ -304,11 +304,13 @@ void main() {
         WebSocket.connect('ws://127.0.0.1:${server.port}/v1/room');
 
     final ride = await open();
-    final closed = ride.done;
+    final closed = Completer<void>();
+    ride.listen((_) {}, onDone: closed.complete);
+    addTearDown(ride.close);
     ride.add(
       jsonEncode({'type': 'join', 'room': 'ride', 'guest': 'guest-12345678'}),
     );
-    await closed.timeout(const Duration(seconds: 2));
+    await closed.future.timeout(const Duration(seconds: 2));
 
     final front = await open();
     addTearDown(front.close);

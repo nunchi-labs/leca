@@ -744,14 +744,15 @@ class _TalkScreenState extends State<TalkScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Row(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     OutlinedButton(
                       key: const Key('talk_dial'),
                       onPressed: _peerAddr.isEmpty ? null : _callPeer,
                       child: Text(l10n.talkCall),
                     ),
-                    const SizedBox(width: 8),
                     OutlinedButton(
                       key: const Key('talk_voice'),
                       onPressed: front && state.chatFace == chatFaceHide
@@ -760,7 +761,6 @@ class _TalkScreenState extends State<TalkScreen> {
                                 _send(state, asBusiness: false, kind: 'voice'),
                       child: Text(l10n.talkVoice),
                     ),
-                    const SizedBox(width: 8),
                     OutlinedButton(
                       key: const Key('talk_video'),
                       onPressed: front && state.chatFace == chatFaceHide
@@ -769,14 +769,12 @@ class _TalkScreenState extends State<TalkScreen> {
                                 _send(state, asBusiness: false, kind: 'video'),
                       child: Text(l10n.talkVideo),
                     ),
-                    if (owned) ...[
-                      const Spacer(),
+                    if (owned)
                       OutlinedButton(
                         key: const Key('reply_chat'),
                         onPressed: () => _send(state, asBusiness: true),
                         child: Text(l10n.replyAsBusiness),
                       ),
-                    ],
                   ],
                 ),
               ),
