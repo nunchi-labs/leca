@@ -224,10 +224,10 @@ fn write_line(file: &mut std::fs::File, line: &str) -> Result<(), Fail> {
 }
 
 fn parse_lines(lines: &[String]) -> Result<Vec<Entry>, String> {
-    lines
+    Ok(lines
         .iter()
-        .map(|line| serde_json::from_str(line).map_err(|err| err.to_string()))
-        .collect()
+        .filter_map(|line| serde_json::from_str(line).ok())
+        .collect())
 }
 
 fn replay(entries: &[Entry]) -> Result<String, String> {

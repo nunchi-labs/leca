@@ -54,6 +54,28 @@ jobs:
         env:
           PUB_CACHE: /mnt/cache/pub/server
 
+  ledger:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: ledger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - run: cargo test
+        env:
+          CARGO_HOME: /mnt/cache/cargo
+
   app:
     runs-on: depot-ubuntu-24.04-8
     timeout-minutes: 12

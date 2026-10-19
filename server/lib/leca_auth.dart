@@ -1869,14 +1869,15 @@ Map<String, Object?>? ledgerEntry(String accountId, Map<String, Object?> body) {
   final account = accountId.trim();
   final id = '${body['id'] ?? ''}'.trim();
   final kind = '${body['kind'] ?? ''}'.trim();
-  final to = '${body['to'] ?? ''}'.trim();
+  var to = '${body['to'] ?? ''}'.trim();
   final cents = _centsOf(body['cents']);
   final fee = _centsOf(body['feeCents']);
   final tip = _centsOf(body['tipCents']);
   if (account.isEmpty || !_billId.hasMatch(id) || !_ledgerKind.hasMatch(kind)) {
     return null;
   }
-  if (to.isEmpty || to.length > 240 || _oneLine.hasMatch(to)) return null;
+  if (to.isEmpty || _oneLine.hasMatch(to)) return null;
+  if (to.length > 240) to = to.substring(0, 240);
   if (cents < 0 || fee < 0 || tip < 0 || fee != ledgerFeeCents(cents)) {
     return null;
   }
