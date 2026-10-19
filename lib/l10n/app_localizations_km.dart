@@ -956,7 +956,7 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get talkIroh =>
-      'ការជជែក និងតម្លៃជិះលើហ្វូង iroh។ វេប អាយហ្វូន ម៉ាក និងវីនដូនៅលើហ្វូងតែមួយ។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។';
+      'អ្នកប្រើទាក់ទងគ្នាតាម iroh។ ការជជែក សំឡេង និងវីដេអូនៅលើតំណនោះ។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។';
 
   @override
   String get talkWith => 'ជជែក';
@@ -1052,7 +1052,8 @@ class AppLocalizationsKm extends AppLocalizations {
   String get phoneTitle => 'ទូរស័ព្ទ';
 
   @override
-  String get phoneData => 'ការហៅជាទិន្នន័យ។ iroh ដឹកសំឡេងរវាងឧបករណ៍ទាំងពីរ។';
+  String get phoneData =>
+      'ការហៅឥតគិតថ្លៃ។ កុំព្យូទ័រ iroh ក្នុង Leca ដឹកសំឡេង ដូច្នេះគ្មានថ្លៃបណ្តាញ។';
 
   @override
   String get phoneYourNumber => 'លេខរបស់អ្នក';
@@ -1168,4 +1169,94 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get chatHiddenBody => 'អ្នកមិននៅក្នុងការជជែកនេះទេ។';
+
+  @override
+  String get serviceSale => 'លក់យាន';
+
+  @override
+  String get saleTitle => 'យានលក់';
+
+  @override
+  String get saleBody =>
+      'ម៉ូតូ ឡាន ទូកទូក និងរ៉ឺម៉ក ដែលម្ចាស់ដាក់ឯង។ Leca មិនកាន់កាប់យានទេ។ តម្លៃដែលដាក់ គឺតម្លៃដែលត្រូវបង់។';
+
+  @override
+  String get saleKindAll => 'ទាំងអស់';
+
+  @override
+  String get saleKindMotorcycle => 'ម៉ូតូ';
+
+  @override
+  String get saleKindCar => 'ឡាន';
+
+  @override
+  String get saleKindTuktuk => 'ទូកទូក';
+
+  @override
+  String get saleKindRemorque => 'រ៉ឺម៉ក';
+
+  @override
+  String get sellVehicle => 'លក់យាន';
+
+  @override
+  String get saleTitleLabel => 'យាន';
+
+  @override
+  String get saleTitleHint => 'Honda ADV 350';
+
+  @override
+  String get saleNoteHint => 'ម៉ូតូ Honda ADV 350';
+
+  @override
+  String get saleEmpty => 'មិនមានយានលក់ក្នុងរង្វង់នេះ។';
+
+  @override
+  String get saleKindInvalid => 'ជ្រើសម៉ូតូ ឡាន ទូកទូក ឬរ៉ឺម៉ក។';
+
+  @override
+  String get saleInvalid => 'បញ្ចូលឈ្មោះយាន និងតម្លៃ។';
+
+  @override
+  String get buyVehicle => 'ទិញ';
+
+  @override
+  String get removeSale => 'ដកការលក់';
+
+  @override
+  String get serviceLink => 'ទូរស័ព្ទ និងបណ្តាញ';
+
+  @override
+  String get serviceTravel => 'ឡានក្រុង និងយន្តហោះ';
+
+  @override
+  String get serviceTrade => 'គ្រប់ទីកន្លែង';
+
+  @override
+  String get serviceCharter => 'កម្មវិធីខ្មែរ';
+
+  @override
+  String get serviceCare => 'សង្គ្រោះបន្ទាន់';
+
+  @override
+  String get phoneFree => 'ឥតគិតថ្លៃ';
+
+  @override
+  String get openShopNow => 'បើកហាងឥឡូវ';
+
+  @override
+  String get openShopHint =>
+      'ចុចម្តងបើកហាង។ ដាក់ឈ្មោះបើចង់ឈ្មោះផ្សេង។ ប្រភេទនៅហាង រហូតដល់អ្នកប្តូរ។';
+
+  @override
+  String get bulkOne => 'មួយ';
+
+  @override
+  String get bulkMany => 'ច្រើនក្នុងពេលតែមួយ';
+
+  @override
+  String get serviceMap => 'ផែនទី';
+
+  @override
+  String get ledgerFailed =>
+      'ការទូទាត់នេះមិនទាន់ចុះក្នុងសៀវភៅទេ។ សូមព្យាយាមម្តងទៀត។';
 }

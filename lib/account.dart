@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'art.dart';
 import 'auth.dart';
 import 'compliance.dart';
 import 'device.dart';
@@ -300,6 +301,43 @@ class _OpenBusinessScreenState extends State<OpenBusinessScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              const SizedBox(
+                height: 140,
+                width: double.infinity,
+                child: LecaArt(scene: LecaScene.shop),
+              ),
+              const SizedBox(height: 12),
+              Text(l10n.openShopHint),
+              const SizedBox(height: 8),
+              FilledButton(
+                key: const Key('open_shop_now'),
+                onPressed: state.supplyLoading
+                    ? null
+                    : () async {
+                        final kind = _kind.text.trim().isEmpty
+                            ? 'shop'
+                            : _kind.text;
+                        final named = _name.text.trim().isEmpty
+                            ? (_sellerName.text.trim().isEmpty
+                                  ? 'ហាង'
+                                  : _sellerName.text.trim())
+                            : _name.text;
+                        await state.openBusiness(
+                          kind: kind,
+                          name: named,
+                          note: _note.text,
+                          sellerName: _sellerName.text,
+                          sellerPhone: _sellerPhone.text,
+                          sellerId: _sellerId.text,
+                        );
+                        if (!context.mounted) return;
+                        if (state.supplyError == null) {
+                          Navigator.pop(context);
+                        }
+                      },
+                child: Text(l10n.openShopNow),
+              ),
+              const SizedBox(height: 16),
               Text(l10n.businessKindHint),
               const SizedBox(height: 8),
               Wrap(

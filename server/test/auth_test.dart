@@ -13,6 +13,7 @@ class ScriptedNet extends Net {
   ScriptedNet(this.pages);
 
   final Map<String, String> pages;
+  Object? lastJson;
 
   @override
   Future<NetResponse> get(Uri uri, {Map<String, String>? headers}) async {
@@ -34,6 +35,7 @@ class ScriptedNet extends Net {
     Object body, {
     Map<String, String>? headers,
   }) {
+    lastJson = body;
     return get(uri);
   }
 }
@@ -369,6 +371,22 @@ void main() {
     expect(live['minutes'], 11);
     expect(live['seconds'], 660);
     expect(live['traffic'], isTrue);
+    expect(live['mode'], 'DRIVE');
+    final sent = net.lastJson! as Map;
+    expect(sent['travelMode'], 'DRIVE');
+    expect(sent['routingPreference'], 'TRAFFIC_AWARE');
+    final walked = await core.trafficRoute({
+      'originLat': 11.55,
+      'originLng': 104.92,
+      'destLat': 11.57,
+      'destLng': 104.93,
+      'mode': 'WALK',
+    });
+    expect(walked['mode'], 'WALK');
+    expect(walked['traffic'], isFalse);
+    final walkBody = net.lastJson! as Map;
+    expect(walkBody['travelMode'], 'WALK');
+    expect(walkBody.containsKey('routingPreference'), isFalse);
     final bare = AuthCore(config: const AuthConfig());
     expect(
       () => bare.trafficRoute({

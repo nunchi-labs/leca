@@ -199,6 +199,64 @@ class ListedVehicle {
   }
 }
 
+/// A vehicle an owner listed for sale. The price is the one they named.
+class VehicleSale {
+  const VehicleSale({
+    required this.id,
+    required this.kind,
+    required this.title,
+    required this.note,
+    required this.usd,
+    required this.sellerName,
+    required this.sellerPhone,
+    required this.sellerId,
+    this.latitude = 11.5564,
+    this.longitude = 104.9282,
+  });
+
+  final String id;
+
+  /// One of motorcycle, car, tuktuk, remorque.
+  final String kind;
+  final String title;
+  final String note;
+  final double usd;
+  final String sellerName;
+  final String sellerPhone;
+  final String sellerId;
+  final double latitude;
+  final double longitude;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'kind': kind,
+    'title': title,
+    'note': note,
+    'usd': usd,
+    'sellerName': sellerName,
+    'sellerPhone': sellerPhone,
+    'sellerId': sellerId,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
+
+  static VehicleSale? fromJson(Object? raw) {
+    if (raw is! Map || raw['id'] == null || raw['usd'] is! num) return null;
+    return VehicleSale(
+      id: '${raw['id']}',
+      kind: '${raw['kind']}',
+      title: '${raw['title']}',
+      note: '${raw['note'] ?? ''}',
+      usd: (raw['usd'] as num).toDouble(),
+      sellerName: '${raw['sellerName'] ?? ''}',
+      sellerPhone: '${raw['sellerPhone'] ?? ''}',
+      sellerId: '${raw['sellerId'] ?? ''}',
+      latitude: _double(raw['latitude'], 11.5564),
+      longitude: _double(raw['longitude'], 104.9282),
+    );
+  }
+}
+
 /// Opaque [kind] — food, ride, send, or any lawful job string.
 class OperatorJob {
   const OperatorJob({

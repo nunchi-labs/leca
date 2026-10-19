@@ -97,6 +97,7 @@ void main() {
   ) async {
     await _run(TargetPlatform.android, () async {
       await _google(tester);
+      await tester.ensureVisible(find.text('ផ្ញើអ្វីក៏បាន'));
       await tester.tap(find.text('ផ្ញើអ្វីក៏បាន'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('dropoff')), findsOneWidget);
@@ -419,7 +420,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'Calls are data. iroh carries the voice between the two devices.',
+          'Calls are free. iroh on this computer inside Leca carries the voice, so a carrier does not charge.',
         ),
         findsOneWidget,
       );
@@ -435,6 +436,8 @@ void main() {
         reason: 'number was "$card"',
       );
       expect(find.byKey(const Key('phone_call')), findsOneWidget);
+      expect(find.byKey(const Key('phone_free')), findsOneWidget);
+      expect(find.text(r'Free · $0.00 · iroh'), findsOneWidget);
     });
   });
 }

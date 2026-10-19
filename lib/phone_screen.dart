@@ -4,10 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'art.dart';
 import 'auth.dart';
 import 'auth_api.dart';
 import 'l10n/app_localizations.dart';
+import 'market.dart';
 import 'phone.dart';
+import 'reach.dart';
 import 'state.dart';
 
 class PhoneScreen extends StatefulWidget {
@@ -85,6 +88,18 @@ class _PhoneScreenState extends State<PhoneScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
               Text(l10n.phoneData),
+              const SizedBox(height: 8),
+              const SizedBox(
+                height: 120,
+                width: double.infinity,
+                child: LecaArt(scene: LecaScene.call),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${l10n.phoneFree} · ${moneyUsd(irohCallUsd)} · $userComms',
+                key: const Key('phone_free'),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 4),
               Text(
                 l10n.phoneHeadset,

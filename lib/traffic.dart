@@ -68,8 +68,10 @@ Future<RoadRoute?> roadRoute({
   required TripFix from,
   required TripFix to,
   String? token,
+  String mode = 'DRIVE',
 }) async {
   if (!AuthConfig.apiLive) return null;
+  final travel = mode == 'WALK' ? 'WALK' : 'DRIVE';
   try {
     final response = await http
         .post(
@@ -84,7 +86,7 @@ Future<RoadRoute?> roadRoute({
             'originLng': from.longitude,
             'destLat': to.latitude,
             'destLng': to.longitude,
-            'mode': 'DRIVE',
+            'mode': travel,
           }),
         )
         .timeout(const Duration(seconds: 12));

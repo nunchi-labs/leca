@@ -26,6 +26,17 @@ void main() {
     TripLocation.override = null;
   });
 
+  test('two checkouts in the same second get different bill numbers', () {
+    final state = LecaState();
+    addTearDown(state.dispose);
+    final ids = [for (var i = 0; i < 40; i++) state.newOrderId()];
+    expect(ids.toSet(), hasLength(40));
+    for (final id in ids) {
+      expect(id.length, inInclusiveRange(8, 25));
+      expect(id, matches(RegExp(r'^LECA[0-9A-F]{18}$')));
+    }
+  });
+
   test(
     'a second kitchen replaces the cart, and checkout adds the fee',
     () async {
@@ -195,7 +206,7 @@ void main() {
         expect(state.listedPrice(known, sale: false), 3);
         expect(state.listedPrice(unknown, sale: true), 100);
         expect(state.listedPrice(unknown, sale: false), 6);
-        expect(state.newOrderId(), matches(RegExp(r'^LECA\d{8}$')));
+        expect(state.newOrderId(), matches(RegExp(r'^LECA[0-9A-F]{18}$')));
 
         final van = MarketConfig.cambodia.exampleVehicles.firstWhere(
           (offer) => offer.id == 'van6',

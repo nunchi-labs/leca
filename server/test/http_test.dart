@@ -374,6 +374,117 @@ void main() {
     );
     expect(quote.json['hours'], 3);
   });
+
+  test('a ledger line is the signed-in account, in whole cents', () async {
+    expect(ledgerFeeCents(420000), 21000);
+    expect(ledgerFeeCents(125), 6);
+    expect(ledgerFeeCents(9), 0);
+    expect(ledgerFeeCents(10), 1);
+
+    final anon = await _call(
+      port,
+      'POST',
+      '/v1/ledger',
+      json: {
+        'id': 'LECA1019211100ABCD',
+        'kind': 'goods',
+        'from': 'someone-else',
+        'to': 'Honda ADV 350',
+        'cents': 420000,
+        'feeCents': 21000,
+        'tipCents': 0,
+      },
+    );
+    expect(anon.status, 401);
+
+    final created = await _call(
+      port,
+      'POST',
+      '/v1/auth/email/register',
+      json: {
+        'email': 'payer@leca.app',
+        'password': 'correct-horse',
+        'name': 'Payer',
+      },
+    );
+    final token = created.json['token']! as String;
+    final account =
+        (created.json['user']! as Map<String, Object?>)['id']! as String;
+    final line = ledgerEntry(account, {
+      'id': 'LECA1019211100ABCD',
+      'kind': 'goods',
+      'from': 'someone-else',
+      'to': 'Honda ADV 350',
+      'cents': 420000,
+      'feeCents': 21000,
+      'tipCents': 0,
+      'memo': 'sale',
+    });
+    expect(line?['from'], account);
+    expect(line?['to'], 'Honda ADV 350');
+    expect(
+      ledgerEntry(account, {
+        'id': 'LECA1019211100ABCD',
+        'kind': 'goods',
+        'to': 'Honda ADV 350',
+        'cents': 10.5,
+        'feeCents': 1,
+        'tipCents': 0,
+      }),
+      isNull,
+    );
+    expect(
+      ledgerEntry(account, {
+        'id': 'LECA1019211100ABCD',
+        'kind': 'goods',
+        'to': 'Honda ADV 350',
+        'cents': 100,
+        'feeCents': 0,
+        'tipCents': 0,
+      }),
+      isNull,
+    );
+    expect(
+      ledgerEntry(account, {
+        'id': 'not a bill',
+        'kind': 'goods',
+        'to': 'Honda ADV 350',
+        'cents': 100,
+        'feeCents': ledgerFeeCents(100),
+        'tipCents': 0,
+      }),
+      isNull,
+    );
+    expect(
+      ledgerEntry(account, {
+        'id': 'LECA1019211100ABCD',
+        'kind': 'goods',
+        'to': 'Honda ADV 350',
+        'cents': ledgerMaxCents,
+        'feeCents': ledgerFeeCents(ledgerMaxCents),
+        'tipCents': 0,
+      }),
+      isNull,
+    );
+
+    final fraction = await _call(
+      port,
+      'POST',
+      '/v1/ledger',
+      token: token,
+      json: {
+        'id': 'LECA1019211100ABCD',
+        'kind': 'goods',
+        'from': 'someone-else',
+        'to': 'Honda ADV 350',
+        'cents': 10.5,
+        'feeCents': 1,
+        'tipCents': 0,
+      },
+    );
+    expect(fraction.status, 400);
+    expect(fraction.json['error'], 'ledger_invalid');
+  });
 }
 
 class _Reply {

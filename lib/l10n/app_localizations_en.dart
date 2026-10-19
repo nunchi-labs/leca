@@ -964,7 +964,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get talkIroh =>
-      'Chat and prices ride an iroh swarm. Web, iPhone, Mac, and Windows are on it together. This device\'s key is how the others reach you.';
+      'People reach each other through iroh. Chat, voice, and video stay on that link. This device\'s key is how the others reach you.';
 
   @override
   String get talkWith => 'Talk';
@@ -1063,7 +1063,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get phoneData =>
-      'Calls are data. iroh carries the voice between the two devices.';
+      'Calls are free. iroh on this computer inside Leca carries the voice, so a carrier does not charge.';
 
   @override
   String get phoneYourNumber => 'Your number';
@@ -1179,4 +1179,94 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatHiddenBody => 'You are not in this chat.';
+
+  @override
+  String get serviceSale => 'For sale';
+
+  @override
+  String get saleTitle => 'Vehicles for sale';
+
+  @override
+  String get saleBody =>
+      'Motorcycles, cars, tuk-tuks, and remorques an owner listed. Leca does not own them. The listed price is what gets charged.';
+
+  @override
+  String get saleKindAll => 'All';
+
+  @override
+  String get saleKindMotorcycle => 'Motorcycle';
+
+  @override
+  String get saleKindCar => 'Car';
+
+  @override
+  String get saleKindTuktuk => 'Tuk-tuk';
+
+  @override
+  String get saleKindRemorque => 'Remorque';
+
+  @override
+  String get sellVehicle => 'Sell a vehicle';
+
+  @override
+  String get saleTitleLabel => 'Vehicle';
+
+  @override
+  String get saleTitleHint => 'Honda ADV 350';
+
+  @override
+  String get saleNoteHint => 'ម៉ូតូ Honda ADV 350';
+
+  @override
+  String get saleEmpty => 'Nothing for sale in this radius.';
+
+  @override
+  String get saleKindInvalid =>
+      'Choose a motorcycle, car, tuk-tuk, or remorque.';
+
+  @override
+  String get saleInvalid => 'Name the vehicle and enter a price.';
+
+  @override
+  String get buyVehicle => 'Buy';
+
+  @override
+  String get removeSale => 'Remove listing';
+
+  @override
+  String get serviceLink => 'Mobile & net';
+
+  @override
+  String get serviceTravel => 'Bus & air';
+
+  @override
+  String get serviceTrade => 'Anywhere';
+
+  @override
+  String get serviceCharter => 'Khmer app';
+
+  @override
+  String get serviceCare => 'Emergency';
+
+  @override
+  String get phoneFree => 'Free';
+
+  @override
+  String get openShopNow => 'Open a shop now';
+
+  @override
+  String get openShopHint =>
+      'One tap opens a shop. Add a name if you want a different one. Kind stays shop until you change it.';
+
+  @override
+  String get bulkOne => 'One';
+
+  @override
+  String get bulkMany => 'Many at once';
+
+  @override
+  String get serviceMap => 'Map';
+
+  @override
+  String get ledgerFailed => 'This payment was not recorded. Try again.';
 }

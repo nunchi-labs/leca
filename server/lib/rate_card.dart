@@ -95,6 +95,7 @@ class RateCard {
       'remorque': 140,
       'car': 180,
       'van6': 220,
+      'ambulance': 220,
     },
   );
 
@@ -227,7 +228,7 @@ class RateCard {
         k == 'tuktuk' || k == 'tuk' || k == 'remorque' || k == 'tricycle';
     final moto =
         k == 'motorcycle' || k == 'motorbike' || k == 'moto' || trailer;
-    final light = k == 'car' || k == 'van6' || k == 'van';
+    final light = k == 'car' || k == 'van6' || k == 'van' || k == 'ambulance';
     if (inTown) {
       if (light && !moto && !tri) return 40;
       return 30;

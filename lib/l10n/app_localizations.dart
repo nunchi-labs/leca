@@ -1859,7 +1859,7 @@ abstract class AppLocalizations {
   /// No description provided for @talkIroh.
   ///
   /// In km, this message translates to:
-  /// **'ការជជែក និងតម្លៃជិះលើហ្វូង iroh។ វេប អាយហ្វូន ម៉ាក និងវីនដូនៅលើហ្វូងតែមួយ។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។'**
+  /// **'អ្នកប្រើទាក់ទងគ្នាតាម iroh។ ការជជែក សំឡេង និងវីដេអូនៅលើតំណនោះ។ សោឧបករណ៍នេះជាអាសយដ្ឋានដែលអ្នកដទៃប្រើ។'**
   String get talkIroh;
 
   /// No description provided for @talkWith.
@@ -2015,7 +2015,7 @@ abstract class AppLocalizations {
   /// No description provided for @phoneData.
   ///
   /// In km, this message translates to:
-  /// **'ការហៅជាទិន្នន័យ។ iroh ដឹកសំឡេងរវាងឧបករណ៍ទាំងពីរ។'**
+  /// **'ការហៅឥតគិតថ្លៃ។ កុំព្យូទ័រ iroh ក្នុង Leca ដឹកសំឡេង ដូច្នេះគ្មានថ្លៃបណ្តាញ។'**
   String get phoneData;
 
   /// No description provided for @phoneYourNumber.
@@ -2233,6 +2233,180 @@ abstract class AppLocalizations {
   /// In km, this message translates to:
   /// **'អ្នកមិននៅក្នុងការជជែកនេះទេ។'**
   String get chatHiddenBody;
+
+  /// No description provided for @serviceSale.
+  ///
+  /// In km, this message translates to:
+  /// **'លក់យាន'**
+  String get serviceSale;
+
+  /// No description provided for @saleTitle.
+  ///
+  /// In km, this message translates to:
+  /// **'យានលក់'**
+  String get saleTitle;
+
+  /// No description provided for @saleBody.
+  ///
+  /// In km, this message translates to:
+  /// **'ម៉ូតូ ឡាន ទូកទូក និងរ៉ឺម៉ក ដែលម្ចាស់ដាក់ឯង។ Leca មិនកាន់កាប់យានទេ។ តម្លៃដែលដាក់ គឺតម្លៃដែលត្រូវបង់។'**
+  String get saleBody;
+
+  /// No description provided for @saleKindAll.
+  ///
+  /// In km, this message translates to:
+  /// **'ទាំងអស់'**
+  String get saleKindAll;
+
+  /// No description provided for @saleKindMotorcycle.
+  ///
+  /// In km, this message translates to:
+  /// **'ម៉ូតូ'**
+  String get saleKindMotorcycle;
+
+  /// No description provided for @saleKindCar.
+  ///
+  /// In km, this message translates to:
+  /// **'ឡាន'**
+  String get saleKindCar;
+
+  /// No description provided for @saleKindTuktuk.
+  ///
+  /// In km, this message translates to:
+  /// **'ទូកទូក'**
+  String get saleKindTuktuk;
+
+  /// No description provided for @saleKindRemorque.
+  ///
+  /// In km, this message translates to:
+  /// **'រ៉ឺម៉ក'**
+  String get saleKindRemorque;
+
+  /// No description provided for @sellVehicle.
+  ///
+  /// In km, this message translates to:
+  /// **'លក់យាន'**
+  String get sellVehicle;
+
+  /// No description provided for @saleTitleLabel.
+  ///
+  /// In km, this message translates to:
+  /// **'យាន'**
+  String get saleTitleLabel;
+
+  /// No description provided for @saleTitleHint.
+  ///
+  /// In km, this message translates to:
+  /// **'Honda ADV 350'**
+  String get saleTitleHint;
+
+  /// No description provided for @saleNoteHint.
+  ///
+  /// In km, this message translates to:
+  /// **'ម៉ូតូ Honda ADV 350'**
+  String get saleNoteHint;
+
+  /// No description provided for @saleEmpty.
+  ///
+  /// In km, this message translates to:
+  /// **'មិនមានយានលក់ក្នុងរង្វង់នេះ។'**
+  String get saleEmpty;
+
+  /// No description provided for @saleKindInvalid.
+  ///
+  /// In km, this message translates to:
+  /// **'ជ្រើសម៉ូតូ ឡាន ទូកទូក ឬរ៉ឺម៉ក។'**
+  String get saleKindInvalid;
+
+  /// No description provided for @saleInvalid.
+  ///
+  /// In km, this message translates to:
+  /// **'បញ្ចូលឈ្មោះយាន និងតម្លៃ។'**
+  String get saleInvalid;
+
+  /// No description provided for @buyVehicle.
+  ///
+  /// In km, this message translates to:
+  /// **'ទិញ'**
+  String get buyVehicle;
+
+  /// No description provided for @removeSale.
+  ///
+  /// In km, this message translates to:
+  /// **'ដកការលក់'**
+  String get removeSale;
+
+  /// No description provided for @serviceLink.
+  ///
+  /// In km, this message translates to:
+  /// **'ទូរស័ព្ទ និងបណ្តាញ'**
+  String get serviceLink;
+
+  /// No description provided for @serviceTravel.
+  ///
+  /// In km, this message translates to:
+  /// **'ឡានក្រុង និងយន្តហោះ'**
+  String get serviceTravel;
+
+  /// No description provided for @serviceTrade.
+  ///
+  /// In km, this message translates to:
+  /// **'គ្រប់ទីកន្លែង'**
+  String get serviceTrade;
+
+  /// No description provided for @serviceCharter.
+  ///
+  /// In km, this message translates to:
+  /// **'កម្មវិធីខ្មែរ'**
+  String get serviceCharter;
+
+  /// No description provided for @serviceCare.
+  ///
+  /// In km, this message translates to:
+  /// **'សង្គ្រោះបន្ទាន់'**
+  String get serviceCare;
+
+  /// No description provided for @phoneFree.
+  ///
+  /// In km, this message translates to:
+  /// **'ឥតគិតថ្លៃ'**
+  String get phoneFree;
+
+  /// No description provided for @openShopNow.
+  ///
+  /// In km, this message translates to:
+  /// **'បើកហាងឥឡូវ'**
+  String get openShopNow;
+
+  /// No description provided for @openShopHint.
+  ///
+  /// In km, this message translates to:
+  /// **'ចុចម្តងបើកហាង។ ដាក់ឈ្មោះបើចង់ឈ្មោះផ្សេង។ ប្រភេទនៅហាង រហូតដល់អ្នកប្តូរ។'**
+  String get openShopHint;
+
+  /// No description provided for @bulkOne.
+  ///
+  /// In km, this message translates to:
+  /// **'មួយ'**
+  String get bulkOne;
+
+  /// No description provided for @bulkMany.
+  ///
+  /// In km, this message translates to:
+  /// **'ច្រើនក្នុងពេលតែមួយ'**
+  String get bulkMany;
+
+  /// No description provided for @serviceMap.
+  ///
+  /// In km, this message translates to:
+  /// **'ផែនទី'**
+  String get serviceMap;
+
+  /// No description provided for @ledgerFailed.
+  ///
+  /// In km, this message translates to:
+  /// **'ការទូទាត់នេះមិនទាន់ចុះក្នុងសៀវភៅទេ។ សូមព្យាយាមម្តងទៀត។'**
+  String get ledgerFailed;
 }
 
 class _AppLocalizationsDelegate

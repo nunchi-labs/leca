@@ -38,6 +38,18 @@ class CambodiaRules {
     return k == 'tuktuk' || k == 'tuk' || k == 'remorque' || k == 'tricycle';
   }
 
+  /// Kinds a person can list for sale. A tuk-tuk and a remorque stay apart.
+  static const saleKinds = ['motorcycle', 'car', 'tuktuk', 'remorque'];
+
+  static String? saleKind(String kind) {
+    final k = normKind(kind);
+    if (isMotorcycle(kind)) return 'motorcycle';
+    if (k == 'car' || k == 'auto' || k == 'automobile') return 'car';
+    if (k == 'tuktuk' || k == 'tuk') return 'tuktuk';
+    if (k == 'remorque') return 'remorque';
+    return null;
+  }
+
   static bool isMotorcycleWithTrailer(String kind) {
     final k = normKind(kind);
     return (k.contains('motorcycle') && k.contains('trailer')) ||
@@ -289,5 +301,13 @@ const samplePartners = <RidePartner>[
     plate: '—',
     staffId: 'LECA-KH-4410',
     vehicleKind: 'bicycle',
+  ),
+  RidePartner(
+    id: 'p_ambulance',
+    nameKm: 'សុភា គង់',
+    nameEn: 'Sophea Kong',
+    plate: '2D-1190',
+    staffId: 'LECA-KH-1190',
+    vehicleKind: 'ambulance',
   ),
 ];

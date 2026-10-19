@@ -3,14 +3,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'account.dart';
+import 'art.dart';
 import 'book.dart';
 import 'catalog.dart';
 import 'device.dart';
 import 'l10n/app_localizations.dart';
+import 'map_screen.dart';
 import 'market.dart';
 import 'pay.dart';
 import 'phone_screen.dart';
+import 'reach.dart';
+import 'reach_screen.dart';
 import 'restaurant.dart';
+import 'sale.dart';
 import 'shop.dart';
 import 'state.dart';
 import 'swarm.dart';
@@ -112,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 _ServiceRow(l10n: l10n),
+                const _SuperRail(),
                 Expanded(
                   child: FutureBuilder<List<Kitchen>>(
                     future: _future,
@@ -143,6 +149,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       return ListView(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                         children: [
+                          const _CharterBanner(),
+                          const SizedBox(height: 12),
                           Text(
                             l10n.tagline,
                             style: Theme.of(context).textTheme.titleMedium,
@@ -402,6 +410,9 @@ class _DeskHome extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _ServiceRow(l10n: l10n),
+                const _SuperRail(),
+                const SizedBox(height: 12),
+                const _CharterBanner(),
                 const SizedBox(height: 12),
                 FutureBuilder<List<Kitchen>>(
                   future: future,
@@ -469,6 +480,153 @@ class _DeskHome extends StatelessWidget {
   }
 }
 
+class _SuperRail extends StatelessWidget {
+  const _SuperRail();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 118,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _Door(
+            scene: LecaScene.care,
+            km: 'សង្គ្រោះ',
+            en: 'Care',
+            page: CareScreen(),
+          ),
+          SizedBox(width: 8),
+          _Door(
+            scene: LecaScene.fiber,
+            km: 'បណ្តាញ',
+            en: 'Link',
+            page: LinkScreen(),
+          ),
+          SizedBox(width: 8),
+          _Door(
+            scene: LecaScene.bus,
+            km: 'ធ្វើដំណើរ',
+            en: 'Travel',
+            page: TravelScreen(),
+          ),
+          SizedBox(width: 8),
+          _Door(
+            scene: LecaScene.market,
+            km: 'ទិញ',
+            en: 'Trade',
+            page: TradeScreen(),
+          ),
+          SizedBox(width: 8),
+          _Door(
+            scene: LecaScene.seal,
+            km: 'ខ្មែរ',
+            en: 'Charter',
+            page: CharterScreen(),
+          ),
+          SizedBox(width: 8),
+          _Door(
+            scene: LecaScene.map,
+            km: 'ផែនទី',
+            en: 'Map',
+            page: MapScreen(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Door extends StatelessWidget {
+  const _Door({
+    required this.scene,
+    required this.km,
+    required this.en,
+    required this.page,
+  });
+
+  final LecaScene scene;
+  final String km;
+  final String en;
+  final Widget page;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 96,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute<void>(builder: (_) => page));
+        },
+        child: Column(
+          children: [
+            const SizedBox(height: 4),
+            SizedBox(
+              height: 72,
+              width: 88,
+              child: LecaArt(scene: scene, radius: 12),
+            ),
+            const SizedBox(height: 4),
+            Text(pick(context, km, en), maxLines: 1),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CharterBanner extends StatelessWidget {
+  const _CharterBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        key: const Key('open_charter'),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const CharterScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              const SizedBox(
+                width: 72,
+                height: 72,
+                child: LecaArt(scene: LecaScene.seal, radius: 36),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pick(context, 'បានអនុញ្ញាត', 'Cleared'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFB42318),
+                        fontSize: 18,
+                      ),
+                    ),
+                    Text(
+                      pick(context, 'កម្មវិធីទំនើបខ្មែរ', 'The Khmer superapp'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 String _radiusText(AppLocalizations l10n, LecaState state) {
   if (state.wholeCountry) return l10n.radiusCountry;
   return l10n.radiusLabel(state.radiusKm.round());
@@ -493,7 +651,16 @@ class _Header extends StatelessWidget {
               color: const Color(0xFFB42318),
             ),
           ),
-          const SizedBox(width: 12),
+          IconButton(
+            key: const Key('service_care'),
+            tooltip: l10n.serviceCare,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const CareScreen()),
+              );
+            },
+            icon: const Icon(Icons.local_hospital, color: Color(0xFFB42318)),
+          ),
           const Spacer(),
           TextButton(
             onPressed: state.toggleLocale,
@@ -606,11 +773,61 @@ class _ServiceRow extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             _ServiceChip(
+              key: const Key('service_sale'),
+              label: l10n.serviceSale,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const VehicleSaleScreen(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _ServiceChip(
               label: l10n.serviceSend,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const BookScreen(kind: BookKind.send),
                 ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _ServiceChip(
+              key: const Key('service_link'),
+              label: l10n.serviceLink,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const LinkScreen()),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _ServiceChip(
+              key: const Key('service_travel'),
+              label: l10n.serviceTravel,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const TravelScreen()),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _ServiceChip(
+              key: const Key('service_trade'),
+              label: l10n.serviceTrade,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const TradeScreen()),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _ServiceChip(
+              key: const Key('service_charter'),
+              label: l10n.serviceCharter,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const CharterScreen()),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _ServiceChip(
+              key: const Key('service_map'),
+              label: l10n.serviceMap,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const MapScreen()),
               ),
             ),
           ],
@@ -780,10 +997,22 @@ class KitchenTile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: const Color(0xFFB42318),
-                foregroundColor: Colors.white,
-                child: Text(_initial(kitchen.nameFor(lang))),
+              SizedBox(
+                width: 52,
+                height: 52,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const LecaArt(scene: LecaScene.bowl, radius: 26),
+                    Text(
+                      _initial(kitchen.nameFor(lang)),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

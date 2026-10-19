@@ -313,7 +313,8 @@ build_windows_local() {
   LECA_SRC="$ROOT" \
     LECA_FLUTTER_REF="$(flutter_ref)" \
     LECA_AUTH_API="${LECA_AUTH_API:-https://gno.money}" \
-    "$ROOT/scripts/win-x64.sh"
+    "$ROOT/scripts/win-x64.sh" || return 1
+  [[ -f $ROOT/build/windows/x64/runner/Release/leca.exe ]] || return 1
   pack_dir "$ROOT/build/windows/x64/runner/Release" "$ROOT/dist/Leca-windows-x64.zip"
   echo "build: Leca-windows-x64.zip"
 }

@@ -276,11 +276,15 @@ using_installer() {
 sync_and_build() {
   say "syncing the project into the guest"
   guest "cmd /c mkdir C:\\leca\\src" >/dev/null 2>&1 || true
+  # ephemeral/ holds symlinks into the Linux pub cache. Copying them
+  # leaves Windows CMake with plugin folders that are not directories.
   tar -C "$src" -czf - \
     --exclude build \
     --exclude .dart_tool \
     --exclude .git \
     --exclude qemu/.cache \
+    --exclude ledger/target \
+    --exclude '**/ephemeral' \
     --exclude '._*' \
     --exclude .DS_Store \
     . | guest "tar -xzf - -C C:/leca/src"
@@ -288,8 +292,18 @@ sync_and_build() {
   # exits before flutter runs, so Windows reports that flutter is missing.
   say "flutter build windows"
   guest 'rmdir /s /q C:\leca\src\build\windows' || true
-  local api="${LECA_AUTH_API:-https://gno.money}"
-  guest "cd /d C:\\leca\\src && C:\\flutter\\bin\\flutter.bat build windows --release --dart-define=AUTH_API=${api}"
+  guest 'del /f /q C:\leca\src\build\windows\x64\runner\Release\leca.exe' || true
+  local api="${LECA_AUTH_API:-https://gno.money}" log
+  log="$(mktemp)"
+  # flutter.bat often exits 0 after a failed compile. The marker is printed
+  # only when leca.exe is actually on disk.
+  guest "set LECA_AUTH_API=${api}&& cmd /c C:\\leca\\src\\scripts\\win-x64\\build-guest.bat" | tee "$log"
+  if ! grep -q LECA_WIN_OK "$log"; then
+    rm -f "$log"
+    echo "win-x64: flutter build windows failed" >&2
+    exit 1
+  fi
+  rm -f "$log"
   mkdir -p "$src/build/windows"
   guest "tar -C C:/leca/src/build/windows -czf - x64" | tar -xzf - -C "$src/build/windows"
   [[ -f $src/build/windows/x64/runner/Release/leca.exe ]] || {
@@ -310,6 +324,12 @@ reboot_disk() {
   done
   echo "win-x64: guest did not come back after reboot" >&2
   exit 1
+}
+
+# CMake 3.31 cannot configure the resource compiler when its path contains
+# spaces. Point C:\WinKits at the SDK so rc.exe has no spaces in the path.
+link_windows_kits() {
+  guest 'cmd /c if not exist C:\WinKits mklink /J C:\WinKits "C:\Program Files (x86)\Windows Kits"' >/dev/null 2>&1 || true
 }
 
 enable_guest_build() {
@@ -355,6 +375,7 @@ if ! windows_ready; then
 fi
 : >"$cache/installed"
 enable_guest_build
+link_windows_kits
 if ! vm_mem_matches; then
   reboot_disk "rebooting the guest with ${mem} of RAM"
   wait_ready
