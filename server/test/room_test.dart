@@ -138,71 +138,74 @@ void main() {
     expect((said['entry']! as Map<String, Object?>)['name'], 'Bo');
   });
 
-  test('a swarm frame reaches the other person, with its id on the say', () async {
-    final hub = TalkHub(
-      resolve: (token) => switch (token) {
-        'ada' => (id: 'phone:1', name: 'Ada'),
-        'bo' => (id: 'email:bo', name: 'Bo'),
-        _ => null,
-      },
-    );
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    server.listen((request) async {
-      if (WebSocketTransformer.isUpgradeRequest(request) &&
-          request.uri.path == '/v1/room') {
-        hub.attach(await WebSocketTransformer.upgrade(request));
-      }
-    });
-    addTearDown(server.close);
-    Future<WebSocket> open() =>
-        WebSocket.connect('ws://127.0.0.1:${server.port}/v1/room');
+  test(
+    'a swarm frame reaches the other person, with its id on the say',
+    () async {
+      final hub = TalkHub(
+        resolve: (token) => switch (token) {
+          'ada' => (id: 'phone:1', name: 'Ada'),
+          'bo' => (id: 'email:bo', name: 'Bo'),
+          _ => null,
+        },
+      );
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      server.listen((request) async {
+        if (WebSocketTransformer.isUpgradeRequest(request) &&
+            request.uri.path == '/v1/room') {
+          hub.attach(await WebSocketTransformer.upgrade(request));
+        }
+      });
+      addTearDown(server.close);
+      Future<WebSocket> open() =>
+          WebSocket.connect('ws://127.0.0.1:${server.port}/v1/room');
 
-    final ada = await open();
-    final bo = await open();
-    addTearDown(() async {
-      await ada.close();
-      await bo.close();
-    });
-    final adaIn = _Inbox(ada);
-    final boIn = _Inbox(bo);
-    ada.add(
-      jsonEncode({
-        'type': 'join',
-        'room': 'front',
-        'name': 'Ada',
-        'token': 'ada',
-        'lat': 11.5564,
-        'lng': 104.9282,
-        'radius': 10,
-        'face': 'anon',
-      }),
-    );
-    await adaIn.nextWhere((m) => m['type'] == 'welcome');
-    bo.add(
-      jsonEncode({
-        'type': 'join',
-        'room': 'front',
-        'name': 'Bo',
-        'token': 'bo',
-        'lat': 11.5564,
-        'lng': 104.9282,
-        'radius': 10,
-        'face': 'name',
-      }),
-    );
-    await boIn.nextWhere((m) => m['type'] == 'welcome');
+      final ada = await open();
+      final bo = await open();
+      addTearDown(() async {
+        await ada.close();
+        await bo.close();
+      });
+      final adaIn = _Inbox(ada);
+      final boIn = _Inbox(bo);
+      ada.add(
+        jsonEncode({
+          'type': 'join',
+          'room': 'front',
+          'name': 'Ada',
+          'token': 'ada',
+          'lat': 11.5564,
+          'lng': 104.9282,
+          'radius': 10,
+          'face': 'anon',
+        }),
+      );
+      await adaIn.nextWhere((m) => m['type'] == 'welcome');
+      bo.add(
+        jsonEncode({
+          'type': 'join',
+          'room': 'front',
+          'name': 'Bo',
+          'token': 'bo',
+          'lat': 11.5564,
+          'lng': 104.9282,
+          'radius': 10,
+          'face': 'name',
+        }),
+      );
+      await boIn.nextWhere((m) => m['type'] == 'welcome');
 
-    const frame =
-        '{"topic":"front","kind":"text","text":"noodles","from":"ada","id":"abc"}';
-    ada.add(jsonEncode({'type': 'swarm', 'frame': frame}));
-    final relayed = await boIn.nextWhere((m) => m['type'] == 'swarm');
-    expect(relayed['frame'], frame);
+      const frame =
+          '{"topic":"front","kind":"text","text":"noodles","from":"ada","id":"abc"}';
+      ada.add(jsonEncode({'type': 'swarm', 'frame': frame}));
+      final relayed = await boIn.nextWhere((m) => m['type'] == 'swarm');
+      expect(relayed['frame'], frame);
 
-    ada.add(jsonEncode({'type': 'say', 'text': 'noodles', 'id': 'abc'}));
-    final entry = await adaIn.nextWhere((m) => m['type'] == 'entry');
-    expect(entry['id'], 'abc');
-    expect((entry['entry']! as Map<String, Object?>)['text'], 'noodles');
-  });
+      ada.add(jsonEncode({'type': 'say', 'text': 'noodles', 'id': 'abc'}));
+      final entry = await adaIn.nextWhere((m) => m['type'] == 'entry');
+      expect(entry['id'], 'abc');
+      expect((entry['entry']! as Map<String, Object?>)['text'], 'noodles');
+    },
+  );
 
   test(
     'front chat shows distance, a name, or nobody outside the radius',

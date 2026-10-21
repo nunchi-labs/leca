@@ -102,7 +102,21 @@ case "$check" in
     install_caddy
     add_github_path "$bindir"
     ;;
-  systemd) apt_install systemd ;;
+  systemd)
+    if ! command -v systemd-analyze >/dev/null 2>&1; then
+      # A sandbox with no init rejects systemd's postinst. The binary is enough.
+      sudo apt-get update
+      if [[ ! -x /usr/sbin/policy-rc.d ]]; then
+        printf '%s\n' '#!/bin/sh' 'exit 101' | sudo tee /usr/sbin/policy-rc.d >/dev/null
+        sudo chmod +x /usr/sbin/policy-rc.d
+      fi
+      sudo apt-get install -y --no-install-recommends systemd || true
+    fi
+    if ! command -v systemd-analyze >/dev/null 2>&1; then
+      echo "systemd-analyze is not installed" >&2
+      exit 1
+    fi
+    ;;
   cppcheck) apt_install cppcheck ;;
   cmakelint)
     apt_install python3 python3-venv ca-certificates

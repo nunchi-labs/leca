@@ -89,6 +89,7 @@ run_systemd() {
   if systemd_out="$(systemd-analyze verify host/leca-auth.service 2>&1)"; then
     return 0
   fi
+  # The unit names paths that exist on the server, not on a CI runner.
   filtered="$(
     printf '%s\n' "$systemd_out" \
       | grep -v \
@@ -96,6 +97,9 @@ run_systemd() {
         -e 'Failed to connect to .*bus' \
         -e 'System has not been booted with systemd' \
         -e 'Host and machine IDs are not initialized' \
+        -e 'WorkingDirectory=.*does not exist' \
+        -e 'leca-auth.env' \
+        -e '/root/leca/server' \
       || true
   )"
   if [[ -n $filtered ]]; then

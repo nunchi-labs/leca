@@ -280,9 +280,9 @@ void main() {
       jsonEncode({'phone': '012345678', 'code': startBody['devCode']}),
     );
     final verifyResponse = await verify.close();
-    final session = jsonDecode(
-      await utf8.decoder.bind(verifyResponse).join(),
-    ) as Map<String, Object?>;
+    final session =
+        jsonDecode(await utf8.decoder.bind(verifyResponse).join())
+            as Map<String, Object?>;
     expect(verifyResponse.statusCode, 200);
     expect(session['token'], isNotEmpty);
   });
@@ -355,7 +355,8 @@ void main() {
 
   test('traffic route reports the jam, not the empty-road time', () async {
     final net = ScriptedNet({
-      'routes.googleapis.com/directions/v2:computeRoutes': '{"routes":[{"duration":"660s","staticDuration":"420s","distanceMeters":3100}]}',
+      'routes.googleapis.com/directions/v2:computeRoutes':
+          '{"routes":[{"duration":"660s","staticDuration":"420s","distanceMeters":3100}]}',
     });
     final core = AuthCore(
       config: const AuthConfig(googleMapsKey: 'test-key'),
