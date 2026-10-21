@@ -192,6 +192,7 @@ fn with_journal<T>(
     }
     let mut file = OpenOptions::new()
         .create(true)
+        .truncate(false)
         .read(true)
         .write(true)
         .open(path)
@@ -350,15 +351,9 @@ mod tests {
         let changed = entry_json("LECA1019211100ABCDEF", 250);
         let other = entry_json("LECA1019211101ABCDEF", 250);
         let lines = vec![first];
-        assert_eq!(
-            admission(&lines, &again, "LECA1019211100ABCDEF").unwrap(),
-            true
-        );
+        assert!(admission(&lines, &again, "LECA1019211100ABCDEF").unwrap());
         assert!(admission(&lines, &changed, "LECA1019211100ABCDEF").is_err());
-        assert_eq!(
-            admission(&lines, &other, "LECA1019211101ABCDEF").unwrap(),
-            false
-        );
+        assert!(!admission(&lines, &other, "LECA1019211101ABCDEF").unwrap());
     }
 
     #[test]

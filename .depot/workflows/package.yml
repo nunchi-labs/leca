@@ -86,8 +86,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y zip unzip
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust
         if: matrix.target != 'web'
+        run: bash scripts/ci/ensure-rust.sh "package-${{ matrix.target }}"
       - name: Flutter SDK
         run: bash scripts/ci/ensure-flutter.sh "${{ matrix.target }}" "${{ matrix.precache }}"
       - run: ./build.sh ${{ matrix.target }}

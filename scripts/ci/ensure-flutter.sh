@@ -1,25 +1,20 @@
 #!/usr/bin/env bash
-# One Flutter SDK per job, on the Depot cache disk.
+# One Flutter SDK per job.
 #
 # Pointer: jobs must not share a slot. precache writes the SDK directory,
-# and parallel writers corrupt it. GitHub's flutter-action step was 25s on
-# the app job and 2m 8s for the ARM Windows checkout (CI run 39159848342).
-# The disk keeps the clone. The first run of each slot still pays for it.
+# and parallel writers corrupt it.
 #
 # Usage: ensure-flutter.sh <slot> <precache>
 #   precache is "host", or a flutter precache flag without the dashes
-#   (linux, android, web).
+#   (linux, android, web, macos, ios, windows).
 set -euo pipefail
 
 slot="${1:?slot}"
 precache="${2:?precache}"
 version="${FLUTTER_VERSION:-3.47.5}"
-sdk="/mnt/cache/flutter/${slot}/sdk"
-
-[[ -d /mnt/cache ]] || {
-  echo "ci: /mnt/cache is not mounted. The job mounts leca-ci-cache there." >&2
-  exit 1
-}
+# shellcheck disable=SC1091
+source "$(dirname "$0")/cache-root.sh"
+sdk="$LECA_CACHE/flutter/${slot}/sdk"
 
 got=""
 if [[ -x $sdk/bin/flutter ]]; then
@@ -38,4 +33,8 @@ if [[ $got != "$version" ]]; then
   fi
 fi
 
-echo "$sdk/bin" >> "${GITHUB_PATH:?}"
+add_github_path "$sdk/bin"
+if [[ -z ${PUB_CACHE:-} ]]; then
+  mkdir -p "$LECA_CACHE/pub/$slot"
+  add_github_env PUB_CACHE "$LECA_CACHE/pub/$slot"
+fi

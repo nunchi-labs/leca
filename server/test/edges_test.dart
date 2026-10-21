@@ -425,7 +425,12 @@ void main() {
       addTearDown(fresh.close);
       final freshIn = _Inbox(fresh);
       fresh.add(
-        jsonEncode({'type': 'join', 'room': '', 'name': 'Cy', 'token': 'guest'}),
+        jsonEncode({
+          'type': 'join',
+          'room': '',
+          'name': 'Cy',
+          'token': 'guest',
+        }),
       );
       final lobby = await freshIn.nextWhere((m) => m['type'] == 'welcome');
       final lobbyLog = lobby['log']! as List;

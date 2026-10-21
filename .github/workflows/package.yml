@@ -1,0 +1,112 @@
+name: Package
+
+# Every target a GitHub runner can compile. Depot's package workflow is
+# the Linux subset (Android, Linux, web) on larger Depot runners.
+# macOS, iOS, and both Windows builds run here.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+  LECA_AUTH_API: https://gno.money
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+
+jobs:
+  package:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: android
+            runner: ubuntu-latest
+            precache: android
+            rust_targets: ""
+          - target: linux-x64
+            runner: ubuntu-latest
+            precache: linux
+            rust_targets: ""
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+            precache: linux
+            rust_targets: ""
+          - target: web
+            runner: ubuntu-latest
+            precache: web
+            rust_targets: ""
+          - target: macos
+            runner: macos-latest
+            precache: macos
+            rust_targets: ""
+          - target: ios
+            runner: macos-latest
+            precache: ios
+            rust_targets: aarch64-apple-ios
+          - target: windows-x64
+            runner: windows-latest
+            precache: windows
+            rust_targets: ""
+          - target: windows-arm64
+            runner: windows-11-arm
+            precache: windows
+            rust_targets: ""
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Gradle cache
+        run: |
+          gradle="${RUNNER_TEMP}/leca-cache/gradle/${{ matrix.target }}"
+          mkdir -p "$gradle"
+          if command -v cygpath >/dev/null; then
+            gradle="$(cygpath -w "$gradle")"
+          fi
+          echo "GRADLE_USER_HOME=${gradle}" >> "$GITHUB_ENV"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: package-${{ matrix.target }}-${{ runner.os }}-${{ runner.arch }}-flutter-${{ env.FLUTTER_VERSION }}
+      - uses: actions/setup-java@v4
+        if: matrix.target == 'android'
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Linux libraries
+        if: matrix.precache == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev zip unzip
+      - name: Zip
+        if: matrix.target == 'web'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip unzip
+      - name: Rust
+        if: matrix.target != 'web'
+        run: bash scripts/ci/ensure-rust.sh "package-${{ matrix.target }}"
+        env:
+          RUSTUP_TARGETS: ${{ matrix.rust_targets }}
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh "${{ matrix.target }}" "${{ matrix.precache }}"
+      - run: ./build.sh ${{ matrix.target }}
+      - name: Stage packages
+        run: |
+          mkdir -p packages
+          cp -a dist/. packages/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Leca-${{ matrix.target }}-${{ github.ref_name }}
+          path: packages/
+          if-no-files-found: error

@@ -1,13 +1,12 @@
 name: CI
 
 # Origin runs this file. Depot reads .depot/workflows, not .github/workflows.
-# Connect the Depot app on the repository's Apps tab once. A GitHub mirror
-# does not send these events: Origin has to be the source of truth.
+# The GitHub mirror runs .github/workflows, which is also what CodeQL's
+# Actions analysis reads. Keep the two trees the same shape.
 #
-# Pull requests run tests only. A push to main also builds Android, Linux,
-# and web. The whole GitHub workflow was 16m 46s, and the long pole was the
-# macOS package (14m 13s) sitting next to Android (13m 56s). macOS is not
-# on Depot, so the main-branch clock here is the Android job.
+# Pull requests run the test grid. A push to main also packages Android,
+# Linux, and web, in parallel with the tests. macOS, iOS, and Windows are
+# in the GitHub workflow: Depot sandboxes are Linux.
 
 on:
   pull_request:
@@ -27,6 +26,5 @@ jobs:
     uses: ./.depot/workflows/test.yml
 
   package:
-    needs: test
     if: github.event_name != 'pull_request'
     uses: ./.depot/workflows/package.yml

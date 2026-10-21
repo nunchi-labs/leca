@@ -1,32 +1,30 @@
 #!/usr/bin/env bash
-# Linters for scripts/lint.sh.
+# Install the tools for one scripts/lint.sh check.
 #
-# Pointer: the GitHub "Linters" step was 30s of the 44s lint job
-# (CI run 39159848342). apt packages install into /usr and the sandbox
-# throws /usr away, so shellcheck, yamllint, cppcheck, xmllint, tidy, jq,
-# and ruby still install every run. PowerShell, a JDK, Caddy, actionlint,
-# ktlint, cmakelint, rubocop, and PSScriptAnalyzer are unpacked onto
-# /mnt/cache and skipped once they are there.
-#
-# A Depot snapshot (depot/snapshot-action) is the step that removes the
-# apt line too. It needs an image name
-# <org-id>.registry.depot.dev/leca-lint:latest from `depot org list`.
-# Do not point the job at that image until the snapshot has been pushed.
+# Usage: ensure-lint.sh <check>
+# Apt packages install every run. Binaries unpack onto the CI cache.
 set -euo pipefail
 
-prefix=/mnt/cache/lint
-bindir=$prefix/bin
+check="${1:?check}"
+export DEBIAN_FRONTEND=noninteractive
+# shellcheck disable=SC1091
+source "$(dirname "$0")/cache-root.sh"
 
-[[ -d /mnt/cache ]] || {
-  echo "ci: /mnt/cache is not mounted. The job mounts leca-ci-cache there." >&2
-  exit 1
-}
+prefix="$LECA_CACHE/lint"
+bindir="$prefix/bin"
 mkdir -p "$bindir" "$prefix/gems" "$prefix/modules"
 
-sudo apt-get update
-sudo apt-get install -y --no-install-recommends \
-  shellcheck yamllint cppcheck libxml2-utils jq tidy \
-  ruby python3 python3-venv ca-certificates curl tar gzip unzip
+host_arch() {
+  case "$(uname -m)" in
+    aarch64 | arm64) echo arm64 ;;
+    *) echo amd64 ;;
+  esac
+}
+
+apt_install() {
+  sudo apt-get update
+  sudo apt-get install -y --no-install-recommends "$@"
+}
 
 fetch_exe() {
   local dest=$1 url=$2
@@ -35,72 +33,116 @@ fetch_exe() {
   chmod +x "$dest"
 }
 
-if [[ ! -x $bindir/actionlint ]]; then
+install_actionlint() {
+  [[ -x $bindir/actionlint ]] && return 0
+  local tmp arch
+  arch="$(host_arch)"
   tmp="$(mktemp -d)"
   curl -fsSL -o "$tmp/actionlint.tar.gz" \
-    https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+    "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_${arch}.tar.gz"
   tar -xzf "$tmp/actionlint.tar.gz" -C "$tmp" actionlint
   install -m 755 "$tmp/actionlint" "$bindir/actionlint"
   rm -rf "$tmp"
-fi
+}
 
-fetch_exe "$bindir/ktlint" \
-  https://github.com/pinterest/ktlint/releases/download/1.5.0/ktlint
-
-if [[ ! -x $prefix/jdk/bin/java ]]; then
+install_jdk() {
+  [[ -x $prefix/jdk/bin/java ]] && return 0
+  local tmp arch=x64
+  if [[ $(uname -m) == aarch64 || $(uname -m) == arm64 ]]; then
+    arch=aarch64
+  fi
   tmp="$(mktemp -d)"
   curl -fsSL -o "$tmp/jdk.tar.gz" \
-    https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse
+    "https://api.adoptium.net/v3/binary/latest/21/ga/linux/${arch}/jdk/hotspot/normal/eclipse"
   mkdir -p "$prefix/jdk"
   tar -xzf "$tmp/jdk.tar.gz" -C "$prefix/jdk" --strip-components=1
   rm -rf "$tmp"
-fi
+}
 
-if [[ ! -x $prefix/pwsh/pwsh ]]; then
+install_pwsh() {
+  [[ -x $prefix/pwsh/pwsh ]] && return 0
+  local tmp arch
+  arch="$(host_arch)"
+  if [[ $arch == amd64 ]]; then
+    arch=x64
+  fi
   tmp="$(mktemp -d)"
   curl -fsSL -o "$tmp/pwsh.tar.gz" \
-    https://github.com/PowerShell/PowerShell/releases/download/v7.6.7/powershell-7.6.7-linux-x64.tar.gz
+    "https://github.com/PowerShell/PowerShell/releases/download/v7.6.7/powershell-7.6.7-linux-${arch}.tar.gz"
   mkdir -p "$prefix/pwsh"
   tar -xzf "$tmp/pwsh.tar.gz" -C "$prefix/pwsh"
   rm -rf "$tmp"
-fi
+}
 
-if [[ ! -x $bindir/caddy ]]; then
+install_caddy() {
+  [[ -x $bindir/caddy ]] && return 0
+  local tmp arch
+  arch="$(host_arch)"
   tmp="$(mktemp -d)"
   curl -fsSL -o "$tmp/caddy.tar.gz" \
-    https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_linux_amd64.tar.gz
+    "https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_linux_${arch}.tar.gz"
   tar -xzf "$tmp/caddy.tar.gz" -C "$tmp" caddy
   install -m 755 "$tmp/caddy" "$bindir/caddy"
   rm -rf "$tmp"
-fi
+}
 
-if [[ ! -x $prefix/py/bin/cmakelint ]]; then
-  rm -rf "$prefix/py"
-  python3 -m venv "$prefix/py"
-  "$prefix/py/bin/pip" install cmakelint
-fi
-
-if [[ ! -x $prefix/gems/bin/rubocop ]]; then
-  sudo apt-get install -y --no-install-recommends ruby-dev build-essential
-  GEM_HOME=$prefix/gems gem install rubocop --no-document
-fi
-
-if [[ ! -d $prefix/modules/PSScriptAnalyzer ]]; then
-  "$prefix/pwsh/pwsh" -NoProfile -Command \
-    "Set-PSRepository PSGallery -InstallationPolicy Trusted
-     Save-Module PSScriptAnalyzer -Path '$prefix/modules' -Force"
-fi
-
-{
-  echo "$bindir"
-  echo "$prefix/jdk/bin"
-  echo "$prefix/pwsh"
-  echo "$prefix/gems/bin"
-  echo "$prefix/py/bin"
-} >> "${GITHUB_PATH:?}"
-
-{
-  echo "JAVA_HOME=$prefix/jdk"
-  echo "GEM_HOME=$prefix/gems"
-  echo "PSModulePath=$prefix/modules"
-} >> "${GITHUB_ENV:?}"
+case "$check" in
+  shellcheck) apt_install shellcheck ;;
+  yamllint) apt_install yamllint ;;
+  actionlint)
+    apt_install ca-certificates curl tar gzip
+    install_actionlint
+    add_github_path "$bindir"
+    ;;
+  json) apt_install jq ;;
+  xml) apt_install libxml2-utils ;;
+  html) apt_install tidy ;;
+  caddy)
+    apt_install ca-certificates curl tar gzip
+    install_caddy
+    add_github_path "$bindir"
+    ;;
+  systemd) apt_install systemd ;;
+  cppcheck) apt_install cppcheck ;;
+  cmakelint)
+    apt_install python3 python3-venv ca-certificates
+    if [[ ! -x $prefix/py/bin/cmakelint ]]; then
+      rm -rf "$prefix/py"
+      python3 -m venv "$prefix/py"
+      "$prefix/py/bin/pip" install cmakelint
+    fi
+    add_github_path "$prefix/py/bin"
+    ;;
+  ktlint)
+    apt_install ca-certificates curl tar gzip
+    install_jdk
+    fetch_exe "$bindir/ktlint" \
+      https://github.com/pinterest/ktlint/releases/download/1.5.0/ktlint
+    add_github_path "$bindir"
+    add_github_path "$prefix/jdk/bin"
+    add_github_env JAVA_HOME "$prefix/jdk"
+    ;;
+  powershell)
+    apt_install ca-certificates curl tar gzip
+    install_pwsh
+    if [[ ! -d $prefix/modules/PSScriptAnalyzer ]]; then
+      "$prefix/pwsh/pwsh" -NoProfile -Command \
+        "Set-PSRepository PSGallery -InstallationPolicy Trusted
+         Save-Module PSScriptAnalyzer -Path '$prefix/modules' -Force"
+    fi
+    add_github_path "$prefix/pwsh"
+    add_github_env PSModulePath "$prefix/modules"
+    ;;
+  ruby)
+    apt_install ruby ruby-dev build-essential
+    if [[ ! -x $prefix/gems/bin/rubocop ]]; then
+      GEM_HOME=$prefix/gems gem install rubocop -v 1.92.0 --no-document
+    fi
+    add_github_path "$prefix/gems/bin"
+    add_github_env GEM_HOME "$prefix/gems"
+    ;;
+  *)
+    echo "ensure-lint: unknown check $check" >&2
+    exit 1
+    ;;
+esac

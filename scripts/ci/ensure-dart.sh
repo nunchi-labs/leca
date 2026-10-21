@@ -1,23 +1,30 @@
 #!/usr/bin/env bash
-# Dart on the Depot cache disk.
+# Dart SDK for one CI job.
 #
-# Pointer: on GitHub Actions run 39159848342 the server job spent 7s in
-# dart-lang/setup-dart before a 13s test. That download dies with the
-# runner. /mnt/cache is a Depot cache disk (depot/cache-mount, name
-# leca-ci-cache), so the next run only checks the version.
+# Usage: ensure-dart.sh <slot>
+# A slot is one job. Parallel jobs do not share a directory.
 set -euo pipefail
 
+slot="${1:?slot}"
 version="${DART_VERSION:-3.13.4}"
-root="/mnt/cache/dart/${version}"
+# shellcheck disable=SC1091
+source "$(dirname "$0")/cache-root.sh"
+root="$LECA_CACHE/dart/${slot}/${version}"
 
-[[ -d /mnt/cache ]] || {
-  echo "ci: /mnt/cache is not mounted. The job mounts leca-ci-cache there." >&2
-  exit 1
-}
+case "$(uname -s)-$(uname -m)" in
+  Linux-x86_64 | Linux-amd64) dart_os=linux dart_arch=x64 ;;
+  Linux-aarch64 | Linux-arm64) dart_os=linux dart_arch=arm64 ;;
+  Darwin-arm64) dart_os=macos dart_arch=arm64 ;;
+  Darwin-x86_64) dart_os=macos dart_arch=x64 ;;
+  *)
+    echo "ensure-dart: unsupported $(uname -s) $(uname -m)" >&2
+    exit 1
+    ;;
+esac
 
 if [[ ! -x $root/bin/dart ]]; then
   tmp="$(mktemp -d)"
-  url="https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-x64-release.zip"
+  url="https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-${dart_os}-${dart_arch}-release.zip"
   curl -fsSL -o "$tmp/dart.zip" "$url"
   unzip -q "$tmp/dart.zip" -d "$tmp"
   rm -rf "$root"
@@ -26,4 +33,8 @@ if [[ ! -x $root/bin/dart ]]; then
   rm -rf "$tmp"
 fi
 
-echo "$root/bin" >> "${GITHUB_PATH:?}"
+add_github_path "$root/bin"
+if [[ -z ${PUB_CACHE:-} ]]; then
+  mkdir -p "$LECA_CACHE/pub/$slot"
+  add_github_env PUB_CACHE "$LECA_CACHE/pub/$slot"
+fi

@@ -1,0 +1,28 @@
+name: CI
+
+# GitHub Actions runs this tree. Depot runs .depot/workflows.
+# CodeQL's Actions language only sees files under .github/workflows.
+#
+# Pull requests run the test grid. A push to main also packages every
+# target these runners can compile, in parallel with the tests.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  package:
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/package.yml
