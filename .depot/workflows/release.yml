@@ -1,0 +1,26 @@
+name: Release
+
+# Pointer: do not publish with softprops/action-gh-release. Origin has no
+# GitHub Releases API, and Depot reports that mode as FAILS
+# (missing capability: github-releases). The packages are artifacts on
+# this run, named Leca-<target>-<tag>.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: ./.depot/workflows/test.yml
+
+  package:
+    needs: test
+    uses: ./.depot/workflows/package.yml

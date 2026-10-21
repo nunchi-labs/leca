@@ -1,0 +1,30 @@
+name: CI
+
+# Origin runs this file. Depot reads .depot/workflows, not .github/workflows.
+# The GitHub mirror runs .github/workflows, which is also what CodeQL's
+# Actions analysis reads. Keep the two trees the same shape.
+#
+# Pull requests run the test grid. A push to main also packages Android,
+# Linux, and web, in parallel with the tests. macOS, iOS, and Windows are
+# in the GitHub workflow: Depot sandboxes are Linux.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: ./.depot/workflows/test.yml
+
+  package:
+    if: github.event_name != 'pull_request'
+    uses: ./.depot/workflows/package.yml

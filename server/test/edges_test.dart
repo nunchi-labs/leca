@@ -416,16 +416,20 @@ void main() {
       expect((restored.single as Map)['proof'], line['proof']);
 
       final kept = _talkLine(seq: 1, room: 'lobby', text: 'earlier', prev: '');
-      File(
-        '${dir.path}/lobby.jsonl',
-      ).writeAsStringSync('${jsonEncode(kept)}\n{"seq":2}\n');
+      File('${dir.path}/lobby.jsonl')
+          .writeAsStringSync('${jsonEncode(kept)}\n{"seq":2}\n');
       final fresh = await WebSocket.connect(
         'ws://127.0.0.1:${server2.port}/v1/room',
       );
       addTearDown(fresh.close);
       final freshIn = _Inbox(fresh);
       fresh.add(
-        jsonEncode({'type': 'join', 'room': '', 'name': 'Cy', 'token': 'guest'}),
+        jsonEncode({
+          'type': 'join',
+          'room': '',
+          'name': 'Cy',
+          'token': 'guest',
+        }),
       );
       final lobby = await freshIn.nextWhere((m) => m['type'] == 'welcome');
       final lobbyLog = lobby['log']! as List;

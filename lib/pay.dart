@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import 'auth.dart';
+import 'auth_api.dart';
 import 'compliance.dart';
 import 'geo.dart';
 import 'khqr.dart';
 import 'l10n/app_localizations.dart';
+import 'ledger.dart';
 import 'location.dart';
 import 'market.dart';
 import 'quote.dart';
@@ -79,6 +82,7 @@ class _PayScreenState extends State<PayScreen> {
   Timer? _debounce;
   int _gen = 0;
   bool _ready = false;
+  bool _ledgerFailed = false;
 
   @override
   void didChangeDependencies() {
@@ -132,6 +136,17 @@ class _PayScreenState extends State<PayScreen> {
       if (!mounted) return;
       if (add == true || state.tipUsd > 0) {
         unawaited(_rebuild());
+        return;
+      }
+    }
+    if (!mounted) return;
+    final token = state.session?.token ?? '';
+    if (AuthConfig.apiLive && token.isNotEmpty) {
+      try {
+        await postLedger(ledgerLineFor(state, _orderId), token: token);
+      } on AuthApiException {
+        if (!mounted) return;
+        setState(() => _ledgerFailed = true);
         return;
       }
     }
@@ -275,6 +290,7 @@ class _PayScreenState extends State<PayScreen> {
         hint: _hint(l10n, state.rail),
         stripe: state.rail.kind == RailKind.stripe,
         cash: state.rail.kind == RailKind.cash,
+        notice: _ledgerFailed ? l10n.ledgerFailed : null,
         onPaid: () => unawaited(_onPaid()),
       );
     }
@@ -655,6 +671,7 @@ class _QrPane extends StatelessWidget {
     required this.onPaid,
     required this.stripe,
     required this.cash,
+    this.notice,
   });
 
   final AppLocalizations l10n;
@@ -663,6 +680,7 @@ class _QrPane extends StatelessWidget {
   final VoidCallback onPaid;
   final bool stripe;
   final bool cash;
+  final String? notice;
 
   @override
   Widget build(BuildContext context) {
@@ -725,6 +743,15 @@ class _QrPane extends StatelessWidget {
           if (!cash) ...[
             const SizedBox(height: 12),
             Text(hint, textAlign: TextAlign.center),
+          ],
+          if (notice != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              notice!,
+              key: const Key('ledger_failed'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF8B1E1E)),
+            ),
           ],
           const SizedBox(height: 16),
           SizedBox(

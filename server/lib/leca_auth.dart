@@ -1400,7 +1400,14 @@ class AuthCore {
     if (originLng.abs() > 180 || destLng.abs() > 180) {
       throw AuthFailure('route_invalid');
     }
-    final mode = body['mode'] == 'TWO_WHEELER' ? 'TWO_WHEELER' : 'DRIVE';
+    final rawMode = '${body['mode']}';
+    final mode = switch (rawMode) {
+      'WALK' => 'WALK',
+      'TWO_WHEELER' => 'TWO_WHEELER',
+      _ => 'DRIVE',
+    };
+    // Walking has no traffic model. A departure time is only for a vehicle.
+    final driving = mode != 'WALK';
     final depart = now().toUtc().add(const Duration(seconds: 30));
     final response = await net.postJson(
       Uri.parse('https://routes.googleapis.com/directions/v2:computeRoutes'),
@@ -1416,8 +1423,8 @@ class AuthCore {
           },
         },
         'travelMode': mode,
-        'routingPreference': 'TRAFFIC_AWARE',
-        'departureTime': depart.toIso8601String(),
+        if (driving) 'routingPreference': 'TRAFFIC_AWARE',
+        if (driving) 'departureTime': depart.toIso8601String(),
       },
       headers: {
         'X-Goog-Api-Key': key,
@@ -1442,7 +1449,8 @@ class AuthCore {
       'minutes': minutes,
       'seconds': seconds,
       'distanceMeters': route['distanceMeters'] ?? 0,
-      'traffic': true,
+      'traffic': driving,
+      'mode': mode,
     };
   }
 
@@ -1806,6 +1814,12 @@ Future<void> handleAuth(
       await _handlePhone(core, request, response, path);
       return;
     }
+    if (request.method == 'POST' && path == '/v1/ledger') {
+      final user = _bearer(core, request);
+      final body = await _readJson(request);
+      await _json(response, 200, await _recordLedger(user, body));
+      return;
+    }
     if (trust != null &&
         (path.startsWith('/v1/driver/') ||
             path.startsWith('/v1/report') ||
@@ -1820,6 +1834,102 @@ Future<void> handleAuth(
   } on Object catch (_) {
     await _json(response, 500, {'error': 'failed'});
   }
+}
+
+/// Largest whole-cent amount that stays exact in JSON numbers.
+const ledgerMaxCents = 9007199254740991;
+
+final _billId = RegExp(r'^[A-Za-z0-9]{8,25}$');
+final _ledgerKind = RegExp(r'^[a-z0-9_-]{1,32}$');
+final _oneLine = RegExp(r'[\u0000-\u001F]');
+
+/// The 5% service fee, in cents, using the same rounding as the app.
+int ledgerFeeCents(int cents) => (cents * 5 / 100).round();
+
+int _centsOf(Object? raw) {
+  final int value;
+  if (raw is int) {
+    value = raw;
+  } else if (raw is double) {
+    if (!raw.isFinite || raw != raw.truncateToDouble()) return -1;
+    value = raw.toInt();
+  } else {
+    final parsed = int.tryParse(raw == null ? '' : '$raw');
+    if (parsed == null) return -1;
+    value = parsed;
+  }
+  if (value < 0 || value > ledgerMaxCents) return -1;
+  return value;
+}
+
+/// One checkout for [accountId]. The body cannot name a different payer.
+/// Null when the line is not whole cents, the fee is not 5%, or the id
+/// is not a bill number.
+Map<String, Object?>? ledgerEntry(String accountId, Map<String, Object?> body) {
+  final account = accountId.trim();
+  final id = '${body['id'] ?? ''}'.trim();
+  final kind = '${body['kind'] ?? ''}'.trim();
+  var to = '${body['to'] ?? ''}'.trim();
+  final cents = _centsOf(body['cents']);
+  final fee = _centsOf(body['feeCents']);
+  final tip = _centsOf(body['tipCents']);
+  if (account.isEmpty || !_billId.hasMatch(id) || !_ledgerKind.hasMatch(kind)) {
+    return null;
+  }
+  if (to.isEmpty || _oneLine.hasMatch(to)) return null;
+  if (to.length > 240) to = to.substring(0, 240);
+  if (cents < 0 || fee < 0 || tip < 0 || fee != ledgerFeeCents(cents)) {
+    return null;
+  }
+  if (cents > ledgerMaxCents - fee) return null;
+  final withFee = cents + fee;
+  if (withFee > ledgerMaxCents - tip || withFee + tip <= 0) return null;
+  var memo = '${body['memo'] ?? ''}'.replaceAll(_oneLine, ' ').trim();
+  if (memo.length > 240) memo = memo.substring(0, 240);
+  return {
+    'id': id,
+    'kind': kind,
+    'from': account,
+    'to': to,
+    'cents': cents,
+    'feeCents': fee,
+    'tipCents': tip,
+    'memo': memo,
+  };
+}
+
+/// Applies one paid checkout on the Nunchi coin ledger.
+Future<Map<String, Object?>> _recordLedger(
+  AuthUser user,
+  Map<String, Object?> body,
+) async {
+  final entry = ledgerEntry(user.id, body);
+  if (entry == null) throw AuthFailure('ledger_invalid');
+  final bin =
+      Platform.environment['LECA_LEDGER'] ?? '/usr/local/bin/leca-ledger';
+  final journal =
+      Platform.environment['LECA_LEDGER_JOURNAL'] ??
+      '/var/lib/leca-auth/ledger.jsonl';
+  if (!File(bin).existsSync()) {
+    throw AuthFailure('ledger_unavailable', 503);
+  }
+  await Directory(File(journal).parent.path).create(recursive: true);
+  final proc = await Process.start(bin, [journal]);
+  proc.stdin.writeln(jsonEncode(entry));
+  await proc.stdin.close();
+  final outFuture = proc.stdout.transform(utf8.decoder).join();
+  final errFuture = proc.stderr.drain<void>();
+  final out = await outFuture;
+  await errFuture;
+  final code = await proc.exitCode;
+  if (code != 0 || out.trim().isEmpty) {
+    throw AuthFailure('ledger_failed');
+  }
+  final decoded = jsonDecode(out);
+  if (decoded is! Map) throw AuthFailure('ledger_failed');
+  final mapped = decoded.map((key, value) => MapEntry('$key', value));
+  if (mapped['ok'] != true) throw AuthFailure('ledger_failed');
+  return mapped;
 }
 
 Future<void> _handlePhone(

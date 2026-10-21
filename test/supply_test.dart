@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:leca/identity.dart';
 import 'package:leca/rate.dart';
+import 'package:leca/records.dart';
 import 'package:leca/state.dart';
 
 final _pngA = base64Decode(
@@ -257,4 +258,53 @@ void main() {
       expect(repliesFast(state.replySecondsFor('nom_banh_chok')!), isTrue);
     },
   );
+
+  test('item and report ids skip numbers that are already used', () {
+    final state = LecaState();
+    addTearDown(state.dispose);
+    state.items.add(
+      ShopItem(
+        id: 'item_1',
+        businessId: 'b',
+        description: 'ភួយ',
+        usd: 1,
+        photo: _pngA,
+      ),
+    );
+    state.items.add(
+      ShopItem(
+        id: 'item_2',
+        businessId: 'b',
+        description: 'កាហ្វេ',
+        usd: 2,
+        photo: _pngA,
+      ),
+    );
+    state.items.removeAt(0);
+    expect(
+      state.addItem(
+        businessId: 'b',
+        description: 'ត្រី',
+        usd: 1.236,
+        photo: _pngA,
+      ),
+      isNull,
+    );
+    expect(state.items.last.id, 'item_1');
+    expect(state.items.last.usd, 1.24);
+    expect(state.items.map((item) => item.id).toSet(), hasLength(2));
+
+    state.reports.add(
+      const PlatformReport(
+        id: 'r_2',
+        kind: 'consumer',
+        category: 'complaint',
+        subjectId: 'b',
+        status: 'recorded',
+      ),
+    );
+    state.fileConsumerReport('b', 'ម្តងទៀត');
+    expect(state.reports.last.id, 'r_1');
+    expect(state.reports.map((report) => report.id).toSet(), hasLength(2));
+  });
 }

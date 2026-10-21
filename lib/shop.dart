@@ -2,11 +2,15 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'art.dart';
 import 'identity.dart';
 import 'l10n/app_localizations.dart';
 import 'market.dart';
 import 'pay.dart';
+import 'qty.dart';
 import 'rate.dart';
+import 'reach.dart';
+import 'records.dart';
 import 'state.dart';
 import 'talk_screen.dart';
 
@@ -126,62 +130,53 @@ class ShopScreen extends StatelessWidget {
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.memory(
-                              item.photo,
-                              width: 72,
-                              height: 72,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item.description),
-                                Text(
-                                  '${moneyUsd(item.usd)} · ${moneyKhr(item.usd)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  item.photo,
+                                  width: 72,
+                                  height: 72,
+                                  fit: BoxFit.cover,
                                 ),
-                                TextButton(
-                                  key: Key('takedown_${item.id}'),
-                                  onPressed: () {
-                                    state.takeDownItem(item.id);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(l10n.takedownDone),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item.description),
+                                    Text(
+                                      '${moneyUsd(item.usd)} · ${moneyKhr(item.usd)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                    );
-                                  },
-                                  child: Text(l10n.takedown),
+                                    ),
+                                    TextButton(
+                                      key: Key('takedown_${item.id}'),
+                                      onPressed: () {
+                                        state.takeDownItem(item.id);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(l10n.takedownDone),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(l10n.takedown),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          FilledButton(
-                            onPressed: () {
-                              state.setBooking(
-                                Booking(
-                                  kind: BookKind.goods,
-                                  title: item.description,
-                                  amountUsd: item.usd,
-                                  detail: item.id,
-                                ),
-                              );
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const PayScreen(),
-                                ),
-                              );
-                            },
-                            child: Text(l10n.checkout),
-                          ),
+                          const SizedBox(height: 8),
+                          _BuyBox(item: item),
                         ],
                       ),
                     ),
@@ -251,13 +246,16 @@ class AddItemScreen extends StatefulWidget {
 class _AddItemScreenState extends State<AddItemScreen> {
   final _description = TextEditingController();
   final _price = TextEditingController();
+  final _bulk = TextEditingController();
   Uint8List? _photo;
   String? _error;
+  var _many = false;
 
   @override
   void dispose() {
     _description.dispose();
     _price.dispose();
+    _bulk.dispose();
     super.dispose();
   }
 
@@ -273,6 +271,29 @@ class _AddItemScreenState extends State<AddItemScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              const SizedBox(
+                height: 120,
+                width: double.infinity,
+                child: LecaArt(scene: LecaScene.shop),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: Text(l10n.bulkOne),
+                    selected: !_many,
+                    onSelected: (_) => setState(() => _many = false),
+                  ),
+                  ChoiceChip(
+                    key: const Key('bulk_many'),
+                    label: Text(l10n.bulkMany),
+                    selected: _many,
+                    onSelected: (_) => setState(() => _many = true),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Material(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -302,32 +323,50 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _description,
-                decoration: InputDecoration(
-                  labelText: l10n.itemDescriptionKm,
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              if (_many)
+                TextField(
+                  key: const Key('bulk_lines'),
+                  controller: _bulk,
+                  minLines: 4,
+                  maxLines: 8,
+                  decoration: InputDecoration(
+                    labelText: l10n.bulkMany,
+                    hintText: 'ភួយ, 4.50',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                )
+              else ...[
+                TextField(
+                  controller: _description,
+                  decoration: InputDecoration(
+                    labelText: l10n.itemDescriptionKm,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _price,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: l10n.itemPrice,
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _price,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: l10n.itemPrice,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
+              ],
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
@@ -340,12 +379,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
               FilledButton(
                 key: const Key('save_item'),
                 onPressed: () {
-                  final code = state.addItem(
-                    businessId: widget.businessId,
-                    description: _description.text,
-                    usd: double.tryParse(_price.text.trim()) ?? 0,
-                    photo: _photo,
-                  );
+                  final code = _many
+                      ? _saveMany(state)
+                      : state.addItem(
+                          businessId: widget.businessId,
+                          description: _description.text,
+                          usd: double.tryParse(_price.text.trim()) ?? 0,
+                          photo: _photo,
+                        );
                   if (code != null) {
                     setState(() => _error = code);
                     return;
@@ -358,6 +399,61 @@ class _AddItemScreenState extends State<AddItemScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  String? _saveMany(LecaState state) {
+    final sheet = readBulk(_bulk.text);
+    if (sheet.error != null) return sheet.error;
+    return state.addItems(
+      businessId: widget.businessId,
+      rows: sheet.rows,
+      photo: _photo,
+    );
+  }
+}
+
+class _BuyBox extends StatefulWidget {
+  const _BuyBox({required this.item});
+
+  final ShopItem item;
+
+  @override
+  State<_BuyBox> createState() => _BuyBoxState();
+}
+
+class _BuyBoxState extends State<_BuyBox> {
+  int _qty = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final state = LecaScope.of(context);
+    final usd = bulkUsd(widget.item.usd, _qty);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        QtyBar(onChanged: (n) => setState(() => _qty = n)),
+        const SizedBox(height: 8),
+        FilledButton(
+          onPressed: () {
+            state.setBooking(
+              Booking(
+                kind: BookKind.goods,
+                title: _qty == 1
+                    ? widget.item.description
+                    : '${widget.item.description} × $_qty',
+                amountUsd: usd,
+                detail: '${widget.item.id} x$_qty',
+              ),
+            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute<void>(builder: (_) => const PayScreen()));
+          },
+          child: Text('${l10n.checkout} · ${moneyUsd(usd)}'),
+        ),
+      ],
     );
   }
 }

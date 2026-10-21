@@ -1,5 +1,14 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+# CMake 3.31 passes an unquoted rc.exe path into get_filename_component.
+# A path under Program Files is split into extra arguments and the Windows
+# build never configures. C:\WinKits is a junction onto the Windows SDK.
+if(WIN32 AND EXISTS "C:/WinKits/10/bin/10.0.26100.0/x64/rc.exe")
+  set(CMAKE_RC_COMPILER "C:/WinKits/10/bin/10.0.26100.0/x64/rc.exe" CACHE FILEPATH "Resource compiler" FORCE)
+  # Plugin projects call project(), and that try_compile does not inherit the
+  # cache entry above. Without this, CMake finds rc.exe under Program Files.
+  list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES CMAKE_RC_COMPILER)
+endif()
 project(leca LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change

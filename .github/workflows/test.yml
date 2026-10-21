@@ -1,0 +1,234 @@
+name: Test
+
+# One job per check, started together. Same grid as .depot/workflows/test.yml,
+# plus SwiftLint, which needs macOS.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+  DART_VERSION: "3.13.4"
+
+jobs:
+  server-analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: server-analyze-${{ runner.os }}-${{ runner.arch }}-dart-${{ env.DART_VERSION }}
+      - name: Dart SDK
+        run: bash ../scripts/ci/ensure-dart.sh server-analyze
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+
+  server-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: server-format-${{ runner.os }}-${{ runner.arch }}-dart-${{ env.DART_VERSION }}
+      - name: Dart SDK
+        run: bash ../scripts/ci/ensure-dart.sh server-format
+      - run: dart format --output=none --set-exit-if-changed lib bin test
+
+  server-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: server-test-${{ runner.os }}-${{ runner.arch }}-dart-${{ env.DART_VERSION }}
+      - name: Dart SDK
+        run: bash ../scripts/ci/ensure-dart.sh server-test
+      - run: dart pub get
+      - run: dart test
+
+  app-analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: app-analyze-${{ runner.os }}-${{ runner.arch }}-flutter-${{ env.FLUTTER_VERSION }}
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh app-analyze host
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - name: Generated localizations are committed
+        run: git diff --exit-code -- lib/l10n
+      - run: flutter analyze --fatal-infos
+
+  app-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: app-format-${{ runner.os }}-${{ runner.arch }}-flutter-${{ env.FLUTTER_VERSION }}
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh app-format host
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test
+
+  app-test:
+    name: app-test-${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: app-test-${{ matrix.shard }}-${{ runner.os }}-${{ runner.arch }}-flutter-${{ env.FLUTTER_VERSION }}
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh "app-test-${{ matrix.shard }}" host
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter test --reporter compact --total-shards 4 --shard-index ${{ matrix.shard }}
+
+  ledger-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ledger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: ledger-test-${{ runner.os }}-${{ runner.arch }}-rust
+      - name: Rust
+        run: bash ../scripts/ci/ensure-rust.sh ledger-test
+      - run: cargo test --locked
+
+  ledger-fmt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ledger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: ledger-fmt-${{ runner.os }}-${{ runner.arch }}-rust
+      - name: Rust
+        run: bash ../scripts/ci/ensure-rust.sh ledger-fmt
+        env:
+          RUSTUP_COMPONENTS: rustfmt
+      - run: cargo fmt --check
+
+  ledger-clippy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ledger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: ledger-clippy-${{ runner.os }}-${{ runner.arch }}-rust
+      - name: Rust
+        run: bash ../scripts/ci/ensure-rust.sh ledger-clippy
+        env:
+          RUSTUP_COMPONENTS: clippy
+      - run: cargo clippy --locked --all-targets -- -D warnings
+
+  swift:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: SwiftLint
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/swiftlint.zip" \
+            https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip
+          unzip -q "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/swiftlint"
+          bin="$(find "$RUNNER_TEMP/swiftlint" -type f -name swiftlint | head -1)"
+          "$bin" lint --strict --quiet
+
+  lint:
+    name: ${{ matrix.check }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - shellcheck
+          - yamllint
+          - actionlint
+          - json
+          - xml
+          - html
+          - caddy
+          - systemd
+          - cppcheck
+          - cmakelint
+          - ktlint
+          - powershell
+          - ruby
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/leca-cache
+          key: lint-${{ matrix.check }}-${{ runner.os }}-${{ runner.arch }}
+      - name: Linters
+        run: bash scripts/ci/ensure-lint.sh ${{ matrix.check }}
+      - run: bash scripts/lint.sh ${{ matrix.check }}

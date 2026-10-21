@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ import 'passkey_auth.dart';
 import 'phone.dart';
 import 'quote.dart';
 import 'rate.dart';
+import 'reach.dart';
 import 'records.dart';
 import 'swarm.dart';
 import 'talk.dart';
@@ -82,6 +84,7 @@ class LecaState extends ChangeNotifier {
   final List<ChatMessage> messages = <ChatMessage>[];
   final Map<String, List<int>> replySamples = <String, List<int>>{};
   final List<ListedVehicle> vehicles = <ListedVehicle>[];
+  final List<VehicleSale> sales = <VehicleSale>[];
   DriverProfile? driver;
   String? driverError;
 
@@ -203,6 +206,7 @@ class LecaState extends ChangeNotifier {
     'messages': [for (final m in messages) m.toJson()],
     'replySamples': replySamples,
     'vehicles': [for (final v in vehicles) v.toJson()],
+    'sales': [for (final sale in sales) sale.toJson()],
     'driver': driver?.toJson(),
     'fareAsks': {
       for (final entry in fareAsks.entries) entry.key: entry.value.toJson(),
@@ -282,6 +286,7 @@ class LecaState extends ChangeNotifier {
         });
     }
     _fill(raw['vehicles'], vehicles, ListedVehicle.fromJson);
+    _fill(raw['sales'], sales, VehicleSale.fromJson);
     driver = DriverProfile.fromJson(raw['driver']);
     final asks = raw['fareAsks'];
     if (asks is Map) {
@@ -586,7 +591,7 @@ class LecaState extends ChangeNotifier {
     if (!allowed.contains(category)) return;
     final partner = rideMatch;
     if (partner == null) return;
-    var id = 'r_${reports.length + 1}';
+    var id = _freeId('r_', reports.map((report) => report.id));
     var status = 'suspended';
     if (AuthConfig.apiLive && (session?.token ?? '').isNotEmpty) {
       try {
@@ -704,7 +709,7 @@ class LecaState extends ChangeNotifier {
     if (businessId.trim().isEmpty) return;
     reports.add(
       PlatformReport(
-        id: 'r_${reports.length + 1}',
+        id: _freeId('r_', reports.map((report) => report.id)),
         kind: 'consumer',
         category: 'complaint',
         subjectId: businessId,
@@ -721,7 +726,7 @@ class LecaState extends ChangeNotifier {
     items[i] = items[i].takeDown();
     reports.add(
       PlatformReport(
-        id: 'r_${reports.length + 1}',
+        id: _freeId('r_', reports.map((report) => report.id)),
         kind: 'takedown',
         category: 'listing',
         subjectId: itemId,
@@ -1060,6 +1065,7 @@ class LecaState extends ChangeNotifier {
     messages.clear();
     replySamples.clear();
     vehicles.clear();
+    sales.clear();
     driver = null;
     driverError = null;
     fareAsks.clear();
@@ -1178,6 +1184,55 @@ class LecaState extends ChangeNotifier {
     );
     supplyLoading = false;
     notifyListeners();
+  }
+
+  /// Lists a motorcycle, car, tuk-tuk, or remorque at the price the owner names.
+  String? listSale({
+    required String kind,
+    required String title,
+    required String note,
+    required double usd,
+    required bool owner,
+    required String sellerName,
+    required String sellerPhone,
+    required String sellerId,
+  }) {
+    final canonical = CambodiaRules.saleKind(kind);
+    if (canonical == null) return 'sale_kind';
+    final price = _priced(usd);
+    if (title.trim().isEmpty || price == null) return 'sale_invalid';
+    if (CambodiaRules.applies() && !owner) return 'owner_required';
+    final seller = CambodiaRules.checkSeller(
+      sellerName: sellerName,
+      sellerPhone: sellerPhone,
+      sellerId: sellerId,
+    );
+    if (seller != null) return seller;
+    final khmer = CambodiaRules.checkItemText(note);
+    if (khmer != null) return khmer;
+    final here = origin;
+    sales.add(
+      VehicleSale(
+        id: _freeId('sale_', sales.map((sale) => sale.id)),
+        kind: canonical,
+        title: title.trim(),
+        note: note.trim(),
+        usd: price,
+        sellerName: sellerName.trim(),
+        sellerPhone: sellerPhone.trim(),
+        sellerId: sellerId.trim(),
+        latitude: here.latitude,
+        longitude: here.longitude,
+      ),
+    );
+    notifyListeners();
+    return null;
+  }
+
+  void removeSale(String id) {
+    final before = sales.length;
+    sales.removeWhere((sale) => sale.id == id);
+    if (sales.length != before) notifyListeners();
   }
 
   String? setDriving({required bool value, String note = ''}) {
@@ -1474,8 +1529,9 @@ class LecaState extends ChangeNotifier {
     required double usd,
     required Uint8List? photo,
   }) {
+    final price = _priced(usd);
     if (description.trim().isEmpty ||
-        usd <= 0 ||
+        price == null ||
         photo == null ||
         photo.isEmpty) {
       return 'item_invalid';
@@ -1484,13 +1540,44 @@ class LecaState extends ChangeNotifier {
     if (khmer != null) return khmer;
     items.add(
       ShopItem(
-        id: 'item_${items.length + 1}',
+        id: _freeId('item_', items.map((item) => item.id)),
         businessId: businessId,
         description: description.trim(),
-        usd: usd,
+        usd: price,
         photo: photo,
       ),
     );
+    notifyListeners();
+    return null;
+  }
+
+  String? addItems({
+    required String businessId,
+    required List<BulkRow> rows,
+    required Uint8List? photo,
+  }) {
+    if (rows.isEmpty || photo == null || photo.isEmpty) return 'item_invalid';
+    final prices = <double>[];
+    for (final row in rows) {
+      final price = _priced(row.usd);
+      if (row.description.trim().isEmpty || price == null) {
+        return 'item_invalid';
+      }
+      final khmer = CambodiaRules.checkItemText(row.description);
+      if (khmer != null) return khmer;
+      prices.add(price);
+    }
+    for (var i = 0; i < rows.length; i++) {
+      items.add(
+        ShopItem(
+          id: _freeId('item_', items.map((item) => item.id)),
+          businessId: businessId,
+          description: rows[i].description.trim(),
+          usd: prices[i],
+          photo: photo,
+        ),
+      );
+    }
     notifyListeners();
     return null;
   }
@@ -1716,12 +1803,39 @@ class LecaState extends ChangeNotifier {
     return sale ? 100 : 6;
   }
 
+  /// A KHQR bill number, at most 25 characters. The clock alone repeats
+  /// for every checkout in the same minute, so the tail is random.
   String newOrderId() {
     final now = DateTime.now().toUtc();
-    final stamp =
-        '${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-    return 'LECA$stamp';
+    final stamp = [
+      now.month,
+      now.day,
+      now.hour,
+      now.minute,
+      now.second,
+    ].map((part) => part.toString().padLeft(2, '0')).join();
+    final salt = Random.secure()
+        .nextInt(0x100000000)
+        .toRadixString(16)
+        .padLeft(8, '0');
+    return 'LECA$stamp$salt'.toUpperCase();
   }
+
+  String _freeId(String prefix, Iterable<String> used) {
+    final taken = used.toSet();
+    var n = 1;
+    while (taken.contains('$prefix$n')) {
+      n += 1;
+    }
+    return '$prefix$n';
+  }
+}
+
+double? _priced(double usd) {
+  if (!usd.isFinite) return null;
+  final cents = (usd * 100).round();
+  if (cents <= 0) return null;
+  return cents / 100;
 }
 
 String _freshGuest() {

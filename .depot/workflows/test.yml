@@ -1,0 +1,232 @@
+name: Test
+
+# One job per check, started together. A failure names the check.
+# SwiftLint is in .github/workflows/test.yml. Depot has no macOS sandbox,
+# and a macos-latest label is silently run as Ubuntu.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+  DART_VERSION: "3.13.4"
+
+jobs:
+  server-analyze:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Dart SDK
+        run: bash ../scripts/ci/ensure-dart.sh server-analyze
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+
+  server-format:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Dart SDK
+        run: bash ../scripts/ci/ensure-dart.sh server-format
+      - run: dart format --output=none --set-exit-if-changed lib bin test
+
+  server-test:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Dart SDK
+        run: bash ../scripts/ci/ensure-dart.sh server-test
+      - run: dart pub get
+      - run: dart test
+
+  app-analyze:
+    runs-on: depot-ubuntu-24.04-8
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh app-analyze host
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - name: Generated localizations are committed
+        run: git diff --exit-code -- lib/l10n
+      - run: flutter analyze --fatal-infos
+
+  app-format:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh app-format host
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test
+
+  app-test:
+    name: app-test-${{ matrix.shard }}
+    runs-on: depot-ubuntu-24.04-4
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Flutter SDK
+        run: bash scripts/ci/ensure-flutter.sh "app-test-${{ matrix.shard }}" host
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - run: flutter test --reporter compact --total-shards 4 --shard-index ${{ matrix.shard }}
+
+  ledger-test:
+    runs-on: depot-ubuntu-24.04-8
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ledger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Rust
+        run: bash ../scripts/ci/ensure-rust.sh ledger-test
+      - run: cargo test --locked
+
+  ledger-fmt:
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ledger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Rust
+        run: bash ../scripts/ci/ensure-rust.sh ledger-fmt
+        env:
+          RUSTUP_COMPONENTS: rustfmt
+      - run: cargo fmt --check
+
+  ledger-clippy:
+    runs-on: depot-ubuntu-24.04-8
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ledger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Rust
+        run: bash ../scripts/ci/ensure-rust.sh ledger-clippy
+        env:
+          RUSTUP_COMPONENTS: clippy
+      - run: cargo clippy --locked --all-targets -- -D warnings
+
+  lint:
+    name: ${{ matrix.check }}
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - shellcheck
+          - yamllint
+          - actionlint
+          - json
+          - xml
+          - html
+          - caddy
+          # systemd-analyze loads the unit on GitHub's Ubuntu runner.
+          # Depot's sandbox has no systemd bus, and installing the package
+          # fails its postinst. The GitHub job runs this check.
+          - cppcheck
+          - cmakelint
+          - ktlint
+          - powershell
+          - ruby
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: depot/cache-mount@v1
+        continue-on-error: true
+        with:
+          name: leca-ci-cache
+          path: /mnt/cache
+      - name: Linters
+        run: bash scripts/ci/ensure-lint.sh ${{ matrix.check }}
+      - run: bash scripts/lint.sh ${{ matrix.check }}

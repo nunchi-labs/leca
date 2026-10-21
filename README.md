@@ -11,7 +11,13 @@ One app for customers and operators (not a separate driver app):
 - Open a business (restaurant, pharmacy, or any lawful kind)
 - Drive, accept jobs, and list a vehicle
 - Pay: **Stripe** plus Cambodian KHQR rails (**ABA Pay**, Bakong, ACLEDA, Wing Bank, other QR)
-- Data-only phone: the number is an iroh address, and the voice rides that link
+- Phone calls are free. The number is an iroh address, and the voice rides that link. People reach each other through iroh
+- Mobile service: a Leca SIM with Cellcard, Smart, Metfone, and SEATEL live together. Data uses the fastest. Voice stays free on iroh
+- Fiber and cable from the licensed operators, sold as 10 Gbps in every populated center, plus 5G+ home hotspots
+- Bus and air tickets. The operator runs the coach or the aircraft
+- Nationwide trade: anyone, in any province, can buy from anyone in any other
+- Emergency ambulance to a hospital. An independent crew drives it
+- The Khmer superapp charter, cleared on the home screen
 
 Native on **Android, iOS, macOS, Windows, Linux, and web** (Flutter). A phone is for delivery: search is a kilometre radius from the phone's GPS, and the same phone can go out on a job. A Mac or Windows computer manages products and prices. It can receive a delivery, and it does not go out and make one. The top of the radius control is the whole country, which is not a circle.
 
@@ -98,7 +104,8 @@ Output: `build/app/outputs/flutter-apk/app-release.apk`.
 | macos, ios | the Mac in `scripts/mac.host` |
 | android, linux-x64 | the Hetzner machine in `scripts/hetzner.host` |
 | windows-x64 | a KVM Windows guest on that Hetzner machine (`scripts/win-x64.sh`, `LECA_WIN_MEM` default `32G`) |
-| linux-arm64, windows-arm64 | GitHub ARM runners |
+| linux-arm64 | Depot CI (`depot-ubuntu-24.04-arm-8`) |
+| windows-arm64 | a Windows ARM machine. Depot CI has no Windows sandbox |
 
 ```bash
 ./build.sh
@@ -106,7 +113,7 @@ Output: `build/app/outputs/flutter-apk/app-release.apk`.
 ./build.sh android linux-x64 windows-x64
 ```
 
-`linux-arm64` and `windows-arm64` stay on the GitHub ARM runners. `./qemu/build.sh` can still boot those ARM VMs on the Apple Silicon Mac, outside `./build.sh`.
+`linux-arm64` is built by Depot CI. `windows-arm64` needs a Windows ARM machine. `./qemu/build.sh` can still boot those ARM VMs on the Apple Silicon Mac, outside `./build.sh`.
 
 ## Driver, shops, rides
 
@@ -126,7 +133,21 @@ Everyone on a trip shares one room: text, voice, video, and price lines. Each li
 
 ### Phone
 
-A call is data. The number is this device's iroh endpoint (`leca1`, the endpoint id, and the current address). Paste that card, call a saved contact, or call the other person in a trip room. Signaling is an iroh stream (`leca-phone/1`). Voice is 20 ms G.711 μ-law datagrams on the same connection. The microphone and speaker are the handset: echo cancel is on, and Android uses voice-communication mode. A carrier voice circuit is not in the call.
+A call is free. The number is this device's iroh endpoint (`leca1`, the endpoint id, and the current address). Paste that card, call a saved contact, or call the other person in a trip room. Signaling is an iroh stream (`leca-phone/1`). Voice is 20 ms G.711 μ-law datagrams on the same connection. The microphone and speaker are the handset: echo cancel is on, and Android uses voice-communication mode. A carrier voice circuit is not in the call, so the carrier does not charge. Chat, voice, and video between people stay on iroh.
+
+### Mobile, fiber, travel, trade, care
+
+Leca provisions a SIM with Cellcard, Smart, Metfone, and SEATEL live on it together, the way a multi-network line keeps several providers up at once. Data uses whichever of them is fastest. An equal speed stays put. The voice on that line is the free iroh call. Home 5G+ hotspots are sold the same way, one unit or a large count.
+
+Fiber and cable plans name the licensed operators (the TRC list carried by Open Development Cambodia through August 2025). The line Leca sells is 10 Gbps, and every provincial center is marked saturated for 10 Gbps fiber and 5G+.
+
+Bus and air tickets are Giant Ibis, Mekong Express, Virak Buntham, Larryta, and the other coaches on the card, plus Air Cambodia and Cambodia Airways. Leca does not operate the vehicle or the aircraft. One seat or a large party.
+
+Anyone in any province can buy from anyone in any other. A shop opened on this app is on that shelf. Twenty units ride one delivery; past that, another run is billed.
+
+An ambulance request prices the trip to the hospital the person names, matches an independent crew, and can send up to twelve for one incident. The call to the crew is the free iroh call. Leca does not operate the ambulance.
+
+The home screen shows the Khmer superapp charter: posts and telecommunications, public works, commerce, the National Bank, and health. Each line is cleared for what this app offers. The charter does not print a ministry file number.
 
 While the auth server is up, a signed-in device publishes its address at `POST /v1/phone/here` and can be found by name at `GET /v1/phone/find`. A listing expires after 90 seconds. The call still goes device to device over iroh. In a browser the number is shown; the call itself runs in the installed app.
 
@@ -150,4 +171,8 @@ flutter test
 
 ## Origin
 
-Origin is the source of truth. This tree also lives as a local git repo at `~/ciao`.
+Origin is the source of truth. The git remote named `origin` is the Cursor repository, and CI is `.depot/workflows/`. Depot runs those workflows when the Depot app is connected on the repository's Apps tab. A GitHub mirror does not start them.
+
+Pull requests run the server tests, the Flutter tests, and `scripts/lint.sh`. A push to main also packages Android, Linux (x64 and arm64), and web. macOS, iOS, and Windows stay on `./build.sh`, because Depot CI sandboxes are Linux only. SwiftLint stays on a Mac (`swiftlint lint --strict`).
+
+The GitHub remotes are still `github` (faddat/leca) and `nunchi` (nunchi-labs/leca). This tree also lives as a local git repo at `~/ciao`.
