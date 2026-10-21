@@ -210,7 +210,9 @@ jobs:
           - xml
           - html
           - caddy
-          - systemd
+          # systemd-analyze loads the unit on GitHub's Ubuntu runner.
+          # Depot's sandbox has no systemd bus, and installing the package
+          # fails its postinst. The GitHub job runs this check.
           - cppcheck
           - cmakelint
           - ktlint
